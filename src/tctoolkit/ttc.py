@@ -66,6 +66,5 @@ def RunMain():
         
 if(__name__ == "__main__"):
     RunMain()
-    #topdir = "E:\\users\\nitinb\\sources\\TCCAT\\pycdd\\apache_httpd"
     
     
