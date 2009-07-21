@@ -261,8 +261,7 @@ class App:
 
 def RunMain():
     app = App()
-    #smfile = sys.argv[1]
-    smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
+    smfile = sys.argv[1]
     tmroot = SMTree(smfile)
     app.createtreemap(tmroot)
     app.run()
