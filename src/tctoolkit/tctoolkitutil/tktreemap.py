@@ -109,21 +109,28 @@ class TMColorMap:
         
 class TreemapCanvas(Tkinter.Canvas):
     def __init__(self, root, kwargs):
-        self.__createCanvas(root, kwargs)
         #Set the default variable values for Treemaps
         self.tmroot = None
-        #set the default values
-        self.tmmargin = kwargs.get('tmmargin', 3) # margin in pixels
-        self.titleheight = kwargs.get('titleheight', 12)
-        self.titlewidth = kwargs.get('titlewidth', 50)
-        self.tmcolormap = kwargs.get('tmcolormap', TMColorMap())
-        self.lower = kwargs.get('lower', [0, 0])
-        self.upper = kwargs.get('upper', [600, 400])
-        self.sizeprop = kwargs.get('sizeprop', DEFAULT_SIZE_PROP)
-        self.clrprop = kwargs.get('clrprop', DEFAULT_COLOR_PROP)
-        self.tooltip = kwargs.get('tooltip', None)
         self.nodemap = dict()
-        
+        #set the default values
+        self.__setdefault(kwargs, 'tmmargin', 3)
+        self.__setdefault(kwargs, 'titleheight', 12)
+        self.__setdefault(kwargs, 'titlewidth', 50)
+        self.__setdefault(kwargs, 'tmcolormap', TMColorMap())
+        self.__setdefault(kwargs, 'lower', [0, 0])
+        self.__setdefault(kwargs, 'upper', [600, 400])
+        self.__setdefault(kwargs, 'sizeprop', DEFAULT_SIZE_PROP)
+        self.__setdefault(kwargs, 'clrprop', DEFAULT_COLOR_PROP)
+        self.__setdefault(kwargs, 'tooltip', None)
+        self.__setdefault(kwargs, 'leafnodecb', None)
+        #call the base class method to create the actual canvas
+        self.__createCanvas(root, kwargs)
+
+    def __setdefault(self, kwargs, var, defvalue):
+        self.__dict__[var] = kwargs.get(var, defvalue)
+        if( var in kwargs):
+            del kwargs[var]
+            
     def __createCanvas(self, root, kwargs):
         self.frame = Tkinter.Frame(root)
         Tkinter.Canvas.__init__(self, self.frame, kwargs)
@@ -220,6 +227,9 @@ class TreemapSD(TreemapCanvas):
                 
                 self.createNodeSliceDice(child, list(lm), list(um), axis + 1)
                 lm[axis] = um[axis]
+            if( self.leafnodecb != None and len(node) == 0):
+                self.leafnodecb(node, self, id)
+                    
         except TypeError:
             pass
 
@@ -248,7 +258,10 @@ class TreemapSquarified(TreemapCanvas):
             #now sort the nodelist in the reverse order of sizes
             nodelist = sorted(nodelist, key = lambda node:node.getSize(self.sizeprop),reverse=True)
             self.createNodelistSquarified(nodelist, lm, um)
-        
+        elif( self.leafnodecb != None):
+            assert(len(nodelist) == 0)
+            self.leafnodecb(node, self, id, lower, upper)
+            
     def createNodelistSquarified(self,nodelist, lower, upper, axis=0):
         #Copy the lists to avoid modifying the passed values
         lower = list(lower)
@@ -307,8 +320,7 @@ class TreemapSquarified(TreemapCanvas):
         assert(nodesize > 0.0)
         assert(ht > 0.0)
         for child in nodelist:
-            upper[otheraxis] = lower[otheraxis] + (ht * child.getSize(self.sizeprop)/ nodesize) 
-            
+            upper[otheraxis] = lower[otheraxis] + (ht * child.getSize(self.sizeprop)/ nodesize)             
             self.createNodeSquarified(child, lower, upper)
             lower[otheraxis] = upper[otheraxis]
         
