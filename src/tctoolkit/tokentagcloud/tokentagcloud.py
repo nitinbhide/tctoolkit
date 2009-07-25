@@ -19,8 +19,8 @@ from pygments.token import Token, is_token_subtype
 import operator
 import math
 import string
-from tccatutil.common import *
-from tccatutil.tagcloud import TagCloud
+from tctoolkitutil.common import *
+from tctoolkitutil.tagcloud import TagCloud
 
 class Tokenizer:
     def __init__(self, srcfile):
