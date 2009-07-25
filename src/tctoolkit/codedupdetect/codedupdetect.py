@@ -27,6 +27,8 @@ class CodeDupDetect:
             tknzr = Tokenizer(srcfile)
             rk = RabinKarp(self.minmatch,self.matchstore)
             rk.addAllTokens(tknzr)
+            if( i > 300):
+                break
             
         return(self.matchstore.iter_matches())
 

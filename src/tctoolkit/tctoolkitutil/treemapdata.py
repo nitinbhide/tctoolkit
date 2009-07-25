@@ -31,7 +31,10 @@ class TreemapNode:
 
     def __len__(self):
         return(len(self.children))
-    
+
+    def __str__(self):
+        return(self.name)
+        
     def addChildNode(self, node):
         assert(self.children.has_key(node.name) == False)
         assert(isinstance(node, TreemapNode)==True)
@@ -85,6 +88,9 @@ class TreemapNode:
     def setProp(self, key, val):
         self.properties[key] = val
 
+    def getProp(self, key):
+        return(self.properties.get(key, None))
+    
     def getClr(self, key=DEFAULT_COLOR_PROP):
         clr = self.properties.get(key, None)
         if( clr != None):
