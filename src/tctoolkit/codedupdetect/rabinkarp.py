@@ -59,7 +59,12 @@ class RabinKarp:
             self.__rollhashbase = (self.__rollhashbase*HASH_BASE) % HASH_MOD;
 
     def getTokenHash(self,token):
-        thash =FNV8_hash(token)
+        #if token size is only one charater (i.e. tokens like '{', '+' etc)
+        #then don't call FNV hash. Just use the single character.
+        if( len(token) > 1):
+            thash =FNV8_hash(token)
+        else:
+            thash = ord(token[0])
 ##        for ch in token:
 ##            thash = int_mod(thash * TOKEN_HASHBASE, TOKEN_MOD)
 ##            thash = int_mod(thash + ord(ch), TOKEN_MOD)
