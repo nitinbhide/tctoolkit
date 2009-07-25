@@ -16,10 +16,12 @@ from optparse import OptionParser
 from tccatutil.common import *
 
 from tccatutil.treemapdata import TreemapNode
-from tccatutil.tktreemap import TreemapSquarified,TMColorMap
+from tccatutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
 from tccatutil.tkcanvastooltip import TkCanvasToolTip
 
-from Tkinter import Tk
+import Tkinter
+from idlelib.TreeWidget import TreeItem, TreeNode
+
 import string, os, datetime
 
 CLR_PROP = 'duplicate lines'
@@ -30,6 +32,7 @@ class CDDApp:
         self.dirname=dirname
         self.options = options
         self.filelist = None
+        self.matches = None
 
     def getFileList(self):
         if( self.filelist == None):
@@ -59,14 +62,28 @@ class CDDApp:
     def ShowDuplicatesTreemap(self):
         self.initTk()
         self.createTreemap()
+        self.showDupListTree()
         
     def initTk(self):
-        self.root = Tk("CDD")
+        self.root = Tkinter.Tk("CDD")
         self.root.title("Code Duplication Treemap")
-        self.tmcanvas = TreemapSquarified(self.root,width='13i', height='8i')
+        self.pane = Tkinter.PanedWindow(self.root, orient=Tkinter.HORIZONTAL)
+        self.pane.pack(fill=Tkinter.BOTH, expand=1)
+        self.initDupListTree()
+        self.initTreemap()
+        
+    def initDupListTree(self):
+        frame = Tkinter.Frame(self.pane)
+        self.duplisttree = createScrollableCanvas(frame, width='2i')
+        self.duplisttree.pack()
+        self.pane.add(frame)
+
+    def initTreemap(self):        
+        self.tmcanvas = TreemapSquarified(self.pane,width='13i', height='8i')
         self.tmcanvas.config(bg='white')
         self.tmcanvas.grid(sticky='nesw')
         self.tmcanvas.pack()
+        self.pane.add(self.tmcanvas.frame)
         self.tooltip = TkCanvasToolTip(self.tmcanvas, follow=True)
 
     def getColormap(self,tmrootnode):
@@ -84,12 +101,15 @@ class CDDApp:
         self.tooltip.updatebindings()
 
     def getMatchLcInfo(self):
-        filelist = self.getFileList()
-        cdd = CodeDupDetect(100)
-        exactmatches = cdd.findcopies(filelist)
+        if( self.matches == None):
+            filelist = self.getFileList()
+            cdd = CodeDupDetect(100)
+            exactmatches = cdd.findcopies(filelist)
+            self.matches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
+            
         #convert the matches to dictionary of filename against the number of copied lines
         matchinfodict = dict()
-        for matchset in exactmatches:
+        for matchset in self.matches:
             for match in matchset:
                 fname = match.srcfile()
                 lc = matchinfodict.get(fname, 0)
@@ -114,10 +134,72 @@ class CDDApp:
             node = tmrootnode.addChild(namelist)
             node.setProp(SIZE_PROP, lc)
             node.setProp(CLR_PROP, matchlcinfo.get(fname, 0))
-        tmrootnode.MergeSingleChildNodes('/', SIZE_PROP, CLR_PROP)
+        tmrootnode.MergeSingleChildNodes('/')
         return(tmrootnode)
+
+    def showDupListTree(self):
+        mtreeroot = DupTreeItem("Duplicate List")
+        #Add the tree items for various categories like (1-10 lines, 10-100 lines, 101-500 lines, More than 500 lines"
+        dup500_ = mtreeroot.addChildName("More than 500 lines")
+        dup101_500 = mtreeroot.addChildName("101-500 lines")
+        dup11_100 = mtreeroot.addChildName("11-100 lines")
+        dup1_10 = mtreeroot.addChildName("upto 10 lines")
+        
+        matchid = 0
+        for matchset in self.matches:
+            matchid = matchid+1
+            matchnode = DupTreeItem("")
+            lc = 0
+            for match in matchset:
+                fname = match.srcfile()
+                lc = max(lc, match.getLineCount())
+                start = match.getStartLine()
+                matchnode.addChildName("%s (line %d - %d)" % (fname, start, start+lc))
+                
+            matchnode.name = "Match %d (Lines : %d)" % (matchid, lc)
             
-            
+            if( lc > 0 and lc <= 10):
+                dup1_10.addChild(matchnode)
+            elif( lc >10 and lc <= 100):
+                dup11_100.addChild(matchnode)
+            elif( lc >100 and lc < 500):
+                dup101_500.addChild(matchnode)
+            else:
+                dup500_.addChild(matchnode)        
+
+        for child in mtreeroot.children:
+            child.name = "%s (count : %d)" % (child.name, len(child.children))
+        
+        #now create a 'tree display"
+        self.filetree = TreeNode(self.duplisttree, None, mtreeroot)
+        self.filetree.update()
+        self.filetree.expand()
+        
+class DupTreeItem(TreeItem):
+    def __init__(self, name):
+        self.name = name
+        self.children = []
+        
+    def GetText(self):
+        return(self.name)
+        
+    def IsExpandable(self):
+        return len(self.children) > 0
+
+    def addChild(self, child):
+        self.children.append(child)
+
+    def addChildName(self, name):
+        child = DupTreeItem(name)
+        self.addChild(child)
+        return(child)
+    
+    def GetSubList(self):        
+        return(self.children)
+    
+    def OnDoubleClick(self):
+        pass
+        
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
     parser = OptionParser(usage)
