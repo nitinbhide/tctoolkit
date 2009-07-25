@@ -26,9 +26,7 @@ class CodeDupDetect:
             print "Analyzing file %s (%d of %d)" %(srcfile,i,totalfiles)
             tknzr = Tokenizer(srcfile)
             rk = RabinKarp(self.minmatch,self.matchstore)
-            rk.addAllTokens(tknzr)
-            if( i > 300):
-                break
+            rk.addAllTokens(tknzr)            
             
         return(self.matchstore.iter_matches())
 
