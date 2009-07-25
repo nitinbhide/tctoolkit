@@ -13,11 +13,11 @@ from __future__ import with_statement
 
 from codedupdetect.codedupdetect import CodeDupDetect
 from optparse import OptionParser
-from tccatutil.common import *
 
-from tccatutil.treemapdata import TreemapNode
-from tccatutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
-from tccatutil.tkcanvastooltip import TkCanvasToolTip
+from tctoolkitutil.common import *
+from tctoolkitutil.treemapdata import TreemapNode
+from tctoolkitutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
+from tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
 
 import Tkinter
 from idlelib.TreeWidget import TreeItem, TreeNode

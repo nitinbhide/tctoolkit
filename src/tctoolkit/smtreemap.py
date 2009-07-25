@@ -11,9 +11,9 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 from __future__ import with_statement
 
-from tccatutil.treemapdata import TreemapNode
-from tccatutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
-from tccatutil.tkcanvastooltip import TkCanvasToolTip
+from tctoolkitutil.treemapdata import TreemapNode
+from tctoolkitutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
+from tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
 
 import Tkinter,tkFileDialog
 from idlelib.TreeWidget import TreeItem, TreeNode
@@ -261,7 +261,8 @@ class App:
 
 def RunMain():
     app = App()
-    smfile = sys.argv[1]
+    #smfile = sys.argv[1]
+    smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
     tmroot = SMTree(smfile)
     app.createtreemap(tmroot)
     app.run()
