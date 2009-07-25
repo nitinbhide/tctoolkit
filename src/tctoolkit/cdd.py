@@ -33,6 +33,7 @@ class CDDApp:
         self.options = options
         self.filelist = None
         self.matches = None
+        self.dupsInFile = None
 
     def getFileList(self):
         if( self.filelist == None):
@@ -78,8 +79,8 @@ class CDDApp:
         self.duplisttree.pack()
         self.pane.add(frame)
 
-    def initTreemap(self):        
-        self.tmcanvas = TreemapSquarified(self.pane,width='13i', height='8i')
+    def initTreemap(self):
+        self.tmcanvas = TreemapSquarified(self.pane,width='13i', height='8i',leafnodecb = self.tmLeafnodeCallback)
         self.tmcanvas.config(bg='white')
         self.tmcanvas.grid(sticky='nesw')
         self.tmcanvas.pack()
@@ -100,16 +101,19 @@ class CDDApp:
         self.tmcanvas.drawTreemap(tmrootnode)
         self.tooltip.updatebindings()
 
-    def getMatchLcInfo(self):
+    def getMatches(self):
         if( self.matches == None):
             filelist = self.getFileList()
             cdd = CodeDupDetect(100)
             exactmatches = cdd.findcopies(filelist)
             self.matches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
-            
+        return(self.matches)
+    
+    def getMatchLcInfo(self):
+        matches = self.getMatches()
         #convert the matches to dictionary of filename against the number of copied lines
         matchinfodict = dict()
-        for matchset in self.matches:
+        for matchset in matches:
             for match in matchset:
                 fname = match.srcfile()
                 lc = matchinfodict.get(fname, 0)
@@ -127,16 +131,30 @@ class CDDApp:
     
     def makeTree(self):
         matchlcinfo = self.getMatchLcInfo()
-        lcinfo = self.getLcInfo()
+        lcinfo = self.getLcInfo()        
         tmrootnode = TreemapNode("Duplication Map - ")
         for fname, lc in lcinfo.iteritems():
             namelist = fname.split(os.sep)
             node = tmrootnode.addChild(namelist)
             node.setProp(SIZE_PROP, lc)
             node.setProp(CLR_PROP, matchlcinfo.get(fname, 0))
+            node.setProp('filename', fname)
         tmrootnode.MergeSingleChildNodes('/')
         return(tmrootnode)
 
+    def getDupsInFile(self,fname):
+        if( self.dupsInFile == None):
+            matches = self.getMatches()
+            self.dupsInFile = dict()
+            for matchset in matches:
+                for match in matchset:
+                    fname = match.srcfile()
+                    duplist = self.dupsInFile.get(fname, [])
+                    duplist.append((match.getStartLine(), match.getLineCount()))
+                    self.dupsInFile[fname] = duplist
+        return(self.dupsInFile.get(fname, None))
+                
+        
     def showDupListTree(self):
         mtreeroot = DupTreeItem("Duplicate List")
         #Add the tree items for various categories like (1-10 lines, 10-100 lines, 101-500 lines, More than 500 lines"
@@ -146,7 +164,8 @@ class CDDApp:
         dup1_10 = mtreeroot.addChildName("upto 10 lines")
         
         matchid = 0
-        for matchset in self.matches:
+        matches = self.getMatches()
+        for matchset in matches:
             matchid = matchid+1
             matchnode = DupTreeItem("")
             lc = 0
@@ -175,6 +194,28 @@ class CDDApp:
         self.filetree.update()
         self.filetree.expand()
         
+    def tmLeafnodeCallback(self, node, tmcanvas, canvasid,lower,upper):
+        '''
+        draw the approx positions for the duplicates in 'dark brown' color on the
+        canvas rectangles of that file.
+        '''        
+        width = upper[0]-lower[0]
+        height = float(upper[1]-lower[1])
+            
+        if( width > 4 and height > 2):            
+            fname = node.getProp('filename')
+            assert(fname != None)
+            dupsinfile = self.getDupsInFile(fname)
+            #if dupsinfile is None, then there are no duplicates in file
+            if( dupsinfile != None):
+                fsize = float(node.getSize(SIZE_PROP))
+                x = lower[0]
+                y = lower[1]
+                for startline, linecount in dupsinfile:
+                    rectht = int(height*(float(linecount)/fsize)+0.5)
+                    rectstart = int(height*(float(startline)/fsize)+0.5)
+                    tmcanvas.create_rectangle(x+2, y+rectstart, x+width-2, y+rectstart+rectht, fill='magenta')
+            
 class DupTreeItem(TreeItem):
     def __init__(self, name):
         self.name = name
