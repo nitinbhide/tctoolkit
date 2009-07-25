@@ -121,7 +121,7 @@ class RabinKarp:
         #   and the line numbers cannot be same
         if( tokendata1[3] == tokendata2[3]
                 and (tokendata1[0]!=tokendata2[0]
-                     or (abs(tokendata1[2]-tokendata2[2])>self.patternsize) and tokendata1[1]>tokendata2[1])):
+                     or ((abs(tokendata1[2]-tokendata2[2])>self.patternsize) and tokendata1[1]>tokendata2[1]))):
 
             tknzr2 = tknzr1
             if( tokendata2[0] != tokendata1[0]): #filenames are different, get the different tokenizer
