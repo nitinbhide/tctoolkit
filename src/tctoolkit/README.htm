@@ -5,7 +5,10 @@
 <title>Thinking Craftsman Toolkit</title>
 <style type="text/css">
 <!--
-.style1 {color: #0000FF}
+.style1 {
+	color: #000000;
+	background: #BCBCBC;
+}
 -->
 </style>
 </head>
@@ -13,25 +16,26 @@
 <body>
 <h1 align="center">Thinking Craftsman Toolkit</h1>
 <h2 class="style1">Introduction</h2>
-<p><em>Thinking Craftsman Toolkit</em> is a setup of tools for analyzing source code in various ways. Currently there are 3 tools  </p>
+<p><em><a href="http://code.google.com/p/tctoolkit">Thinking Craftsman Toolkit</a></em> is a setup of tools for analyzing source code in various ways. Currently there are 3 tools  </p>
 <ol>
   <li>
     <div align="justify"><strong>Code Duplication Detector (CDD)</strong>:<br />
-      Code duplication detector is similar to <a href="http://pmd.sourceforge.net/cpd.html">Copy Paste Detector (CPD)</a> or <a href="http://www.redhillconsulting.com.au/products/simian/">Simian</a>. It uses <a href="http://pygments.org/">Pygments</a> Lexer to parse the source files and uses <a href="http://en.wikipedia.org/wiki/Rabin-Karp_string_search_algorithm">Rabin Karp</a> algorithm to detect the duplicates. Hence it supports all languages supported by <em>Pygments</em>.    <br />
+      Code duplication detector is similar to <a href="http://pmd.sourceforge.net/cpd.html">Copy Paste Detector (CPD)</a> or <a href="http://www.redhillconsulting.com.au/products/simian/">Simian</a>. It uses <a href="http://pygments.org/">Pygments</a> Lexer to parse the source files and uses <a href="http://en.wikipedia.org/wiki/Rabin-Karp_string_search_algorithm">Rabin Karp</a> algorithm to detect the duplicates. Hence it supports all languages supported by <em>Pygments</em>.
     </div>
   </li>
+  <br />
   <li>
     <div align="justify"><strong>Token Tag Cloud (TTC)</strong>    :<br />
       Sometime back I read the blog article '<a href="http://fragmental.tw/2009/04/29/tag-clouds-see-how-noisy-your-code-is/">See How Noisy Your Code Is</a>'. TTC is tool for creating various tag clouds based on token types (e.g. keywords, names, classnames etc).    <br />
-      <br />
       </div>
   </li>
+	<br />
   <li>
     <div align="justify"><strong>Treemap Visualization for Source Monitor Metrics data (SMTreemap)</strong>    :<br />
       <a href="http://www.campwoodsw.com/sourcemonitor.html">Source Monitor</a> is an excellent tool to generate various metrics from the source code (e.g. maxium complexity, averge compelxity, line count, block depth etc). However, it is difficult to quickly analyse this data for large code bases. Treemaps are excellent to visualize the hierarchicaldata on two dimensions (as size and color). This tool uses Tkinter to display the SourceMonitor data as treemap. You have to export the source monitor data as CSV or XML. smtreemap.py can then use this CSV or XML file as input to display the treemap    </div>
   </li>
 </ol>
-<hr/>
+
 <h2 class="style1">Using the Tools</h2>
     
 <ol>
@@ -39,16 +43,15 @@
   <pre>cdd.py [options] &lt;directory name&gt;</pre>Duplication results are displayed sorted in the descending order of number of duplicate lines found.
   <p>  Options:
   <pre>-h, --help : show this help message and exit</pre>
-	<pre>
--p PATTERN, --pattern=PATTERN : find duplications with files matching the pattern</pre>
+  <pre>-p PATTERN, --pattern=PATTERN : find duplications with files matching the pattern</pre>
 If file pattern is not specified, CDD will check all the extensions supported by Pygments.
     <pre>-t, --treemap         : display the duplication as treemap </pre>
     <p>Treemap option shows the entire directory tree as 'treemap' and gives a 'big picture' view of proliferation of duplication.  </p>
     <ul>
-      <li>Green rectangles : These files don't have any duplication      </li>
-      <li>White rectangles : These files have low number of duplicated lines (around 10)      </li>
-      <li>Red rectangles : These files have large number of duplicates      </li>
-      <li>Magenta lines inside the rectangles : show the relative location of duplicate
+      <li><em>Green rectangles</em> : These files don't have any duplication      </li>
+      <li><em>White rectangles</em> : These files have low number of duplicated lines (around 10)      </li>
+      <li><em>Red rectangles</em> : These files have large number of duplicates      </li>
+      <li><em>Magenta lines inside the rectangles</em> : show the relative location of duplicate
         lines in the file.      <br />
       </li>
     </ul>
