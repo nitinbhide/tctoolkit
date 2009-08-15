@@ -213,8 +213,11 @@ class CDDApp:
                 y = lower[1]
                 for startline, linecount in dupsinfile:
                     rectht = int(height*(float(linecount)/fsize)+0.5)
-                    rectstart = int(height*(float(startline)/fsize)+0.5)
-                    tmcanvas.create_rectangle(x+2, y+rectstart, x+width-2, y+rectstart+rectht, fill='magenta')
+                    if( rectht > 1):
+                        rectstart = int(height*(float(startline)/fsize)+0.5)
+                        #draw rectangle with 'magenta' color fill and no border (border width=0)
+                        tmcanvas.create_rectangle(x+2, y+rectstart, x+width-2, y+rectstart+rectht,
+                                                  fill='magenta',width=0)
             
 class DupTreeItem(TreeItem):
     def __init__(self, name):
