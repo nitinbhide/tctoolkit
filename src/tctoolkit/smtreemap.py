@@ -77,8 +77,9 @@ class FileTreeItem(TreeItem):
         node = self.node
         return len(node) > 0
 
-    def GetSubList(self):        
+    def GetSubList(self):
         items = [FileTreeItem(child, self.tmcanvas) for child in self.node]
+        items = sorted(items, key=lambda child : child.node.name)
         return(items)
     
     def OnDoubleClick(self):
@@ -261,8 +262,8 @@ class App:
 
 def RunMain():
     app = App()
-    #smfile = sys.argv[1]
-    smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
+    smfile = sys.argv[1]
+    #smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
     tmroot = SMTree(smfile)
     app.createtreemap(tmroot)
     app.run()
