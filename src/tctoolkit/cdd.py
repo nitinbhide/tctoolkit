@@ -11,6 +11,9 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 from __future__ import with_statement
 
+from contextlib import contextmanager
+import sys
+
 from codedupdetect.codedupdetect import CodeDupDetect
 from optparse import OptionParser
 
@@ -27,6 +30,19 @@ import string, os, datetime
 CLR_PROP = 'duplicate lines'
 SIZE_PROP = 'filesize'
 
+@contextmanager
+def FileOrStdout(filename):
+    output = sys.stdout
+    if( filename != None):        
+        try:
+            output = open(filename, "w")
+        except:
+            pass
+    yield(output)
+    if( output != sys.stdout):
+        output.close()
+    
+        
 class CDDApp:
     def __init__(self, dirname, options):
         self.dirname=dirname
@@ -46,20 +62,22 @@ class CDDApp:
         return(self.filelist)
 
     def run(self):
+        filelist = self.getFileList()        
+        self.cdd = CodeDupDetect(filelist,100)            
+        self.PrintDuplicates()
+        
         if( self.options.treemap == True):
             self.ShowDuplicatesTreemap()
-            self.root.mainloop()
-        else:
-            self.PrintDuplicates()
-            
+            self.root.mainloop()        
+    
     def PrintDuplicates(self):
-        filelist = self.getFileList()
         tm1 = datetime.datetime.now()
-        cdd = CodeDupDetect(100)
-        exactmatch = cdd.printmatches(filelist)
-        tm2 = datetime.datetime.now()
-        print "time to find matches : ",(tm2-tm1)
-        
+        with FileOrStdout(self.options.filename) as output:
+            exactmatch = self.cdd.printmatches(output)
+            tm2 = datetime.datetime.now()
+            output.write("time to find matches - %s\n" %(tm2-tm1))
+
+            
     def ShowDuplicatesTreemap(self):
         self.initTk()
         self.createTreemap()
@@ -103,13 +121,12 @@ class CDDApp:
 
     def getMatches(self):
         if( self.matches == None):
-            filelist = self.getFileList()
-            cdd = CodeDupDetect(100)
-            exactmatches = cdd.findcopies(filelist)
+            exactmatches = self.cdd.findcopies()
             self.matches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
         return(self.matches)
     
     def getMatchLcInfo(self):
+        #get the line count information of the duplicates
         matches = self.getMatches()
         #convert the matches to dictionary of filename against the number of copied lines
         matchinfodict = dict()
@@ -121,6 +138,7 @@ class CDDApp:
         return(matchinfodict)
 
     def getLcInfo(self):
+        #get the line count information about the files
         filelist = self.getFileList()
         lcinfodict = dict()
         for fname in filelist:
@@ -252,6 +270,8 @@ def RunMain():
                       help="find duplications with files matching the pattern")
     parser.add_option("-t", "--treemap", action="store_true", dest="treemap", default=False,
                       help="display the duplication as treemap")
+    parser.add_option("-f", "--file", dest="filename", default=None,
+                      help="output file name. This is simple text file")
     (options, args) = parser.parse_args()
     
     if( len(args) < 1):
