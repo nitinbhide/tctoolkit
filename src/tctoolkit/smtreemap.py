@@ -20,6 +20,7 @@ from idlelib.TreeWidget import TreeItem, TreeNode
 
 import csv
 import sys, os, string
+from optparse import OptionParser
 import xml.etree.ElementTree as ET
 
 CLR_PROP = 'MaxComplexity'
@@ -261,12 +262,19 @@ class App:
         #self.root.destroy()
 
 def RunMain():
-    app = App()
-    smfile = sys.argv[1]
-    #smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
-    tmroot = SMTree(smfile)
-    app.createtreemap(tmroot)
-    app.run()
+    usage = "usage: %prog [options] <source monitor xml or csv filename>"
+    parser = OptionParser(usage)
+
+    (options, args) = parser.parse_args()
+    
+    if( len(args) < 1):
+        print "Invalid number of arguments. Use smtreemap.py --help to see the details."
+    else:            
+        app = App()
+        smfile = args[0]
+        tmroot = SMTree(smfile)
+        app.createtreemap(tmroot)
+        app.run()
     
 if( __name__ == "__main__"):
     RunMain()
