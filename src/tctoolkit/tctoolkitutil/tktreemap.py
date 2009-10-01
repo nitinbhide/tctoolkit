@@ -17,6 +17,7 @@ from treemapdata import TreemapNode, DEFAULT_COLOR_PROP, DEFAULT_SIZE_PROP
 DEFAULT_MINCLR = (255,0,0) #Red
 DEFAULT_MAXCLR = (0,255,0) #green
 DEFAULT_NEUTRALCLR = (255,255, 255) #white
+COLORDIFF_TOL = 0.001
 
 def getwidth(lower, upper, axis):
     wid = upper[axis] - lower[axis]
@@ -70,9 +71,17 @@ class TMColorMap:
     def setlimits(self, minclrval, maxclrval, neutralval=None):
         self.minclrval = float(minclrval)
         self.maxclrval = float(maxclrval)
+        if( (self.maxclrval - self.minclrval) <= COLORDIFF_TOL):
+            self.maxclrval = self.minclrval+COLORDIFF_TOL
+            
         if( neutralval == None):
-            neutralval = (self.minclrval+self.maxclrval)/2.0        
+            neutralval = (self.minclrval+self.maxclrval)/2.0
+        
         self.neutralclrval = float(neutralval)
+        #if neutral value is greater than max clr value, it will screw up the color computations
+        #hence reset it if required.
+        self.neutralclrval = min(self.neutralclrval, self.maxclrval)
+        
         assert(self.minclrval<= self.neutralclrval and self.neutralclrval <= self.maxclrval)        
     
     def mapclr(self, val):
