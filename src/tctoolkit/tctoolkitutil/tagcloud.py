@@ -48,7 +48,25 @@ class TagCloud:
             if(taginfo != None):
                 tagDict[taginfo[0]] = taginfo[1]
         return(tagDict)
+
+    def printTagStats(self, numWords=100, filterFunc=None):
+        tagHtmlStr = ''
+
+        tagDict = self.tagDict
+        if( filterFunc != None):
+            tagDict = self.filterWords(filterFunc)
         
+        if( len(tagDict) > 0):            
+            #first get sorted wordlist (reverse sorted by frequency)
+            tagWordList = sorted(tagDict.items(), key=operator.itemgetter(1),reverse=True)
+            totalTagWords = len(tagWordList)
+            #now extract top 'numWords' from the list and then sort it with alphabetical order.
+            #comparison should be case-insensitive            
+            tagWordList = sorted(tagWordList[0:numWords], key=operator.itemgetter(0),
+                                 cmp=lambda x,y: cmp(x.lower(), y.lower()) )
+            for word, freq in tagWordList:
+                print "%s(%d):%f" % (word, freq, math.log(freq))
+                
     def getTagCloudHtml(self,numWords=100, filterFunc=None):
         tagHtmlStr = ''
 
