@@ -229,12 +229,16 @@ class CDDApp:
                 fsize = float(node.getSize(SIZE_PROP))
                 x = lower[0]
                 y = lower[1]
+                #show small magenta coloured strip of 4 pixels (rectwd) to represent the location
+                #of duplication.
+                rectwd = 4
+                    
                 for startline, linecount in dupsinfile:
                     rectht = int(height*(float(linecount)/fsize)+0.5)
                     if( rectht > 1):
                         rectstart = int(height*(float(startline)/fsize)+0.5)
                         #draw rectangle with 'magenta' color fill and no border (border width=0)
-                        tmcanvas.create_rectangle(x+2, y+rectstart, x+width-2, y+rectstart+rectht,
+                        tmcanvas.create_rectangle(x+2, y+rectstart, x+rectwd+2, y+rectstart+rectht,
                                                   fill='magenta',width=0)
             
 class DupTreeItem(TreeItem):
