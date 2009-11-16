@@ -11,6 +11,7 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 import fnmatch
 import os
+import string
 
 IGNOREDIRS = ['.svn','.cvs'] 
 
@@ -59,3 +60,26 @@ def PreparePygmentsFileList(dirname):
                 #but continue the outer loop
                 break
     return(filelist)
+
+def FindFileInPathList(fname, pathlist, extList=None):
+    '''
+    search the directories in 'pathlist' one by one to see if fname exists in that
+    directory. Search inside a directory is NOT recursive. First 'hit' is returned.
+    '''
+    patternList = []
+    if( extList != None and len(extList) > 0):
+        for exten in extList:
+            if( exten.startswith('.') == False):
+                exten = '.' + exten
+            patternList.append(fname + exten)
+    else:
+        patternList.append(fname)
+
+    
+    for fpath in pathlist:
+        filelist = os.listdir(fpath)
+        for pattern in patternList:
+            matchList = fnmatch.filter(filelist, pattern)
+            if( len(matchList) > 0):
+                return(os.path.join(fpath, matchList[0]))
+    return(None)
