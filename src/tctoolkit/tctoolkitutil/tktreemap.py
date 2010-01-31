@@ -351,7 +351,7 @@ Example Code on how ot use the TkTreemap
 '''
 class App:
     def __init__(self):
-        self.root = Tkinter.Tk("Treemap")
+        self.root = Tkinter.Tk()
         self.tmcanvas = TreemapSquarified(self.root,width='8i', height='6i')
         self.tmcanvas.config(bg='white')
         self.tmcanvas.pack()
