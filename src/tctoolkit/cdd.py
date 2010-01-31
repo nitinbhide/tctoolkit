@@ -84,7 +84,7 @@ class CDDApp:
         self.showDupListTree()
         
     def initTk(self):
-        self.root = Tkinter.Tk("CDD")
+        self.root = Tkinter.Tk()
         self.root.title("Code Duplication Treemap")
         self.pane = Tkinter.PanedWindow(self.root, orient=Tkinter.HORIZONTAL)
         self.pane.pack(fill=Tkinter.BOTH, expand=1)

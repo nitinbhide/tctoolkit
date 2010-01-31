@@ -82,7 +82,7 @@ class TMTree(TreemapNode):
         
 class App:
     def __init__(self):
-        self.root = Tkinter.Tk("Source Monitor Treemap")
+        self.root = Tkinter.Tk()
         self.root.title("Source Monitor Treemap")
         self.initMenu()
         self.initDropDown()
