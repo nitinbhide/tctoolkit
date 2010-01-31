@@ -169,7 +169,7 @@ def tonum(str):
         
 class App:
     def __init__(self):
-        self.root = Tkinter.Tk("Source Monitor Treemap")
+        self.root = Tkinter.Tk()
         self.root.title("Source Monitor Treemap")
         self.initMenu()
         self.initDropDown()
@@ -272,6 +272,7 @@ def RunMain():
     else:            
         app = App()
         smfile = args[0]
+        #smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
         tmroot = SMTree(smfile)
         app.createtreemap(tmroot)
         app.run()
