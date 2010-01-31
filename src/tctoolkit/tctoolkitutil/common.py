@@ -77,9 +77,13 @@ def FindFileInPathList(fname, pathlist, extList=None):
 
     
     for fpath in pathlist:
-        filelist = os.listdir(fpath)
         for pattern in patternList:
-            matchList = fnmatch.filter(filelist, pattern)
-            if( len(matchList) > 0):
-                return(os.path.join(fpath, matchList[0]))
+            testfname = os.path.join(fpath, pattern)        
+            if( os.path.exists(testfname)):
+                return(testfname)
     return(None)
+
+def StripAtStart(src, strtostrip):
+    if( src.startswith(strtostrip)):
+        src = src[len(strtostrip):]
+    return(src)    

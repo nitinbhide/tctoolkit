@@ -6,7 +6,7 @@ import os
 import string
 
 from pygments.filter import simplefilter,Filter
-from pygments.lexers import JavaLexer, CppLexer, CLexer
+from pygments.lexers import JavaLexer, CppLexer, CLexer,CSharpLexer
 from pygments.token import Token
 
 from tctoolkitutil.common import FindFileInPathList, StripAtStart
@@ -17,7 +17,7 @@ def get_import_filter(lexer, srcdir, depsearchpath):
     '''
     filter = None
     
-    if( lexer.name == JavaLexer.name):
+    if( lexer.name == JavaLexer.name or lexer.name==CSharpLexer.name):
         filter = JavaImportFilter(srcdir, depsearchpath)
     elif(lexer.name == CppLexer.name or lexer.name == CLexer.name):
         filter = CppImportFilter(srcdir, depsearchpath)
