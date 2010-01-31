@@ -12,7 +12,10 @@ from tcdepends.depfilter import get_import_filter
     
 
 class Dependency:
-    langSrcFileExten = { 'cpp':['c','cpp', 'cxx', 'hpp', 'h', 'hxx'], 'java': ['java']}
+    langSrcFileExten = { 'cpp':['c','cpp', 'cxx', 'hpp', 'h', 'hxx'],
+                         'java': ['java'],
+                         'c#':['cs']
+                         }
     
     def __init__(self, language, dependspath=[]):
         self.dependencypath = dependspath
