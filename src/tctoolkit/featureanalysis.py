@@ -25,7 +25,7 @@ def AnalyzeFeatures(dirname, pattern,outfilename):
     
     feat = FeatureAnalysis()
     feat.detectFeatures(filelist)
-    print "printing features"
+    print "writing features to %s" % outfilename
     with open(outfilename, "wb") as outfile:
         feat.printFeatures(outfile)
     
@@ -40,7 +40,7 @@ def RunMain():
 
     parser.add_option("-p", "--pattern", dest="pattern", default='*.c',
                       help="do feature analysis of files matching the pattern")
-    parser.add_option("-o", "--outfile", dest="outfile", default=None,
+    parser.add_option("-o", "--outfile", dest="outfile", default="features.txt",
                       help="outfile name. Output to stdout if not specified")
     
     (options, args) = parser.parse_args()
@@ -50,17 +50,10 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        tmplDict = dict()
-        tagcld = AnalyzeFeatures(dirname, options.pattern)
-        
-        tmplDict['KEYWORD_TAGSTR']= tagcld.getTagCloudHtml(filterFunc=KeywordFilter)
-        tmplDict['NAME_TAGSTR']= tagcld.getTagCloudHtml(filterFunc=NameFilter)
-        tmplDict['CLASSFUNCNAME_TAGSTR']= tagcld.getTagCloudHtml(filterFunc=ClassFuncNameFilter)
-        
-        OutputTagCloud(options.outfile, tmplDict)
+        AnalyzeFeatures(dirname, options.pattern, options.outfile)            
         
 if(__name__ == "__main__"):
-    #RunMain()
-    TestMain()
+    RunMain()
+    #TestMain()
     
     
