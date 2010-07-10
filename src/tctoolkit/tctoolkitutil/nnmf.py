@@ -1,7 +1,7 @@
 '''
 Non Negative Matrix Factorization : From Programming Collective Intelligence By Toby Segaran.
 '''
-
+import time
 import math
 import itertools
 from numpy import *
@@ -24,6 +24,9 @@ def sanitize(mat, matname):
             mat[idx] = 0
       
 def factorize(v,pc=10,iter=50):
+    # scaling the matrix to improve the calculation speed
+    # http://www.procoders.net/?p=424
+    v /= v.sum(axis=0)
     ic=shape(v)[0]
     fc=shape(v)[1]
   
@@ -57,5 +60,4 @@ def factorize(v,pc=10,iter=50):
         w=matrix(array(w)*array(wn)/array(wd))
         sanitize(w, 'w')
     print "final cost : %f" % cost
-    
     return w,h
