@@ -14,7 +14,7 @@ from __future__ import with_statement
 
 from pygments.lexers import get_lexer_for_filename
 from pygments.filter import simplefilter
-from pygments.token import Token, is_token_subtype
+from pygments.token import Token
 
 import operator
 import math
