@@ -18,8 +18,9 @@ def difcost(a,b):
     return dif
 
 def sanitize(mat, matname):
-    for idx, val in ndenumerate(mat):    
-        if( math.isnan(val)):            
+    for idx, val in ndenumerate(mat):
+        #use numpy.isnan as python 2.5 doesn't have isnan defined in math module
+        if( isnan(val)):            
             mat[idx] = 0
       
 def factorize(v,pc=10,iter=50):
