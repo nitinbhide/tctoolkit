@@ -182,17 +182,17 @@ class App:
     def initTreemapCanvas(self):
         self.tmcanvas = TreemapSquarified(self.pane,width='13i', height='8i')
         self.tmcanvas.config(bg='white')
-        #self.tmcanvas.grid(column=1,row=1, sticky="nsew")
-        self.tmcanvas.pack()
+        self.pane.config(bg='blue')
         self.pane.add(self.tmcanvas.frame)
+        self.pane.paneconfigure(self.tmcanvas.frame, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
         self.tooltip = TkCanvasToolTip(self.tmcanvas, follow=True)
         
     def initTreeCanvas(self):
         frame = Tkinter.Frame(self.pane)
         self.treecanvas = createScrollableCanvas(frame, width='2i')
-        self.treecanvas.pack()
         self.pane.add(frame)
-
+        self.pane.paneconfigure(frame, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
+        
     def initMenu(self):
         menubar = Tkinter.Menu(self.root)
         filemenu = Tkinter.Menu(menubar, tearoff=0)
