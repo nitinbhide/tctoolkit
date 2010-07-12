@@ -19,8 +19,9 @@ from tctoolkitutil import nnmf
 def tokenize(fname):
     tokenzr = Tokenizer(fname)
     for ttype,tokenstr in tokenzr.get_tokens():
-        if( Token.Name in ttype):
-            yield tokenstr    
+        if( ttype in Token.Name):
+            if( ttype in Token.Name.Class or ttype in Token.Name.Function ):
+                yield tokenstr
 
 class FeatureAnalysis:
     def __init__(self):
@@ -72,13 +73,13 @@ class FeatureAnalysis:
         
         # Loop over all the features
         for i in range(pc):
+            outfile.write("Feature #%d\n" % i)
             slist=[]
             # Create a list of words and their weights
             for j in range(wc):
               slist.append((self.feat[i,j],self.wordvec[j]))
             # Reverse sort the word list
-            slist.sort()
-            slist.reverse()
+            slist.sort(reverse=True)
             
             # Print the first six elements
             n=[s[1] for s in slist[0:10]]
@@ -89,16 +90,16 @@ class FeatureAnalysis:
             flist=[]
             for j in range(len(self.filetitles)):
               # Add the article with its weight
-              flist.append((self.weights[j,i],self.filetitles[j]))
-              toppatterns[j].append((self.weights[j,i],i,self.filetitles[j]))
+                if( self.weights[j,i] > 0.1):
+                    flist.append((self.weights[j,i],self.filetitles[j]))
+                    toppatterns[j].append((self.weights[j,i],i,self.filetitles[j]))
             
             # Reverse sort the list
-            flist.sort()
-            flist.reverse()
+            flist.sort(reverse=True)
             
             # Show the top 3 articles
             for f in flist[0:10]:
-              outfile.write(str(f)+'\n')
+                outfile.write(str(f)+'\n')
             outfile.write('\n')
     
         outfile.write('\n')
