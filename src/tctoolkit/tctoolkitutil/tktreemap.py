@@ -32,8 +32,10 @@ def getPreferedAxis(lower, upper):
     return(preferedaxis)
 
 def initScrollableCanvas(frame, canvas):
+    frame.grid_rowconfigure(0, weight=1)
+    frame.grid_columnconfigure(0, weight=1)
+
     canvas.config(bg='white')
-    canvas.grid(sticky='nsew')
     #Create a scrollable canvas
     scrollX = Tkinter.Scrollbar(frame, orient=Tkinter.HORIZONTAL)
     scrollY = Tkinter.Scrollbar(frame, orient=Tkinter.VERTICAL)
@@ -42,11 +44,11 @@ def initScrollableCanvas(frame, canvas):
     canvas['yscrollcommand'] = scrollY.set
     scrollX['command'] = canvas.xview
     scrollY['command'] = canvas.yview
-    scrollX.pack(side=Tkinter.BOTTOM, fill=Tkinter.X)
-    scrollY.pack(side=Tkinter.RIGHT, fill=Tkinter.Y)
-    canvas.pack(side=Tkinter.LEFT, fill=Tkinter.Y)
-    frame.grid(sticky="nsew")
-    frame.pack(side=Tkinter.LEFT, fill=Tkinter.Y)
+    scrollX.grid(row=1, column=0, sticky=Tkinter.E+Tkinter.W)
+    scrollY.grid(row=0, column=1, sticky=Tkinter.N+Tkinter.S)
+    canvas.grid(row=0, column=0, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
+    #fill and expand if required.
+    frame.pack(fill=Tkinter.BOTH, expand=True)
 
 def createScrollableCanvas(parent, **kwargs):
     frame = Tkinter.Frame(parent)
