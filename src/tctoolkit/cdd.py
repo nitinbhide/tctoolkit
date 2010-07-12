@@ -96,6 +96,7 @@ class CDDApp:
         self.duplisttree = createScrollableCanvas(frame, width='2i')
         self.duplisttree.pack()
         self.pane.add(frame)
+        self.pane.paneconfigure(frame, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
 
     def initTreemap(self):
         self.tmcanvas = TreemapSquarified(self.pane,width='13i', height='8i',leafnodecb = self.tmLeafnodeCallback)
@@ -103,6 +104,7 @@ class CDDApp:
         self.tmcanvas.grid(sticky='nesw')
         self.tmcanvas.pack()
         self.pane.add(self.tmcanvas.frame)
+        self.pane.paneconfigure(self.tmcanvas.frame, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
         self.tooltip = TkCanvasToolTip(self.tmcanvas, follow=True)
 
     def getColormap(self,tmrootnode):
