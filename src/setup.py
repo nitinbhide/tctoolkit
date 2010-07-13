@@ -18,7 +18,9 @@ setup(name='TCToolkit', version ='0.5.5',
       license = 'http://www.opensource.org/licenses/bsd-license.php',
       url='http://code.google.com/p/tctoolkit',
       requires = ['pygments'],
-      packages=['tctoolkit', 'tctoolkit.codedupdetect','tctoolkit.tctoolkitutil', 'tctoolkit.tokentagcloud'],
+      packages=['tctoolkit', 'tctoolkit.codedupdetect','tctoolkit.tctoolkitutil',
+                'tctoolkit.featureanalysis', 'tctoolkit.tcdepends',
+                'tctoolkit.tokentagcloud'],
       package_dir = {'': '.'},
       package_data= {'tctoolkit':['README.htm']}
      )
