@@ -66,7 +66,7 @@ class CDDApp:
         self.cdd = CodeDupDetect(filelist,100)            
         self.PrintDuplicates()
         
-        if( self.options.treemap == True):
+        if( self.options.treemap == True and self.foundMatches()):
             self.ShowDuplicatesTreemap()
             self.root.mainloop()        
     
@@ -77,10 +77,17 @@ class CDDApp:
             tm2 = datetime.datetime.now()
             output.write("time to find matches - %s\n" %(tm2-tm1))
 
+    def foundMatches(self):
+        '''
+        return true if there is atleast one match found.
+        '''
+        matches = self.getMatches()
+        return( len(matches) > 0)
             
     def ShowDuplicatesTreemap(self):
+        assert(self.foundMatches()==True)
         self.initTk()
-        self.createTreemap()
+        createTreemap()
         self.showDupListTree()
         
     def initTk(self):
@@ -194,7 +201,7 @@ class CDDApp:
                 lc = max(lc, match.getLineCount())
                 start = match.getStartLine()
                 matchnode.addChildName("%s (line %d - %d)" % (fname, start, start+lc))
-                
+            
             matchnode.name = "Match %d (Lines : %d)" % (matchid, lc)
             
             if( lc > 0 and lc <= 10):
@@ -205,7 +212,7 @@ class CDDApp:
                 dup101_500.addChild(matchnode)
             else:
                 dup500_.addChild(matchnode)        
-
+        
         for child in mtreeroot.children:
             child.name = "%s (count : %d)" % (child.name, len(child.children))
         
