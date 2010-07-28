@@ -87,7 +87,7 @@ class CDDApp:
     def ShowDuplicatesTreemap(self):
         assert(self.foundMatches()==True)
         self.initTk()
-        createTreemap()
+        self.createTreemap()
         self.showDupListTree()
         
     def initTk(self):
