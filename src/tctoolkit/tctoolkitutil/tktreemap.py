@@ -94,15 +94,22 @@ class TMColorMap:
             val = min(val, self.maxclrval)
             val = max(val, self.minclrval)
 
-            #Now get the value is fraction between the limits.            
-            if( val >= self.minclrval and val<= self.neutralclrval):
-                val = (val-self.minclrval)/(self.neutralclrval-self.minclrval)
+            #Now get the value is fraction between the limits.
+            try:
+                if( val >= self.minclrval and val<= self.neutralclrval):
+                    val = (val-self.minclrval)/(self.neutralclrval-self.minclrval)
+                    minclr = self.minclr
+                    maxclr = self.neutralclr
+                else:
+                    val = (val-self.neutralclrval)/(self.maxclrval-self.neutralclrval)
+                    minclr = self.neutralclr
+                    maxclr = self.maxclr
+            except:
+                #if you get any error set the color value to neutral color
+                #minclrval and maxclrval are both 0 then set val to neural color.
                 minclr = self.minclr
-                maxclr = self.neutralclr
-            else:
-                val = (val-self.neutralclrval)/(self.maxclrval-self.neutralclrval)
-                minclr = self.neutralclr
                 maxclr = self.maxclr
+                val = neutralclr
             #now map the fraction to color.
             r = minclr[0] + val*(maxclr[0]-minclr[0])
             r = int(r+0.5)
