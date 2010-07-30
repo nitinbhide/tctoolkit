@@ -10,6 +10,7 @@ This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released u
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
+from math import log
 from numpy import *
 from pygments.token import Token
 
@@ -38,7 +39,7 @@ class FeatureAnalysis:
               wordvec.append(w) 
         
         # Create the word matrix
-        l1=[[(word in f and f[word] or 0) for word in wordvec] for f in self.filewords]
+        l1=[[(word in f and log(f[word]+1) or 0) for word in wordvec] for f in self.filewords]
         return l1,wordvec
     
     def updateFileWords(self, filelist):    
