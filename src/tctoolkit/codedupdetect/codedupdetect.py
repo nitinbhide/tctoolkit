@@ -43,14 +43,16 @@ class CodeDupDetect:
         matchcount=0
         
         for matches in exactmatches:
+            output.write('%s\n'%('='*50))
             matchcount=matchcount+1
             output.write("Match %d:\n"%matchcount)
-            output.write("number of duplications :%d\n" % len(matches))
+            fcount = len(matches)            
+            first = True
             for match in matches:
-                output.write("\tfile : %s start line: %d duplicate lines:%d\n"
-                             % (match.srcfile(),match.getStartLine(),match.getLineCount()))
-                
-            output.write("***\n")
-
+                if( first):
+                    output.write("Found an approx. %d line duplication in %d files.\n" % (match.getLineCount(),fcount))
+                    first = False
+                output.write("Starting at line %d of %s\n" % (match.getStartLine(),match.srcfile()))
+            
         return(exactmatches)            
 
