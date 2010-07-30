@@ -294,37 +294,37 @@ class TreemapSquarified(TreemapCanvas):
             rowchildlist = []
             worstratio = 50000
             nodesize = sum(imap(lambda node : node.getSize(self.sizeprop), nodelist))
-            assert(nodesize > 0.0)
-            rowsize = 0.0
-            idx = 0
-            rowwid=0.0
-            for child in nodelist:
-                childsize = float(child.getSize(self.sizeprop))
-                assert(childsize > 0.0)
-                sqrowsizes.append(childsize)
-                rowsize = rowsize+childsize
-                wid1 = width*rowsize/nodesize
-                aspectratio = self.worstratio(sqrowsizes, ht, wid1)
-                if ( worstratio > aspectratio):
-                    rowchildlist.append(child)
-                    rowwid = wid1
-                    worstratio = aspectratio
-                    assert(len(sqrowsizes) == len(rowchildlist))                
-                else:
-                    #best aspect ratio found. Now layout the row.
-                    break
-            if( len(rowchildlist) > 0):
-                # Make sure that lists are copied.
-                rowlower = list(lower)
-                rowupper = list(upper)
-                rowupper[axis] = rowlower[axis]+rowwid
-                self.drawrow(rowchildlist, rowlower, rowupper, axis)        
-            #update the rectangle size
-            lower[axis] = lower[axis]+rowwid
-            #calculate the new
-            nodelist = nodelist[len(rowchildlist):]
-            if( len(nodelist) > 0):
-                self.createNodelistSquarified(nodelist, lower, upper)
+            if( nodesize > 0.0):
+                rowsize = 0.0
+                idx = 0
+                rowwid=0.0
+                for child in nodelist:
+                    childsize = float(child.getSize(self.sizeprop))
+                    assert(childsize > 0.0)
+                    sqrowsizes.append(childsize)
+                    rowsize = rowsize+childsize
+                    wid1 = width*rowsize/nodesize
+                    aspectratio = self.worstratio(sqrowsizes, ht, wid1)
+                    if ( worstratio > aspectratio):
+                        rowchildlist.append(child)
+                        rowwid = wid1
+                        worstratio = aspectratio
+                        assert(len(sqrowsizes) == len(rowchildlist))                
+                    else:
+                        #best aspect ratio found. Now layout the row.
+                        break
+                if( len(rowchildlist) > 0):
+                    # Make sure that lists are copied.
+                    rowlower = list(lower)
+                    rowupper = list(upper)
+                    rowupper[axis] = rowlower[axis]+rowwid
+                    self.drawrow(rowchildlist, rowlower, rowupper, axis)        
+                #update the rectangle size
+                lower[axis] = lower[axis]+rowwid
+                #calculate the new
+                nodelist = nodelist[len(rowchildlist):]
+                if( len(nodelist) > 0):
+                    self.createNodelistSquarified(nodelist, lower, upper)
 
     def drawrow(self, nodelist, lower, upper, axis):
         assert(axis==0 or axis==1)
