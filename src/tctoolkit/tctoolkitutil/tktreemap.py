@@ -300,7 +300,7 @@ class TreemapSquarified(TreemapCanvas):
                 rowwid=0.0
                 for child in nodelist:
                     childsize = float(child.getSize(self.sizeprop))
-                    assert(childsize > 0.0)
+                    #assert(childsize > 0.0)
                     sqrowsizes.append(childsize)
                     rowsize = rowsize+childsize
                     wid1 = width*rowsize/nodesize
@@ -347,9 +347,12 @@ class TreemapSquarified(TreemapCanvas):
         assert(rowwid > 0.0)
         rowsize = sum(sqrowsizes)
         worstaspect = 0.0
-        assert(rowsize > 0.0)
+        if rowsize == 0 or rowwid==0:
+            return 0.0
         for rectsize in sqrowsizes:
             rectht = ht*(rectsize/rowsize)
+            if rectht== 0.0:
+                return 0.0
             aspect = max(rowwid/rectht, rectht/rowwid)
             if( worstaspect < aspect):
                 worstaspect = aspect
