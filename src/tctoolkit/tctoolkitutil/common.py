@@ -15,20 +15,17 @@ import string
 
 IGNOREDIRS = ['.svn','.cvs'] 
 
-def IgnoreDir(dirname):
-    ignore = False
+def RemoveIgnoreDirs(dirs):
     for ignoredir in IGNOREDIRS:
-        ignore = fnmatch.fnmatch(dirname,ignoredir)
-        if(ignore == True):
-            break
-    return(ignore)
+        if ignoredir in dirs:
+            dirs.remove(ignoredir)            
+    return(dirs)
 
 def GetDirFileList(dirname):
     rawfilelist = []
     #prepare list of all files ignore the directories defined in 'ignoredirs' list.
     for root, dirs, files in os.walk(dirname):
-        if( IgnoreDir(root)==True):
-            continue
+        dirs = RemoveIgnoreDirs(dirs)
         for fname in files:
             rawfilelist.append(os.path.join(root, fname))
     return(rawfilelist)
