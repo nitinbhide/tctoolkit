@@ -23,7 +23,7 @@ from pygments.lexers import CppLexer,get_lexer_for_filename
 from pygments.formatters import HtmlFormatter
 
 
-class CodeDupDetect:
+class CodeDupDetect(object):
     def __init__(self,filelist, minmatch=100, fuzzy=False):
         self.matchstore = matchstore.MatchStore(minmatch)
         self.minmatch = minmatch #minimum number of tokens to be matched.
@@ -38,7 +38,7 @@ class CodeDupDetect:
                 i=i+1
                 print "Analyzing file %s (%d of %d)" %(srcfile,i,totalfiles)
                 tknzr = Tokenizer(srcfile, fuzzy=self.fuzzy)
-                rk = RabinKarp(self.minmatch,self.matchstore)
+                rk = RabinKarp(self.minmatch,self.matchstore, self.fuzzy)
                 rk.addAllTokens(tknzr)
         self.foundcopies = True
 

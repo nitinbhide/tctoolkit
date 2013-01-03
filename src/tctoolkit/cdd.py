@@ -52,7 +52,7 @@ def FileOrStdout(filename):
         output.close()
     
         
-class CDDApp:
+class CDDApp(object):
     def __init__(self, dirname, options):
         self.dirname=dirname
         self.options = options
