@@ -15,7 +15,7 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.filter import simplefilter
 from pygments.token import Token, is_token_subtype
 
-class Tokenizer:
+class Tokenizer(object):
     def __init__(self, srcfile, fuzzy=False):
         self.srcfile = srcfile
         self.tokenlist=None

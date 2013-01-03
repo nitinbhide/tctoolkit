@@ -48,10 +48,11 @@ def FNV8_hash(str):
     #print "hash after folding ", hash
     return(hash)
     
-class RabinKarp:
-    def __init__(self, patternsize, matchstore):
+class RabinKarp(object):
+    def __init__(self, patternsize, matchstore, fuzzy=False):
         self.patternsize = patternsize
         self.matchstore = matchstore
+        self.fuzzy=fuzzy
         self.tokenqueue = deque()
         self.tokenizers = dict()
         self.token_hash = dict()
@@ -126,6 +127,7 @@ class RabinKarp:
         if( matches!= None):
             for tokendata2 in matches:
                 matchlen,sha1_hash,match_end1,match_end2 =self.findMatchLength(tknzr,tokendata1,tokendata2)
+                
                 if(matchlen >= self.patternsize):
                     #add the exact match to match store.
                     self.matchstore.addExactMatch(matchlen,sha1_hash,tokendata1,match_end1,tokendata2,match_end2)
@@ -146,14 +148,15 @@ class RabinKarp:
                      or ((abs(tokendata1[2]-tokendata2[2])>self.patternsize) and tokendata1[1]>tokendata2[1]))):
 
             tknzr2 = tknzr1
+                
             if( tokendata2[0] != tokendata1[0]): #filenames are different, get the different tokenizer
                 tknzr2 = self.getTokanizer(tokendata2)
 
             sha1 = hashlib.sha1()
-            sha1.update(tokendata1[3])
-            
+                        
+                
             for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1[2]),tknzr2.get_tokens_frompos(tokendata2[2])):
-                if( matchdata1[3] != matchdata2[3]):
+                if( matchdata1[3] != matchdata2[3]):                    
                     break
                 sha1.update(matchdata1[3])
                 matchend1 = matchdata1
@@ -161,13 +164,18 @@ class RabinKarp:
                 matchlen = matchlen+1
             sha1_hash = sha1.digest()
             
+            #if tokendata2[0] == "E:\\users\\nitinb\\sources\\personal\\tctools\\test\\apache_httpd\\server\\mpm\\worker\\worker.c" \
+            #    or tokendata1[0] == "E:\\users\\nitinb\\sources\\personal\\tctools\\test\\apache_httpd\\server\\mpm\\worker\\worker.c":
+            #    import pdb
+            #    pdb.set_trace()
+            
         return(matchlen,sha1_hash, matchend1,matchend2)
 
     def getTokanizer(self,tokendata):
         srcfile = tokendata[0]
         tknizer = self.tokenizers.get(srcfile)
         if(tknizer == None):
-            tknizer = tokenizer.Tokenizer(srcfile)
+            tknizer = tokenizer.Tokenizer(srcfile, fuzzy=self.fuzzy)
             self.tokenizers[srcfile] = tknizer
             
         return(tknizer)
