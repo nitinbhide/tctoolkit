@@ -54,6 +54,7 @@ class RabinKarp:
         self.matchstore = matchstore
         self.tokenqueue = deque()
         self.tokenizers = dict()
+        self.token_hash = dict()
         self.__rollhashbase =1
         for i in xrange(0, patternsize-1):
             self.__rollhashbase = (self.__rollhashbase*HASH_BASE) % HASH_MOD;
@@ -71,6 +72,18 @@ class RabinKarp:
 ##        #print "token : %s hash:%d" % (token,thash)
         return(thash)
 
+    #def getTokenHash(self, token):
+    #    '''
+    #    check if the token exists in the token_hash dictionary. If yes, return
+    #    the value. If not, then add a new integer as token hash.
+    #    '''
+    #    if token in self.token_hash:
+    #        hash = self.token_hash[token]
+    #    else:
+    #        hash = len(self.token_hash) + 1
+    #        self.token_hash[token] = hash
+    #    return hash 
+        
     def addAllTokens(self,tknzr):
         curhash =0
         matchlen=0
