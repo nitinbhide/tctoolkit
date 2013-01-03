@@ -16,9 +16,10 @@ from pygments.filter import simplefilter
 from pygments.token import Token, is_token_subtype
 
 class Tokenizer:
-    def __init__(self, srcfile):
+    def __init__(self, srcfile, fuzzy=False):
         self.srcfile = srcfile
         self.tokenlist=None
+        self.fuzzy = fuzzy
         
     def __iter__(self):
         if(self.tokenlist==None):
@@ -32,8 +33,10 @@ class Tokenizer:
         with open(self.srcfile,"r") as code:
             for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):    
                 #print ttype
-    ##            if( is_token_subtype(ttype,Token.Name)):
-    ##                value='i'
+                if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
+                    #we are doing fuzzy matching. Hence replace the names
+                    #e.g. variable names by value 'Variable'.
+                    value='Variable'
                 newvalue = value.strip()
                 if( newvalue !='' and ttype not in Token.Comment):
                     yield self.srcfile, linenum,charpos,newvalue
