@@ -20,11 +20,19 @@ class Tokenizer:
         self.srcfile = srcfile
         self.tokenlist=None
         self.fuzzy = fuzzy
+        self.pos_dict = dict()
         
     def __iter__(self):
-        if(self.tokenlist==None):
-            self.tokenlist = [token for token in self.get_tokens()]
+        self.update_token_list()        
         return(self.tokenlist.__iter__())
+    
+    def update_token_list(self):
+        if(self.tokenlist==None):
+            self.tokenlist = list()
+            for idx, token in enumerate(self.get_tokens()):
+                self.tokenlist.append(token)
+                self.pos_dict[token[2]] = idx
+
     
     def get_tokens(self):
         pyglexer = get_lexer_for_filename(self.srcfile,stripall=True)
@@ -36,20 +44,18 @@ class Tokenizer:
                 if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
                     #we are doing fuzzy matching. Hence replace the names
                     #e.g. variable names by value 'Variable'.
-                    value='Variable'
-                newvalue = value.strip()
+                    newvalue='#variable'
+                else:
+                    newvalue = value.strip()
                 if( newvalue !='' and ttype not in Token.Comment):
                     yield self.srcfile, linenum,charpos,newvalue
                 linenum=linenum+value.count('\n')
                 
         
     def get_tokens_frompos(self, fromcharpos):
-        tokeniter = self.__iter__()
-        for srcfile,linenum,charpos,value in tokeniter:
-            if( fromcharpos == charpos):
-                #yield srcfile, linenum, charpos,value
-                break
-        for tokendata in tokeniter:
+        self.update_token_list()                
+        idx = self.pos_dict[fromcharpos]
+        for tokendata in self.tokenlist[idx:]:
             yield tokendata
             
 
