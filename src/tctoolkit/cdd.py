@@ -13,17 +13,26 @@ from __future__ import with_statement
 
 from contextlib import contextmanager
 import sys
+import logging
 
 from codedupdetect.codedupdetect import CodeDupDetect
 from optparse import OptionParser
 
 from tctoolkitutil.common import *
-from tctoolkitutil.treemapdata import TreemapNode
-from tctoolkitutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
-from tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
 
-import Tkinter
-from idlelib.TreeWidget import TreeItem, TreeNode
+try:
+    import Tkinter
+    from idlelib.TreeWidget import TreeItem, TreeNode
+    
+    from tctoolkitutil.treemapdata import TreemapNode
+    from tctoolkitutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
+    from tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
+    
+except:
+    class TreeItem(object):
+        pass
+    
+    print "Unable to import tkinter. Treemap will not be available."
 
 import string, os, datetime
 
