@@ -18,7 +18,7 @@ import operator
 import hashlib
 import tokenizer
 
-HASH_BASE = 256            
+HASH_BASE = 256
 HASH_MOD =16777619;  #make sure it is a prime
 
 #TOKEN_HASHBASE=HASH_BASE
@@ -76,13 +76,17 @@ class RabinKarp:
     #    '''
     #    check if the token exists in the token_hash dictionary. If yes, return
     #    the value. If not, then add a new integer as token hash.
+    #    NOTE : for some reason this hash value misses some of the duplicates.
+    #    I am not sure why.
     #    '''
+    #    if(len(token) == 1):
+    #        thash = ord(token[0])
     #    if token in self.token_hash:
-    #        hash = self.token_hash[token]
+    #        thash = self.token_hash[token]            
     #    else:
-    #        hash = len(self.token_hash) + 1
-    #        self.token_hash[token] = hash
-    #    return hash 
+    #        thash = len(self.token_hash) + 1 + 256;
+    #        self.token_hash[token] = thash
+    #    return thash 
         
     def addAllTokens(self,tknzr):
         curhash =0
