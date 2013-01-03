@@ -19,16 +19,17 @@ import tempfile
 import os
 import shutil
 from pygments import highlight
-from pygments.lexers import CppLexer
+from pygments.lexers import CppLexer,get_lexer_for_filename
 from pygments.formatters import HtmlFormatter
 
 
 class CodeDupDetect:
-    def __init__(self,filelist, minmatch=100):
+    def __init__(self,filelist, minmatch=100, fuzzy=False):
         self.matchstore = matchstore.MatchStore(minmatch)
         self.minmatch = minmatch #minimum number of tokens to be matched.
         self.filelist = filelist
         self.foundcopies = False
+        self.fuzzy = fuzzy
 
     def __findcopies(self):
         totalfiles = len(self.filelist)
@@ -36,7 +37,7 @@ class CodeDupDetect:
         for srcfile in self.filelist:
                 i=i+1
                 print "Analyzing file %s (%d of %d)" %(srcfile,i,totalfiles)
-                tknzr = Tokenizer(srcfile)
+                tknzr = Tokenizer(srcfile, fuzzy=self.fuzzy)
                 rk = RabinKarp(self.minmatch,self.matchstore)
                 rk.addAllTokens(tknzr)
         self.foundcopies = True
@@ -101,11 +102,12 @@ class CodeDupDetect:
                 for i in range(match.getStartLine()):
                     src.readline()
                 return [src.readline() for i in range(match.getLineCount())]
-        try:
-            import chardet
-            lexer = CppLexer(encoding='chardet')
-        except:
-            lexer = CppLexer(encoding='utf-8')
+        #try:
+        #    import chardet
+        #    lexer = CppLexer(encoding='chardet')
+        #except:
+        #    lexer = CppLexer(encoding='utf-8')
+            
         formatter = HtmlFormatter(encoding='utf-8')
         with open(outfile_fn, 'wb') as out:
             out.write('<html><head><style type="text/css">%s</style></head><body>'%formatter.get_style_defs('.highlight'))
@@ -116,7 +118,8 @@ class CodeDupDetect:
                 out.write('<h1 id="match_%i">MATCH %i</h1><ul>'%(id,id))
                 out.write(' '.join(['<li>%s:%i-%i</li>'%(m.srcfile(), m.getStartLine(), m.getStartLine() + m.getLineCount()) for m in matches]))
                 out.write('</ul><div class="highlight">')
-                highlight(''.join(code([s for s in matches][0])), lexer, formatter, outfile=out)
+                highlight(''.join(code([s for s in matches][0])),get_lexer_for_filename(m.srcfile()), formatter, outfile=out)
                 out.write('<a href="#">Up</a></div>')
                 id += 1
             out.write('</body></html>')
+            

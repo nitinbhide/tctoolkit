@@ -63,7 +63,7 @@ class CDDApp:
 
     def run(self):
         filelist = self.getFileList()        
-        self.cdd = CodeDupDetect(filelist,self.options.minimum)
+        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy)
         self.PrintDuplicates()
         if self.options.report:
             self.cdd.html_output(self.options.report)
@@ -288,10 +288,12 @@ def RunMain():
                       help="Mark duplicate patterns in-source with c-style comment.")
     parser.add_option("-r", "--report", dest="report", default=None,
                       help="Output html to given filename.")
-    parser.add_option("-f", "--file", dest="filename", default=None,
+    parser.add_option("-o", "--out", dest="filename", default=None,
                       help="output file name. This is simple text file")
     parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
                       help="Minimum token count for matched patterns.")
+    parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
+                      help="Enable fuzzy matching (ignore variable names, function names etc).")
     (options, args) = parser.parse_args()
     
     if( len(args) < 1):
