@@ -35,6 +35,28 @@ class TreemapNode:
     def __str__(self):
         return(self.name)
         
+    def getValidChildren(self, sizeprop, clrprop):
+        '''
+        return a list of children with non zero size value and
+        where getClr() return a valid floating point value.
+        '''
+        for child in self.children.itervalues():            
+            if child.isValidNode(sizeprop, clrprop):
+                yield child
+        
+    def isValidNode(self, sizeprop, clrprop):
+        '''
+        check if this node is valid for given size property and color property
+        i.e. it can be displayed.
+        A valid node is
+         (a) must have size > 0
+         (b) must have color that is not None.
+         (c) However, a node which has children will not have a color assigned (i.e.
+              getClr will return None)
+        '''
+        return self.getSize(sizeprop) > 0 \
+            and (len(self.children) > 0 or self.getClr(clrprop) != None)
+            
     def addChildNode(self, node):
         assert(self.children.has_key(node.name) == False)
         assert(isinstance(node, TreemapNode)==True)
@@ -113,7 +135,7 @@ class TreemapNode:
         minclr = self.getClr(clrprop)
         if( self.children != None and len(self.children) > 0):
             minclr = min(imap(lambda child:child.minclr(clrprop), self.children.itervalues()))
-            
+                    
         assert( (self.children != None and len(self.children) > 0) or minclr != None)
         return(minclr)
     

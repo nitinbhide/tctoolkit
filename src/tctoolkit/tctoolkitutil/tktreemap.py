@@ -239,7 +239,7 @@ class TreemapSD(TreemapCanvas):
         width = um[axis] - lm[axis]
         try:
             nodesize = float(node.getSize(self.sizeprop))
-            for child in node:
+            for child in node.getValidChildren(self.sizeprop, self.clrprop):
                 um[axis] = lm[axis] + (width * float(child.getSize(self.sizeprop)) 
                                        / nodesize) 
                 
@@ -269,7 +269,7 @@ class TreemapSquarified(TreemapCanvas):
         #draw title
         self.drawTitle(node, lower, upper)
 
-        nodelist = list(node)
+        nodelist = list(node.getValidChildren(self.sizeprop, self.clrprop))
         if( len(nodelist) > 0):
             # BUGBUG : if there is a size given to node. It will be missed.        
             (lm, um) = self.addMargins(lower, upper)
@@ -387,6 +387,7 @@ def RunMain():
     tmroot.addChildNameValue("node5", 2, 50)
     tmroot.addChildNameValue("node6", 2, 50)
     tmroot.addChildNameValue("node7", 1, 50)
+    tmroot.addChildNameValue("node7", 0, 50)
 
     clrmap = TMColorMap()
     minval = tmroot.minclr()
