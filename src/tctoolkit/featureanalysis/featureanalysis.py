@@ -89,7 +89,7 @@ class FeatureAnalysis:
         
         # Loop over all the features
         for i in range(pc):
-            outfile.write("Feature #%d\n" % i)
+            outfile.write("Feature #%d\n" % (i+1))
             slist=[]
             # Create a list of words and their weights
             for j in range(wc):
@@ -112,10 +112,15 @@ class FeatureAnalysis:
             
             # Reverse sort the list
             flist.sort(reverse=True)
-            
+            #weight tolerance is max weight/2. So the articles with weights between
+            # max weight to (maxweight/2) are displayed
+            minweight = flist[0][0]/4.0
             # Show the top 3 articles
-            for f in flist[0:10]:
-                outfile.write(str(f)+'\n')
+            for f in flist:
+                if f[0] >= minweight:
+                    outfile.write(str(f)+'\n')
+                else:
+                    break
             outfile.write('\n')
     
         outfile.write('\n')
