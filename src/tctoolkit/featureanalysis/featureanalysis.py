@@ -80,7 +80,7 @@ class FeatureAnalysis:
         wordmatrix,self.wordvec= self.makematrix()
         v=matrix(wordmatrix)
         print "Detecting Features"
-        self.weights,self.feat=nnmf.factorize(v,pc=20,iter=50)
+        self.weights,self.feat=nnmf.factorize(v,pc=20,itercount=50)
         
     def printFeatures(self, outfile):        
         pc,wc=shape(self.feat)

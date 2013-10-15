@@ -23,7 +23,7 @@ def sanitize(mat, matname):
         if( isnan(val)):            
             mat[idx] = 0
       
-def factorize(v,pc=10,iter=50):
+def factorize(v,pc=10,itercount=50):
     # scaling the matrix to improve the calculation speed
     # http://www.procoders.net/?p=424
     v /= v.sum(axis=0)
@@ -38,7 +38,7 @@ def factorize(v,pc=10,iter=50):
   
     # Perform operation a maximum of iter times
     cost = 0
-    for i in range(iter):
+    for i in range(itercount):
         wh=w*h
         # Calculate the current difference
         cost=difcost(v,wh)
