@@ -10,6 +10,8 @@ This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released u
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
+import re
+
 from math import log
 from numpy import *
 from pygments.token import Token
@@ -17,12 +19,27 @@ from pygments.token import Token
 from tokentagcloud.tokentagcloud import Tokenizer
 from tctoolkitutil import nnmf
 
+def split_variable_name(variable):
+    '''
+    split variable names like GetSomething into 'get' and 'something'. Use
+    CamelCase and '_' as seperator.
+    '''
+    def splitter(s):
+        return '_'+s.group()
+        
+    pat="[A-Z_]+[a-z0-9]+"
+    tokens = re.sub(pat, splitter, variable)
+    tokens = tokens.lower().strip('_').split('_')
+    return tokens
+
 def tokenize(fname):
     tokenzr = Tokenizer(fname)
     for ttype,tokenstr in tokenzr.get_tokens():
         if( ttype in Token.Name):
             if( ttype in Token.Name.Class or ttype in Token.Name.Function ):
-                yield tokenstr
+                #split the variable and function names in word.
+                for tk in split_variable_name(tokenstr):
+                    yield tk
 
 class FeatureAnalysis:
     def __init__(self):
