@@ -19,16 +19,14 @@ from pygments.token import Token
 from tokentagcloud.tokentagcloud import Tokenizer
 from tctoolkitutil import nnmf
 
+SPLIT_VAR_RE = re.compile("[A-Z_]+[a-z0-9]+")
+
 def split_variable_name(variable):
     '''
     split variable names like GetSomething into 'get' and 'something'. Use
     CamelCase and '_' as seperator.
-    '''
-    def splitter(s):
-        return '_'+s.group()
-        
-    pat="[A-Z_]+[a-z0-9]+"
-    tokens = re.sub(pat, splitter, variable)
+    '''    
+    tokens = SPLIT_VAR_RE.sub(lambda s: '_'+s.group(), variable)
     tokens = tokens.lower().strip('_').split('_')
     return tokens
 
