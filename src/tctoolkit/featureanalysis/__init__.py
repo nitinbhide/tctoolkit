@@ -10,7 +10,7 @@ import re
 from pygments.token import Token
 from tokentagcloud.tokentagcloud import Tokenizer
 
-SPLIT_VAR_RE = re.compile("[A-Z_]+[a-z0-9]+")
+SPLIT_VAR_RE = re.compile("[A-Z_\.]+[a-z0-9]+")
 
 STOPWORDS_SET= set(["a", "about", "above", "above", "across", "after", "afterwards", "again", "against", "all",
                     "almost", "alone", "along", "already", "also","although","always","am","among", "amongst",
@@ -56,11 +56,13 @@ def split_variable_name(variable):
 def tokenize_file(fname):
     tokenzr = Tokenizer(fname)
     for ttype,tokenstr in tokenzr.get_tokens():
-        if( ttype in Token.Name and (ttype in Token.Name.Class or ttype in Token.Name.Function) ):
+        if( ttype in Token.Name and (ttype in Token.Name.Class or ttype in Token.Name.Function \
+                            or ttype in Token.Name.Variable or ttype in Token.Name.Constant \
+                            or ttype in Token.Name.Namespace) ):
                 #split the variable and function names in word.
                 for tk in split_variable_name(tokenstr):
                     if tk not in STOPWORDS_SET:
-                        yield tk
+                        yield tk.strip('.')
 
 class FeatureAnalysisBase(object):
     def __init__(self):
