@@ -10,7 +10,7 @@ import re
 from pygments.token import Token
 from tokentagcloud.tokentagcloud import Tokenizer
 
-SPLIT_VAR_RE = re.compile("[A-Z_\.]+[a-z0-9]+")
+SPLIT_VAR_RE = re.compile("(\A\w|[A-Z_\.]+)[a-z0-9]+")
 
 STOPWORDS_SET= set(["a", "about", "above", "above", "across", "after", "afterwards", "again", "against", "all",
                     "almost", "alone", "along", "already", "also","although","always","am","among", "amongst",
