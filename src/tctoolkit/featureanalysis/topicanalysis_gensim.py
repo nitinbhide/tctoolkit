@@ -109,10 +109,10 @@ class Similarity(object):
                 print "num files %d" % len(self.filelist)
         if not self.dictionary:
             self.dictionary = corpora.dictionary.Dictionary.load(self.corpusname+'.corpus')
-            print self.dictionary
+            #print self.dictionary
         if not self.model:
             self.model = models.LdaModel.load(self.corpusname + '.lda')
-            print self.model
+            #print self.model
         if not self.index :
             self.index =  similarities.MatrixSimilarity.load(self.corpusname + '.ldaidx')
             
