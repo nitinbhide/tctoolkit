@@ -20,8 +20,17 @@ from gensim import corpora, models, similarities
 
 from tctoolkitutil import nnmf
 from . import FeatureAnalysisBase
-from . import tokenize_file
+from . import tokenize_file,STOPWORDS_SET
 
+def _tokenize_text_file(fname):
+    with open(fname, "r") as f:
+        doc = f.read()
+        doc =  doc.split()
+        for word in doc:
+            if word not in STOPWORDS_SET:
+                yield word
+        
+        
 class GensimTextCorpus(corpora.textcorpus.TextCorpus):
     def __init__(self, filelist):
         self.length = 0;
@@ -106,16 +115,14 @@ class Similarity(object):
         if not self.index :
             self.index =  similarities.MatrixSimilarity.load(self.corpusname + '.ldaidx')
             
+
     def query(self, filename, numdocs=10):
         '''
         query the document similar to given document.
         '''
         self.init()
-        
+        doc = _tokenize_text_file(filename)
         #tokenize the document
-        with open(filename, "r") as f:
-            doc = f.read()
-            doc =  doc.split()
         
         #convert the document to vector space
         vec_bow = self.dictionary.doc2bow(doc)
