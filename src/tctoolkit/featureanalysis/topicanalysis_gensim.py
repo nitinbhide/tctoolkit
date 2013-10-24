@@ -17,6 +17,7 @@ from math import log
 from numpy import *
 
 from gensim import corpora, models, similarities
+from gensim import utils
 
 from tctoolkitutil import nnmf
 from . import FeatureAnalysisBase
@@ -25,8 +26,8 @@ from . import tokenize_file,STOPWORDS_SET
 def _tokenize_text_file(fname):
     with open(fname, "r") as f:
         doc = f.read()
-        doc =  doc.split()
-        for word in doc:
+        
+        for word in utils.tokenize(doc, lowercase=True):
             if word not in STOPWORDS_SET:
                 yield word
         
@@ -121,14 +122,15 @@ class Similarity(object):
         query the document similar to given document.
         '''
         self.init()
-        doc = _tokenize_text_file(filename)
         #tokenize the document
+        doc = _tokenize_text_file(filename)
         
         #convert the document to vector space
         vec_bow = self.dictionary.doc2bow(doc)
         
         #conver the query LDA space
         vec_lda = self.model[vec_bow] # convert the query to LSI space
+        
         #query for similarity
         sims = self.index[vec_lda]
         docs = sorted(enumerate(sims), key=lambda item: item[1], reverse=True)

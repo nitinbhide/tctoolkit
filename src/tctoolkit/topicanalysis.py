@@ -35,7 +35,7 @@ def FindSimilar(corpusname, filename):
     '''
     print "finding documents similar to %s" % filename
     simidx = Similarity(corpusname)
-    simidx.print_similar_docs(filename)
+    simidx.print_similar_docs(filename, numdocs=10)
 
 def TestMain():
     #IdentifyTopics('./test/apache_httpd', '*.c', "features.txt")
