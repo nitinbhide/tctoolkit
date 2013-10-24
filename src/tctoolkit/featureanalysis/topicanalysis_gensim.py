@@ -135,9 +135,9 @@ class Similarity(object):
         docs = docs[:numdocs]
         
         for docidx, sim in docs:
-            print "%d  : %.8f " % (docidx,sim)
-            print self.filelist[docidx]
+            yield self.filelist[docidx], sim
         
-        #docs = [(self.filelist[docidx], sim) for docidx, sim in docs]
-        #print docs
+    def print_similar_docs(self, filename, numdocs=10):
+        for docname, sim in self.query(filename, numdocs):
+            print "%s : %.8f" % (docname, sim)
     
