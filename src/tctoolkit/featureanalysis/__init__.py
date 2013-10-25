@@ -57,9 +57,9 @@ def split_variable_name(variable):
 def tokenize_file(fname):
     tokenzr = Tokenizer(fname)
     for ttype,tokenstr in tokenzr.get_tokens():
-        if ttype in Token.Name:
-            yield "\nname : %s type : %s\n" % (tokenstr, ttype)
-            pass
+        #if ttype in Token.Name:
+        #    yield "\nname : %s type : %s\n" % (tokenstr, ttype)
+        #    pass
         if( ttype in Token.Name and (ttype == Token.Name or ttype in Token.Name.Class \
                             or ttype in Token.Name.Function \
                             or ttype in Token.Name.Variable or ttype in Token.Name.Constant \
