@@ -5,6 +5,7 @@ This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released u
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
+import os.path
 import re
 
 from pygments.token import Token
@@ -51,18 +52,23 @@ def split_variable_name(variable):
     '''    
     tokens = SPLIT_VAR_RE.sub(lambda s: '_'+s.group(), variable)
     tokens = tokens.lower().strip('_').split('_')
-    return tokens
+    return tokens        
 
 def tokenize_file(fname):
     tokenzr = Tokenizer(fname)
     for ttype,tokenstr in tokenzr.get_tokens():
-        if( ttype in Token.Name and (ttype in Token.Name.Class or ttype in Token.Name.Function \
+        if ttype in Token.Name:
+            yield "\nname : %s type : %s\n" % (tokenstr, ttype)
+            pass
+        if( ttype in Token.Name and (ttype == Token.Name or ttype in Token.Name.Class \
+                            or ttype in Token.Name.Function \
                             or ttype in Token.Name.Variable or ttype in Token.Name.Constant \
                             or ttype in Token.Name.Namespace) ):
                 #split the variable and function names in word.
+                #yield '\n'+ tokenstr + ' : '
                 for tk in split_variable_name(tokenstr):
                     if tk not in STOPWORDS_SET:
-                        yield tk.strip('.')
+                        yield tk.strip('.').lower()
 
 class FeatureAnalysisBase(object):
     def __init__(self):
