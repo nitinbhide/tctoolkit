@@ -20,7 +20,7 @@ from optparse import OptionParser
 
 from tctoolkitutil.common import PreparePygmentsFileList
 from featureanalysis.topicanalysis_gensim import *
-
+ 
 def IdentifyTopics(dirname, pattern, corpusname):
     filelist = PreparePygmentsFileList(dirname)
     filelist = fnmatch.filter(filelist,pattern)
@@ -35,13 +35,27 @@ def FindSimilar(corpusname, filename):
     '''
     print "finding documents similar to %s" % filename
     simidx = Similarity(corpusname)
-    simidx.print_similar_docs(filename, numdocs=10)
+    simidx.print_similar_docs(filename, numdocs=20)
+
+def TestTokenizer(fname):
+    from featureanalysis.topictokenizer import TopicTokenizer
+    
+    dbgfile = os.path.basename(fname) + '.token'
+    dbgfile = os.path.join('./test/ldaout/', dbgfile)
+    with open(dbgfile, "w") as outf:
+        tokenizer = TopicTokenizer(fname)
+        for tk in tokenizer.get_tokens():
+            outf.write("%s " % tk)
+            
 
 def TestMain():
     #IdentifyTopics('./test/apache_httpd', '*.c', "features.txt")
     #IdentifyTopics('./test/tomcat', '*.java', "features.txt")
-    #IdentifyTopics('./test/ccnet/WebDashboard', '*.cs', "ccnet")
+    #IdentifyTopics('./test/ccnet/', '*.cs', "ccnet")
     FindSimilar("ccnet", "testbug.txt")
+    
+    #TestTokenizer(".\\test\\ccnet\\core\\util\\xmlutil.cs")
+    #TestTokenizer(".\\test\\ccnet\\UnitTests\\Core\\SourceControl\\RegExIssueTrackerUrlBuilderTest.cs")
     
 def RunMain():
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)

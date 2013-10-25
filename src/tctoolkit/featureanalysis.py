@@ -12,6 +12,7 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
 from __future__ import with_statement
 
+import logging
 import string
 import sys,fnmatch
 import math
@@ -31,11 +32,13 @@ def AnalyzeFeatures(dirname, pattern,outfilename):
         feat.printFeatures(outfile)
     
 def TestMain():
-    AnalyzeFeatures('./test/apache_httpd', '*.c', "features.txt")
+    #AnalyzeFeatures('./test/apache_httpd', '*.c', "features.txt")
     #AnalyzeFeatures('./test/tomcat', '*.java', "features.txt")
-    #AnalyzeFeatures('./test/ccnet/core', '*.cs')
+    AnalyzeFeatures('./test/ccnet/WebDashboard', '*.cs', "features.txt")
     
 def RunMain():
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+
     usage = "usage: %prog [options] <directory name>"
     parser = OptionParser(usage)
 
