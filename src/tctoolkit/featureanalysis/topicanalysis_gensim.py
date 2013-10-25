@@ -21,7 +21,8 @@ from gensim import utils
 
 from tctoolkitutil import nnmf
 from . import FeatureAnalysisBase
-from . import tokenize_file,STOPWORDS_SET
+from .topictokenizer import STOPWORDS_SET
+from .topictokenizer import TopicTokenizer
 
 def _tokenize_text_file(fname):
     with open(fname, "r") as f:
@@ -43,8 +44,9 @@ class GensimTextCorpus(corpora.textcorpus.TextCorpus):
         for fname in self.input:
             self.input = fname
             self.length = self.length+1
-            #print "now tokenizing %s" % fname
-            yield tokenize_file(fname)
+            print "now tokenizing %s" % fname
+            tokenizer = TopicTokenizer(fname)
+            yield tokenizer.get_tokens()
     
     def __unicode__(self):
         '''
