@@ -22,10 +22,11 @@ import string
 from tctoolkitutil.common import *
 from tctoolkitutil.tagcloud import TagCloud
 
-class Tokenizer:
-    def __init__(self, srcfile):
+class Tokenizer(object):
+    def __init__(self, srcfile, ignore_comments=True):
         self.srcfile = srcfile
         self.tokenlist=None
+        self.ignore_comments = ignore_comments
         
     def __iter__(self):
         if(self.tokenlist==None):
@@ -34,7 +35,9 @@ class Tokenizer:
 
     def ignore_type(self, ttype,value):
         ignore = False
-        if( ttype in Token.Comment or ttype in Token.Operator or ttype in Token.Punctuation):
+        if(self.ignore_comments==True and ttype in Token.Comment ):
+            ignore=True
+        if( ttype in Token.Operator or ttype in Token.Punctuation):
             ignore = True
         if( ignore==False and value ==''):
             ignore=True
