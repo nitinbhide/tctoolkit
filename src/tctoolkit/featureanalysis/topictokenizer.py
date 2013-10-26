@@ -13,6 +13,8 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 import re
 import unicodedata
+import string
+from itertools import izip, tee
 
 from pygments.token import Token
 
@@ -67,6 +69,7 @@ def deaccent(text):
     return unicodedata.normalize("NFC", result)
 
 
+
 class TopicTokenizer(Tokenizer):
     '''
     Tokenizes the source code for use in feature/topic detection
@@ -81,8 +84,14 @@ class TopicTokenizer(Tokenizer):
     SPLIT_VAR_RE = re.compile("(\A\w|[A-Z_\.]+)[a-z0-9]+")
     PAT_ALPHABETIC = re.compile('(((?![\d])\w)+)', re.UNICODE)
     
-    def __init__(self, filename):
-        super(TopicTokenizer, self).__init__(filename, ignore_comments=False)
+    def __init__(self, filename,ignore_comments=True, ngram=1, ngram_join_char=' '):
+        '''
+        if ngram is 1 return each individual word,
+        if ngram is 2 return pairs of words as 'token'
+        '''
+        super(TopicTokenizer, self).__init__(filename, ignore_comments=ignore_comments)
+        self.ngram = ngram
+        self.ngram_join_char = ngram_join_char
     
     def split_variable_name(self, variable):
         '''
@@ -117,7 +126,12 @@ class TopicTokenizer(Tokenizer):
             if word not in STOPWORDS_SET:
                 yield word
 
-    def get_tokens(self):
+    
+    def get_raw_tokens(self):
+        '''
+        extract tokens from source code and comments using the pygments
+        based tokenizer
+        '''
         for ttype,tokenstr in super(TopicTokenizer, self).get_tokens():
             if self.is_name_token(ttype):
                 #split the variable and function names in word
@@ -128,6 +142,31 @@ class TopicTokenizer(Tokenizer):
             if ttype in Token.Comment:
                 for word in self.tokenize_comments(tokenstr):
                     yield word
+    
+    def get_tokens(self):
+        '''
+        yield the tokens (apply grouper if ngrams > 1)
+        '''
+        def grouper(n, iterable, fillvalue=None):
+            "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
+            args = tee(iterable, n)
+            for i in range(n):
+                for j in range(i+1, n):
+                    next(args[j])
+            
+            for tk in izip(*args):
+                yield string.join(tk, self.ngram_join_char)
                 
-
+        token_iter = self.get_raw_tokens()
+        if self.ngram > 1:
+            token_iter = grouper(self.ngram, token_iter, ' ')
+            
+        return token_iter
+            
+    def __iter__(self):
+        '''
+        make an iterator which returns the tokens
+        '''
+        return self.get_tokens()
+    
 
