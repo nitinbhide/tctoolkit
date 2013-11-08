@@ -66,46 +66,9 @@ class SourceCodeTextCorpus(object):
     def __str__(self):
         return unicode(self)
     
-#class GensimTextCorpus(corpora.textcorpus.TextCorpus):
-#    def __init__(self, filelist):
-#        self.length = 0;
-#        self.filelist = filelist
-#        super(GensimTextCorpus, self).__init__(None)
-#        
-#    def get_texts(self):
-#        self.input = self.filelist
-#        assert(self.dictionary.num_docs < len(self.filelist))
-#        for fname in self.input:
-#            self.input = fname
-#            self.length = self.length+1
-#            print "now tokenizing %s" % fname
-#            tokenizer = TopicTokenizer(fname)
-#            self.length = self.length+1
-#            yield tokenizer.get_tokens()
-#    
-#    def __unicode__(self):
-#        '''
-#        print stats about the corpus
-#        '''
-#        return 'num docs : %d ' % self.dictionary.num_docs
-#    
-#    def __str__(self):
-#        return unicode(self)
-#    
-#    def __len__(self):
-#        return self.length
-#    
-#    def save(self, name):
-#        '''
-#        Save the corpus in MMCorpus format for later use.
-#        '''
-#        self.dictionary.filter_extremes()
-#        self.dictionary.compactify()
-#        corpora.MmCorpus.serialize('%s.mm'%name, corpus=self, id2word=self.dictionary)
-#        
-#    
+    
 class TopicAnalysisGensim(object):
-    def __init__(self,filelist, corpusname):
+    def __init__(self,filelist, corpusname, use_lsi=False):
         self.corpus = None
         self.corpusname = corpusname
         self.filelist = filelist
@@ -117,11 +80,9 @@ class TopicAnalysisGensim(object):
         print "Detecting Features"
         self.corpus = SourceCodeTextCorpus(self.filelist)
         print self.corpus
-        #
-        #self.tfidf_model = models.TfidfModel(self.corpus,id2word=self.corpus.dictionary)
-        #print self.tfidf_model
-        self.lda_model = models.LsiModel(corpus=self.corpus, id2word=self.corpus.dictionary, num_topics=100)
-        print self.lda_model
+        
+        self.topic_model = models.LsiModel(corpus=self.corpus, id2word=self.corpus.dictionary, num_topics=100)
+        print self.topic_model
         
     def printFeatures(self, outfile):
         for topic in lda_model.print_topics(10):
@@ -136,8 +97,8 @@ class TopicAnalysisGensim(object):
             pickle.dump(self.filelist, fp) 
         self.corpus.dictionary.save(fname+'.corpus')
         #self.tfidf_model.save(fname+'.tfidf')
-        self.lda_model.save(fname+'.lda')
-        index = similarities.MatrixSimilarity(self.lda_model[self.corpus])
+        self.topic_model.save(fname+'.model')
+        index = similarities.MatrixSimilarity(self.topic_model[self.corpus])
         index.save(fname + '.ldaidx')    
     
         
@@ -161,7 +122,7 @@ class Similarity(object):
             self.dictionary = corpora.Dictionary.load(self.corpusname+'.corpus')
             #print self.dictionary
         if not self.model:
-            self.model = models.LsiModel.load(self.corpusname + '.lda')
+            self.model = models.LsiModel.load(self.corpusname + '.model')
             #print self.model
         if not self.index :
             self.index =  similarities.MatrixSimilarity.load(self.corpusname + '.ldaidx')
