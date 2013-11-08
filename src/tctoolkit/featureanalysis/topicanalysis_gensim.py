@@ -32,21 +32,30 @@ def _tokenize_text_file(fname):
             if word not in STOPWORDS_SET:
                 yield word
         
-        
-class GensimTextCorpus(corpora.textcorpus.TextCorpus):
+class SourceCodeTextCorpus(object):
     def __init__(self, filelist):
-        self.length = 0;
         self.filelist = filelist
-        super(GensimTextCorpus, self).__init__(filelist)
+        self.dictionary = corpora.Dictionary()
+        self.dictionary.add_documents(self.get_texts())
+        #self.dictionary.filter_extremes()
         
     def get_texts(self):
-        self.input = self.filelist
-        for fname in self.input:
-            self.input = fname
-            self.length = self.length+1
-            print "now tokenizing %s" % fname
-            tokenizer = TopicTokenizer(fname)
-            yield tokenizer.get_tokens()
+        for fname in self.filelist:
+            #print "tokenizing %s" % fname
+            srccode_tokenizer =TopicTokenizer(fname)
+            yield srccode_tokenizer.get_tokens()
+
+    def __iter__(self):
+        """
+        The function that defines a corpus.
+
+        Iterating over the corpus must yield sparse vectors, one for each document.
+        """
+        for text in self.get_texts():
+            yield self.dictionary.doc2bow(text, allow_update=False)
+        
+    def __len__(self):
+        return len(self.filelist)
     
     def __unicode__(self):
         '''
@@ -57,13 +66,48 @@ class GensimTextCorpus(corpora.textcorpus.TextCorpus):
     def __str__(self):
         return unicode(self)
     
-    def __len__(self):
-        return self.length
-    
-
+#class GensimTextCorpus(corpora.textcorpus.TextCorpus):
+#    def __init__(self, filelist):
+#        self.length = 0;
+#        self.filelist = filelist
+#        super(GensimTextCorpus, self).__init__(None)
+#        
+#    def get_texts(self):
+#        self.input = self.filelist
+#        assert(self.dictionary.num_docs < len(self.filelist))
+#        for fname in self.input:
+#            self.input = fname
+#            self.length = self.length+1
+#            print "now tokenizing %s" % fname
+#            tokenizer = TopicTokenizer(fname)
+#            self.length = self.length+1
+#            yield tokenizer.get_tokens()
+#    
+#    def __unicode__(self):
+#        '''
+#        print stats about the corpus
+#        '''
+#        return 'num docs : %d ' % self.dictionary.num_docs
+#    
+#    def __str__(self):
+#        return unicode(self)
+#    
+#    def __len__(self):
+#        return self.length
+#    
+#    def save(self, name):
+#        '''
+#        Save the corpus in MMCorpus format for later use.
+#        '''
+#        self.dictionary.filter_extremes()
+#        self.dictionary.compactify()
+#        corpora.MmCorpus.serialize('%s.mm'%name, corpus=self, id2word=self.dictionary)
+#        
+#    
 class TopicAnalysisGensim(object):
-    def __init__(self,filelist):
+    def __init__(self,filelist, corpusname):
         self.corpus = None
+        self.corpusname = corpusname
         self.filelist = filelist
 
     def detectTopics(self):
@@ -71,13 +115,16 @@ class TopicAnalysisGensim(object):
         read the files and detect the topics in each file.
         '''
         print "Detecting Features"
-        self.corpus = GensimTextCorpus(self.filelist)
+        self.corpus = SourceCodeTextCorpus(self.filelist)
         print self.corpus
-        self.model = models.LdaModel(self.corpus, id2word=self.corpus.dictionary, num_topics=100)
-        print self.model
+        #
+        #self.tfidf_model = models.TfidfModel(self.corpus,id2word=self.corpus.dictionary)
+        #print self.tfidf_model
+        self.lda_model = models.LsiModel(corpus=self.corpus, id2word=self.corpus.dictionary, num_topics=100)
+        print self.lda_model
         
     def printFeatures(self, outfile):
-        for topic in self.model.print_topics(10):
+        for topic in lda_model.print_topics(10):
             outfile.write(topic)
             outfile.write('\n')
             print topic
@@ -88,8 +135,9 @@ class TopicAnalysisGensim(object):
         with open(fname +'.filelist', "wb") as fp:
             pickle.dump(self.filelist, fp) 
         self.corpus.dictionary.save(fname+'.corpus')
-        self.model.save(fname+'.lda')
-        index = similarities.MatrixSimilarity(self.model[self.corpus])
+        #self.tfidf_model.save(fname+'.tfidf')
+        self.lda_model.save(fname+'.lda')
+        index = similarities.MatrixSimilarity(self.lda_model[self.corpus])
         index.save(fname + '.ldaidx')    
     
         
@@ -110,15 +158,22 @@ class Similarity(object):
                 self.filelist = pickle.load(fp)
                 print "num files %d" % len(self.filelist)
         if not self.dictionary:
-            self.dictionary = corpora.dictionary.Dictionary.load(self.corpusname+'.corpus')
+            self.dictionary = corpora.Dictionary.load(self.corpusname+'.corpus')
             #print self.dictionary
         if not self.model:
-            self.model = models.LdaModel.load(self.corpusname + '.lda')
+            self.model = models.LsiModel.load(self.corpusname + '.lda')
             #print self.model
         if not self.index :
             self.index =  similarities.MatrixSimilarity.load(self.corpusname + '.ldaidx')
             
 
+    def find_topics(self, ntopics):
+        '''
+        find the topics from the corpus list. 
+        '''
+        self.init()
+        self.model.print_topics(ntopics)
+    
     def query(self, filename, numdocs=10):
         '''
         query the document similar to given document.
@@ -126,15 +181,15 @@ class Similarity(object):
         self.init()
         #tokenize the document
         doc = _tokenize_text_file(filename)
-        
         #convert the document to vector space
         vec_bow = self.dictionary.doc2bow(doc)
+        #convert the query LDA space
         
-        #conver the query LDA space
         vec_lda = self.model[vec_bow] # convert the query to LSI space
         
         #query for similarity
         sims = self.index[vec_lda]
+        
         docs = sorted(enumerate(sims), key=lambda item: item[1], reverse=True)
         docs = docs[:numdocs]
         
