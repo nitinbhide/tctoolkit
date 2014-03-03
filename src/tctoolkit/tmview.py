@@ -1,5 +1,5 @@
 '''
-Display the Source Monitor data as 'treemap'
+Test code for creating the treemap view with Tkinter.
 
 Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsman.in)
 
