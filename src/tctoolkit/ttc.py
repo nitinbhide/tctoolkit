@@ -69,10 +69,12 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
 @stringfunction
 def OutputTagCloud(tagcld):
     '''<html>
+    <head>
     <style type="text/css">
     .tagword { border : 1px groove blue }
     .tagcloud { text-align:justify }
     </style>
+    </head>
     <body>
     <h2 align="center">Language Keyword Tag Cloud</h2>
     <p class="tagcloud">
