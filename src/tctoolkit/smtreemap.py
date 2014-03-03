@@ -93,7 +93,7 @@ class SMTree(TreemapNode):
     '''
     
     def __init__(self, filename):
-        TreemapNode.__init__(self,filename)
+        super(SMTree, self).__init__(filename)
         if( filename.endswith('.csv')):
             self.createFromCSV(filename)
         elif( filename.endswith('.xml')):
@@ -174,7 +174,7 @@ def tonum(str):
     return(num)
 
         
-class App:
+class App(object):
     def __init__(self):
         self.root = Tkinter.Tk()
         self.root.title("Source Monitor Treemap")
