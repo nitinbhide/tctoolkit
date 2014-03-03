@@ -17,7 +17,7 @@ import locale
 MINFONTSIZE = -2
 MAXFONTSIZE = 8
 
-class TagCloud:
+class TagCloud(object):
     def __init__(self):
         self.tagDict = dict()
         self.maxFreqLog = 0.0
@@ -49,9 +49,11 @@ class TagCloud:
                 tagDict[taginfo[0]] = taginfo[1]
         return(tagDict)
 
-    def printTagStats(self, numWords=100, filterFunc=None):
-        tagHtmlStr = ''
-
+    def getSortedTagWordList(self, numWords, filterFunc):
+        '''
+        return list of tag words sorted alphabetically
+        '''
+        tagWordList = []
         tagDict = self.tagDict
         if( filterFunc != None):
             tagDict = self.filterWords(filterFunc)
@@ -64,25 +66,28 @@ class TagCloud:
             #comparison should be case-insensitive            
             tagWordList = sorted(tagWordList[0:numWords], key=operator.itemgetter(0),
                                  cmp=lambda x,y: cmp(x.lower(), y.lower()) )
-            for word, freq in tagWordList:
-                print "%s(%d):%f" % (word, freq, math.log(freq))
-                
+        
+        return tagWordList
+    
+    def getTagStats(self, numWords, filterFunc):
+        '''
+        return tag statistics as 'tuple' of (tag name, count_or_frequency, log(frequency))
+        '''
+        tagWordList = self.getSortedTagWordList(numWords, filterFunc)
+        for word, freq in tagWordList:
+            yield word, freq, math.log(freq)
+
+    
+    def printTagStats(self, numWords=100, filterFunc=None):
+        for word, freq, log_freq in self.getTagStats(numWords, filterFunc):
+            print "%s(%d):%f" % (word, freq, log_freq)
+        
     def getTagCloudHtml(self,numWords=100, filterFunc=None):
         tagHtmlStr = ''
 
-        tagDict = self.tagDict
-        if( filterFunc != None):
-            tagDict = self.filterWords(filterFunc)
-        
-        if( len(tagDict) > 0):            
-            #first get sorted wordlist (reverse sorted by frequency)
-            tagWordList = sorted(tagDict.items(), key=operator.itemgetter(1),reverse=True)
-            totalTagWords = len(tagWordList)
-            #now extract top 'numWords' from the list and then sort it with alphabetical order.
-            #comparison should be case-insensitive            
-            tagWordList = sorted(tagWordList[0:numWords], key=operator.itemgetter(0),
-                                 cmp=lambda x,y: cmp(x.lower(), y.lower()) )
-            
+        tagWordList = self.getSortedTagWordList(numWords, filterFunc)
+                
+        if( len(tagWordList) > 0):                        
             minFreq = min(tagWordList,key=operator.itemgetter(1))[1]
             self.minFreqLog = math.log(minFreq)            
             maxFreq = max(tagWordList,key=operator.itemgetter(1))[1]
