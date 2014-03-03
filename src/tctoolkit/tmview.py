@@ -48,7 +48,7 @@ class ChildTreeItem(TreeItem):
 
 class TMTree(TreemapNode):
     def __init__(self, filename, **kwargs):
-        TreemapNode.__init__(self,filename)
+        super(TMTree, self).__init__(filename)
         self.childseperator = kwargs.get('childseperator', '.')
         self.fieldseperator = kwargs.get('fieldseperator', ',')
         self.createFromCSV(filename)
@@ -80,7 +80,7 @@ class TMTree(TreemapNode):
                     node.setProp(prop, val)
                         
         
-class App:
+class App(object):
     def __init__(self):
         self.root = Tkinter.Tk()
         self.root.title("Source Monitor Treemap")
