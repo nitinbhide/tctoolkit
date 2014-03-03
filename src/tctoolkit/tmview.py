@@ -173,7 +173,6 @@ class App:
 def RunMain():
     app = App()
     tmfile = sys.argv[1]
-    #tmfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
     tmroot = TMTree(tmfile)
     app.createtreemap(tmroot)
     app.run()
