@@ -87,6 +87,11 @@ class FileTreeItem(TreeItem):
         self.tmcanvas.drawTreemap(self.node)
 
 class SMTree(TreemapNode):
+    '''
+    extract the data from SourceMonitor XML or CSV file and convert it into
+    hierarchical tree data structure
+    '''
+    
     def __init__(self, filename):
         TreemapNode.__init__(self,filename)
         if( filename.endswith('.csv')):
@@ -124,20 +129,7 @@ class SMTree(TreemapNode):
                 for colidx, prop in col2prop:
                     val = tonum(line[colidx])
                     node.setprop(prop, val)
-                
-    def getMetricId2PropMap(self, xmtree):
-        assert(xmtree != None)
-        metricnodes = xmtree.findall('project/metric_names/metric_name')
-        metricid2prop = dict()
-        
-        for metricnode in metricnodes:
-            propname = SMPROP_MAPPING.get(metricnode.text)
-            if( propname != None):
-                metricid = metricnode.attrib.get('id')
-                metricid2prop[metricid] = propname
-                
-        return(metricid2prop)
-            
+    
     def createFromXML(self, smfile):
         assert(smfile.endswith('.xml'))
         print "extracting xml ",smfile
@@ -155,6 +147,21 @@ class SMTree(TreemapNode):
                 propname = metricid2prop.get(metricid)
                 if( propname != None):
                     tmnode.setProp(propname, tonum(metricnode.text))
+    
+                
+    def getMetricId2PropMap(self, xmtree):
+        assert(xmtree != None)
+        metricnodes = xmtree.findall('project/metric_names/metric_name')
+        metricid2prop = dict()
+        
+        for metricnode in metricnodes:
+            propname = SMPROP_MAPPING.get(metricnode.text)
+            if( propname != None):
+                metricid = metricnode.attrib.get('id')
+                metricid2prop[metricid] = propname
+                
+        return(metricid2prop)
+            
         
             
 def tonum(str):
@@ -272,7 +279,6 @@ def RunMain():
     else:            
         app = App()
         smfile = args[0]
-        #smfile = "E:\\users\\nitinb\\sources\\TCCAT\\test\\ccnet.xml"
         tmroot = SMTree(smfile)
         app.createtreemap(tmroot)
         app.run()
