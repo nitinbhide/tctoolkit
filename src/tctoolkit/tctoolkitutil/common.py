@@ -12,9 +12,23 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 import fnmatch
 import os
 import string
+import sys
+from contextlib import contextmanager
 
 IGNOREDIRS = ['.svn','.cvs'] 
 
+@contextmanager
+def FileOrStdout(filename):
+    output = sys.stdout
+    if( filename != None):        
+        try:
+            output = open(filename, "w")
+        except:
+            pass
+    yield(output)
+    if( output != sys.stdout):
+        output.close()
+    
 def RemoveIgnoreDirs(dirs):
     for ignoredir in IGNOREDIRS:
         if ignoredir in dirs:
