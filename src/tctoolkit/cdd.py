@@ -59,19 +59,22 @@ class CDDApp(object):
     def run(self):
         filelist = self.getFileList()        
         self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy)
-        self.PrintDuplicates()
-        if self.options.report:
-            self.cdd.html_output(self.options.report)
-        if self.options.comments:
-            self.cdd.insert_comments(self.dirname)
         
+        if self.options.format.lower() == 'html':
+            self.cdd.html_output(self.options.filename)
+        else:
+            #assume that format is 'txt'.
+            self.printDuplicates(self.options.filename)
+            
+        if self.options.comments:
+            self.cdd.insert_comments(self.dirname)        
         if( self.options.treemap == True and self.foundMatches()):
             self.ShowDuplicatesTreemap()
             self.root.mainloop()        
     
-    def PrintDuplicates(self):
+    def printDuplicates(self, filename):
         tm1 = datetime.datetime.now()
-        with FileOrStdout(self.options.filename) as output:
+        with FileOrStdout(filename) as output:
             exactmatch = self.cdd.printmatches(output)
             tm2 = datetime.datetime.now()
             output.write("time to find matches - %s\n" %(tm2-tm1))
@@ -282,15 +285,21 @@ def RunMain():
     parser.add_option("-c", "--comments", action="store_true", dest="comments", default=False,
                       help="Mark duplicate patterns in-source with c-style comment.")
     parser.add_option("-r", "--report", dest="report", default=None,
-                      help="Output html to given filename.")
+                      help="Output html to given filename.This is essentially combination '-f html -o <filename>")
     parser.add_option("-o", "--out", dest="filename", default=None,
                       help="output file name. This is simple text file")
+    parser.add_option("-f", "--fmt", dest="format", default="txt",
+                      help="output file format. Supported : txt, html")
     parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
                       help="Minimum token count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     (options, args) = parser.parse_args()
     
+    if options.report != None:
+        options.format = 'html'
+        options.filename = options.report
+        
     if( len(args) < 1):
         print "Invalid number of arguments. Use cdd.py --help to see the details."
     else:        
