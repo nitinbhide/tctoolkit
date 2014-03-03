@@ -84,9 +84,7 @@ class SourceCodeTagCloud(object):
     
     def getTags(self, numWords=100, filterFunc=None):
         return self.tagcloud.getSortedTagWordList(numWords, filterFunc)
-    
-    def getTagCloudHtml(self, numWords=100, filterFunc=None):
-        return self.tagcloud.getTagCloudHtml(numWords, filterFunc)
+        
     
 def KeywordTagCloud(dirname, pattern):
     tagcld = CreateTagCloud(dirname, pattern)            
