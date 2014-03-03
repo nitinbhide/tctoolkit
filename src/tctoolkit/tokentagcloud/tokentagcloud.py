@@ -58,21 +58,36 @@ class Tokenizer(object):
                     yield ttype,newvalue
                 
 
-def UpdateTagCloud(srcfile, tagcloud):        
-    assert(tagcloud != None)
-    tokenizer = Tokenizer(srcfile)
-    for ttype, value in tokenizer:
-        tagcloud.addWord((value,ttype))
+class SourceCodeTagCloud(object):
+    '''
+    wrapper class for generating the data for source code tag cloud
+    '''
+    def __init__(self, dirname, pattern):
+        self.dirname = dirname
+        self.pattern = pattern
+        self.tagcloud = None
+        self.createTagCloud()
+        
+    def createTagCloud(self):
+        flist = GetDirFileList(self.dirname)    
+        self.tagcloud = TagCloud()
     
-def CreateTagCloud(dirname, pattern):
-    flist = GetDirFileList(dirname)    
-    tagcld = TagCloud()
+        for fname in flist:
+            if fnmatch.fnmatch(fname,self.pattern):
+                self.__addFile(fname)        
+        
+    def __addFile(self, srcfile):
+        assert(self.tagcloud != None)
+        tokenizer = Tokenizer(srcfile)
+        for ttype, value in tokenizer:
+            self.tagcloud.addWord((value,ttype))
     
-    for fname in flist:
-        if fnmatch.fnmatch(fname,pattern):
-            UpdateTagCloud(fname,tagcld)
-    return(tagcld)
-
+    def getTags(self, numWords=100, filterFunc=None):
+        return self.tagcloud.getSortedTagWordList(numWords, filterFunc)
+    
+    def getTagCloudHtml(self, numWords=100, filterFunc=None):
+        return self.tagcloud.getTagCloudHtml(numWords, filterFunc)
+    
 def KeywordTagCloud(dirname, pattern):
     tagcld = CreateTagCloud(dirname, pattern)            
     taghtml = tagcld.getTagCloudHtml(filterFunc=KeywordFilter)

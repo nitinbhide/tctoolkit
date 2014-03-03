@@ -16,10 +16,12 @@ import sys
 
 from optparse import OptionParser
 from tokentagcloud.tokentagcloud import *
+from thirdparty.templet import stringfunction
 
-def OutputTagCloud(outfilename, tmplDict):
-    htmlTmplStr = '''
-    <html>
+
+@stringfunction
+def OutputTagCloud(tagcld):
+    '''<html>
     <style type="text/css">
     .tagword { border : 1px groove blue }
     .tagcloud { text-align:justify }
@@ -27,35 +29,22 @@ def OutputTagCloud(outfilename, tmplDict):
     <body>
     <h2 align="center">Language Keyword Tag Cloud</h2>
     <p class="tagcloud">
-    $KEYWORD_TAGSTR
+    ${ tagcld.getTagCloudHtml(filterFunc=KeywordFilter)}
     </p>
     <hr/>
     <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
     <p class="tagcloud">
-    $NAME_TAGSTR
+    ${ tagcld.getTagCloudHtml(filterFunc=NameFilter) }    
     </p>
     <hr/>
     <h2 align="center">Class Name/Function Name Tag Cloud</h2>
     <p class="tagcloud">
-    $CLASSFUNCNAME_TAGSTR
+    ${ tagcld.getTagCloudHtml(filterFunc=ClassFuncNameFilter) }
     </p>
     <hr/>
     </body>
     </html>
-    '''
-    htmlTmpl = string.Template(htmlTmplStr)   
-    taghtml = htmlTmpl.safe_substitute(tmplDict)
-
-    fout = sys.stdout
-    if( outfilename != None):
-        try:
-            fout = open(outfilename, "w")
-        except:
-            pass
-    fout.write(taghtml)
-    if( fout != sys.stdout):
-        fout.close()
-
+    '''    
     
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
@@ -73,14 +62,18 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        tmplDict = dict()
-        tagcld = CreateTagCloud(dirname, options.pattern)
+        tagcld = SourceCodeTagCloud(dirname, options.pattern)
         
-        tmplDict['KEYWORD_TAGSTR']= tagcld.getTagCloudHtml(filterFunc=KeywordFilter)
-        tmplDict['NAME_TAGSTR']= tagcld.getTagCloudHtml(filterFunc=NameFilter)
-        tmplDict['CLASSFUNCNAME_TAGSTR']= tagcld.getTagCloudHtml(filterFunc=ClassFuncNameFilter)
-        
-        OutputTagCloud(options.outfile, tmplDict)
+        fout = sys.stdout
+        if( options.outfile != None):
+            try:
+                fout = open(options.outfile, "w")
+            except:
+                pass
+        fout.write(OutputTagCloud(tagcld))
+        if( fout != sys.stdout):
+            fout.close()
+                
         
 if(__name__ == "__main__"):
     RunMain()
