@@ -101,7 +101,7 @@ def RunMain():
     parser = OptionParser(usage)
 
     parser.add_option("-p", "--pattern", dest="pattern", default='*.c',
-                      help="create tag cloud of files matching the pattern")
+                      help="create tag cloud of files matching the pattern. Default is '*.c' ")
     parser.add_option("-o", "--outfile", dest="outfile", default=None,
                       help="outfile name. Output to stdout if not specified")
     
