@@ -15,6 +15,7 @@ import string
 import sys
 
 from optparse import OptionParser
+
 from tokentagcloud.tokentagcloud import *
 from thirdparty.templet import stringfunction
 
@@ -113,15 +114,8 @@ def RunMain():
             
         tagcld = HtmlSourceTagCloud(dirname, options.pattern)
         
-        fout = sys.stdout
-        if( options.outfile != None):
-            try:
-                fout = open(options.outfile, "w")
-            except:
-                pass
-        fout.write(OutputTagCloud(tagcld))
-        if( fout != sys.stdout):
-            fout.close()
+        with FileOrStdout(options.outfile) as outf:
+            outf.write(OutputTagCloud(tagcld))
                 
         
 if(__name__ == "__main__"):

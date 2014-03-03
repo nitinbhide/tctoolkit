@@ -11,14 +11,13 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 from __future__ import with_statement
 
-from contextlib import contextmanager
 import sys
 import logging
 
-from codedupdetect.codedupdetect import CodeDupDetect
 from optparse import OptionParser
 
 from tctoolkitutil.common import *
+from codedupdetect.codedupdetect import CodeDupDetect
 
 try:
     import Tkinter
@@ -38,19 +37,6 @@ import string, os, datetime
 
 CLR_PROP = 'duplicate lines'
 SIZE_PROP = 'filesize'
-
-@contextmanager
-def FileOrStdout(filename):
-    output = sys.stdout
-    if( filename != None):        
-        try:
-            output = open(filename, "w")
-        except:
-            pass
-    yield(output)
-    if( output != sys.stdout):
-        output.close()
-    
         
 class CDDApp(object):
     def __init__(self, dirname, options):
