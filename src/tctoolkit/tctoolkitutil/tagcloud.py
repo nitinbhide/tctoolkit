@@ -20,9 +20,7 @@ class TagCloud(object):
         self.tagDict = dict()
             
     def addWord(self, word):
-        freq = self.tagDict.get(word)
-        if(freq == None):
-            freq = 0
+        freq = self.tagDict.get(word, 0)
         freq = freq +1
         self.tagDict[word] = freq
         
