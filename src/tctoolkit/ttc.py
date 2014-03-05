@@ -19,6 +19,93 @@ from optparse import OptionParser
 from tokentagcloud.tokentagcloud import *
 from thirdparty.templet import stringfunction
 
+JSPATH="./thirdparty/javascript/d3js/"
+
+@stringfunction
+def OutputTagCloud(tagcld):
+    '''<!DOCTYPE html>
+    <html>        
+    <head>
+    <meta charset="utf-8">
+    <script src="$JSPATH/d3.js"></script>
+    <script src="$JSPATH/d3.layout.cloud.js"></script>
+    <style type="text/css">
+    .tagword { border : 1px groove blue }
+    .tagcloud { text-align:justify }
+    </style>
+    </head>
+    <body>
+    <div>
+        <h2 align="center">Language Keyword Tag Cloud</h2>
+        <div id="keyword" class="tagcloud"></div>
+    </div>
+    <hr/>
+    <div>
+        <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
+        <div id="names" class="tagcloud"></div>
+    </div>
+    <hr/>
+    <div>
+        <h2 align="center">Class Name/Function Name Tag Cloud</h2>
+        <div id="classnames" class="tagcloud"></div>
+    </div>    
+    <hr/>
+    <script>        
+        function drawTagCloud(wordsAndFreq, selector)
+        {
+            console.log("sector is " + selector);
+            var minFreq = d3.min(wordsAndFreq, function(d) { return d.size});
+            var maxFreq = d3.max(wordsAndFreq, function(d) { return d.size});
+            
+            var fontSize = d3.scale.log();
+            fontSize.domain([minFreq, maxFreq]);
+            fontSize.range([10,100])
+            var fill = d3.scale.category20();
+          
+            d3.layout.cloud().size([960, 400])
+                .words(wordsAndFreq)
+                .padding(5)            
+                .font("Impact")
+                .fontSize(function(d) { return fontSize(+d.size); })
+                .on("end", draw)
+                .start();
+          
+            function draw(words) {
+                console.log("calling draw");
+              d3.select('body').select(selector).append("svg")
+                  .attr("width", 960)
+                  .attr("height", 400)
+                .append("g")
+                  .attr("transform", "translate(150,150)")
+                .selectAll("text")
+                  .data(words)
+                .enter().append("text")
+                  .style("font-size", function(d) { return d.size + "px"; })
+                  .style("font-family", "Impact")
+                  .style("fill", function(d, i) { return fill(i); })
+                  .attr("text-anchor", "left")
+                  .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")";
+                  })
+                  .text(function(d) { return d.text; });
+            }
+        }
+        // Show the tag cloud for keywords
+        var keywordsAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=KeywordFilter)};        
+        drawTagCloud(keywordsAndFreq, "#keyword");
+        // Show the tag cloud for names (class names, function names and variable names)
+        var namesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=NameFilter) }    ;        
+        drawTagCloud(namesAndFreq, "#names");
+        // Show the tag cloud for class names and function names only
+        var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
+        drawTagCloud(classNamesAndFreq, "#classnames");
+      </script>
+
+    </body>
+    </html>
+    '''    
+
+
 class HtmlSourceTagCloud(SourceCodeTagCloud):
     '''
     Generate source code tag cloud in HTML format
@@ -66,35 +153,18 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
                                        for x,freq in tagWordList])
         return(tagHtmlStr)
     
+    def getTagCloudJSON(self, numWords=100, filterFunc=None):
+        tagJsonStr = ''
 
-@stringfunction
-def OutputTagCloud(tagcld):
-    '''<html>
-    <head>
-    <style type="text/css">
-    .tagword { border : 1px groove blue }
-    .tagcloud { text-align:justify }
-    </style>
-    </head>
-    <body>
-    <h2 align="center">Language Keyword Tag Cloud</h2>
-    <p class="tagcloud">
-    ${ tagcld.getTagCloudHtml(filterFunc=KeywordFilter)}
-    </p>
-    <hr/>
-    <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
-    <p class="tagcloud">
-    ${ tagcld.getTagCloudHtml(filterFunc=NameFilter) }    
-    </p>
-    <hr/>
-    <h2 align="center">Class Name/Function Name Tag Cloud</h2>
-    <p class="tagcloud">
-    ${ tagcld.getTagCloudHtml(filterFunc=ClassFuncNameFilter) }
-    </p>
-    <hr/>
-    </body>
-    </html>
-    '''    
+        tagWordList = self.getTags(numWords, filterFunc)
+                
+        if( len(tagWordList) > 0):                                    
+            #change the font size between "-2" to "+8" relative to current font size
+            tagJsonStr = ','.join(["{text:'%s',size:%d}" % (w, freq) for w, freq in tagWordList])
+        tagJsonStr = "[%s]" % tagJsonStr
+        
+        return(tagJsonStr)
+    
     
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
