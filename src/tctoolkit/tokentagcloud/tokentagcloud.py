@@ -65,8 +65,10 @@ class SourceCodeTagCloud(object):
     def __init__(self, dirname, pattern):
         self.dirname = dirname
         self.pattern = pattern
-        self.tagcloud = None
+        self.tagcloud = None #Stores frequency of tag cloud.
+        self.fileTagCount = dict() #Store information about how many files that tag was found
         self.createTagCloud()
+        
         
     def createTagCloud(self):
         flist = GetDirFileList(self.dirname)    
@@ -79,12 +81,19 @@ class SourceCodeTagCloud(object):
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
         tokenizer = Tokenizer(srcfile)
+        fileTokenset = set()
         for ttype, value in tokenizer:
-            self.tagcloud.addWord((value,ttype))
+            self.tagcloud.addWord((value,ttype))            
+            if value not in fileTokenset:
+                self.fileTagCount[value] = self.fileTagCount.get(value, 0)+1
+                fileTokenset.add(value)
     
     def getTags(self, numWords=100, filterFunc=None):
         return self.tagcloud.getSortedTagWordList(numWords, filterFunc)
-        
+    
+    def getFileCount(self, tagWord):
+        return self.fileTagCount.get(tagWord, 0)
+    
     
 def KeywordTagCloud(dirname, pattern):
     tagcld = CreateTagCloud(dirname, pattern)            
