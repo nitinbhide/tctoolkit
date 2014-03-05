@@ -48,19 +48,30 @@ def OutputTagCloud(tagcld):
     <div>
         <h2 align="center">Class Name/Function Name Tag Cloud</h2>
         <div id="classnames" class="tagcloud"></div>
-    </div>    
+    </div>
     <hr/>
-    <script>        
+    <div id="colorscale">
+    </div>    
+    <script>
+        var minColor = 0, maxColor=0;
+        // color scale is reversed ColorBrewer RdBu
+        var colors = ["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"];
+        colors = colors.reverse()
+        var fill =  d3.scale.ordinal();
+        fill.range(colors);
+         
         function drawTagCloud(wordsAndFreq, selector, width, height)
         {
-            console.log("sector is " + selector);
+            //console.log("selector is " + selector);
             var minFreq = d3.min(wordsAndFreq, function(d) { return d.size});
             var maxFreq = d3.max(wordsAndFreq, function(d) { return d.size});
+            minColor = d3.min(wordsAndFreq, function(d) { return d.color});
+            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});
             
             var fontSize = d3.scale.log();
             fontSize.domain([minFreq, maxFreq]);
             fontSize.range([10,100])
-            var fill = d3.scale.category20();
+            fill.domain([minColor, maxColor]);
           
             d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
@@ -72,7 +83,7 @@ def OutputTagCloud(tagcld):
                 .start();
           
             function draw(words) {
-                console.log("calling draw");
+               // console.log("calling draw");
               d3.select('body').select(selector).append("svg")
                   .attr("width", width)
                   .attr("height", height)
@@ -83,13 +94,25 @@ def OutputTagCloud(tagcld):
                 .enter().append("text")
                   .style("font-size", function(d) { return d.size + "px"; })
                   .style("font-family", "Impact")
-                  .style("fill", function(d, i) { return fill(i); })
+                  .style("fill", function(d, i) {
+                    return fill(d.color); })
                   .attr("text-anchor", "middle")
                   .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                    })
                   .text(function(d) { return d.text; });
             }
+        }
+        
+        function drawColorScale(selector)
+        {
+            var clrScale = d3.select('body').select(selector).append('div').append('ul').selectAll();
+            clrScale.style("list-style-type","none").style("margin",0).style("padding",0);
+             var legend = clrScale.data(fill.range())
+                .enter().append("li")
+                    .style("display", "inline")
+                    .style("background-color", function(d){ return fill(d) } )
+                    .html("&nbsp;&nbsp;&nbsp;");
         }
         
         var width=900;
@@ -103,6 +126,7 @@ def OutputTagCloud(tagcld):
         // Show the tag cloud for class names and function names only
         var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
         drawTagCloud(classNamesAndFreq, "#classnames",width, height);
+        drawColorScale("#colorscale");
       </script>
 
     </body>
@@ -164,7 +188,7 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
                 
         if( len(tagWordList) > 0):                                    
             #change the font size between "-2" to "+8" relative to current font size
-            tagJsonStr = ','.join(["{text:'%s',size:%d}" % (w, freq) for w, freq in tagWordList])
+            tagJsonStr = ','.join(["{text:'%s',size:%d, color:%d}" % (w, freq, self.getFileCount(w)) for w, freq in tagWordList])
         tagJsonStr = "[%s]" % tagJsonStr
         
         return(tagJsonStr)
