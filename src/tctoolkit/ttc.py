@@ -51,7 +51,7 @@ def OutputTagCloud(tagcld):
     </div>    
     <hr/>
     <script>        
-        function drawTagCloud(wordsAndFreq, selector)
+        function drawTagCloud(wordsAndFreq, selector, width, height)
         {
             console.log("sector is " + selector);
             var minFreq = d3.min(wordsAndFreq, function(d) { return d.size});
@@ -62,10 +62,11 @@ def OutputTagCloud(tagcld):
             fontSize.range([10,100])
             var fill = d3.scale.category20();
           
-            d3.layout.cloud().size([960, 400])
+            d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
                 .padding(5)            
                 .font("Impact")
+                .rotate(function() { return 0})
                 .fontSize(function(d) { return fontSize(+d.size); })
                 .on("end", draw)
                 .start();
@@ -73,32 +74,35 @@ def OutputTagCloud(tagcld):
             function draw(words) {
                 console.log("calling draw");
               d3.select('body').select(selector).append("svg")
-                  .attr("width", 960)
-                  .attr("height", 400)
+                  .attr("width", width)
+                  .attr("height", height)
                 .append("g")
-                  .attr("transform", "translate(150,150)")
+                  .attr("transform", "translate("+width/2+","+height/2+")")
                 .selectAll("text")
                   .data(words)
                 .enter().append("text")
                   .style("font-size", function(d) { return d.size + "px"; })
                   .style("font-family", "Impact")
                   .style("fill", function(d, i) { return fill(i); })
-                  .attr("text-anchor", "left")
+                  .attr("text-anchor", "middle")
                   .attr("transform", function(d) {
-                    return "translate(" + [d.x, d.y] + ")";
-                  })
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                   })
                   .text(function(d) { return d.text; });
             }
         }
+        
+        var width=900;
+        var height = width*3.0/4.0;
         // Show the tag cloud for keywords
         var keywordsAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=KeywordFilter)};        
-        drawTagCloud(keywordsAndFreq, "#keyword");
+        drawTagCloud(keywordsAndFreq, "#keyword",width, height);
         // Show the tag cloud for names (class names, function names and variable names)
         var namesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=NameFilter) }    ;        
-        drawTagCloud(namesAndFreq, "#names");
+        drawTagCloud(namesAndFreq, "#names",width, height);
         // Show the tag cloud for class names and function names only
         var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
-        drawTagCloud(classNamesAndFreq, "#classnames");
+        drawTagCloud(classNamesAndFreq, "#classnames",width, height);
       </script>
 
     </body>
