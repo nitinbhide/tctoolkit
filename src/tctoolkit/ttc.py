@@ -55,7 +55,7 @@ def OutputTagCloud(tagcld):
     <script>
         var minColor = 0, maxColor=0;
         // color scale is reversed ColorBrewer RdBu
-        var colors = ["#67001f","#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166ac","#053061"];
+        var colors = ["#b2182b","#d6604d","#f4a582","#fddbc7","#f7f7f7","#d1e5f0","#92c5de","#4393c3","#2166a"];
         colors = colors.reverse()
         var fill =  d3.scale.ordinal();
         fill.range(colors);
