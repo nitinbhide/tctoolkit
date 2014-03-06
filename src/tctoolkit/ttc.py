@@ -55,10 +55,13 @@ def OutputTagCloud(tagcld):
     <script>
         var minColor = 0, maxColor=0;
         // color scale is reversed ColorBrewer RdYlBu
-        var colors =  ["#a50026","#d73027","#f46d43","#fdae61","#fee090","#ffffbf","#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
+        var colors =  ["#a50026", "#d73027","#f46d43","#fdae61","#fee090","#ffffbf",
+                        "#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
+        console.log(colors);
+        colors.reverse();
         var fill =  d3.scale.ordinal();
         fill.range(colors);
-         
+        
         function drawTagCloud(wordsAndFreq, selector, width, height)
         {
             //console.log("selector is " + selector);
@@ -70,7 +73,7 @@ def OutputTagCloud(tagcld):
             var fontSize = d3.scale.log();
             fontSize.domain([minFreq, maxFreq]);
             fontSize.range([10,100])
-            fill.domain([minColor, maxColor]);
+            fill.domain([minColor, maxColor+1]);
           
             d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
@@ -99,19 +102,19 @@ def OutputTagCloud(tagcld):
                   .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                    })
-                  .text(function(d) { return d.text; });
+                  .text(function(d) { return d.text + '('+d.color+')'; });
             }
         }
         
-        function drawColorScale(selector)
+        function drawColorScale(selector, fill)
         {
             var clrScale = d3.select('body').select(selector).append('div').append('ul').selectAll();
             clrScale.style("list-style-type","none").style("margin",0).style("padding",0);
              var legend = clrScale.data(fill.range())
                 .enter().append("li")
                     .style("display", "inline")
-                    .style("background-color", function(d){ return fill(d) } )
-                    .html("&nbsp;&nbsp;&nbsp;");
+                    .style("background-color", function(d, i){return colors[i];} )
+                    .text(function(d) { return d});
         }
         
         var width=900;
@@ -125,7 +128,7 @@ def OutputTagCloud(tagcld):
         // Show the tag cloud for class names and function names only
         var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
         drawTagCloud(classNamesAndFreq, "#classnames",width, height);
-        drawColorScale("#colorscale");
+        drawColorScale("#colorscale", fill);
       </script>
 
     </body>
