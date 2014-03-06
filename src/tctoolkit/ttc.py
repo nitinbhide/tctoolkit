@@ -80,15 +80,17 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         function drawTagCloud(wordsAndFreq, selector, width, height)
         {
             //console.log("selector is " + selector);
+            // Font size is calculated based on word frequency
             var minFreq = d3.min(wordsAndFreq, function(d) { return d.size});
             var maxFreq = d3.max(wordsAndFreq, function(d) { return d.size});
-            minColor = d3.min(wordsAndFreq, function(d) { return d.color});
-            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});
             
             var fontSize = d3.scale.log();
             fontSize.domain([minFreq, maxFreq]);
             fontSize.range([10,100])
-            fill.domain([minColor, maxColor+1]);
+            // color is calculated based on how many files the word is found
+            minColor = d3.min(wordsAndFreq, function(d) { return d.color});
+            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});            
+            fill.domain([Math.log(minColor), Math.log(maxColor+1)]);
           
             d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
@@ -112,7 +114,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                   .style("font-size", function(d) { return d.size + "px"; })
                   .style("font-family", "Impact")
                   .style("fill", function(d, i) {
-                    return fill(d.color); })
+                    return fill(Math.log(d.color)); })
                   .attr("text-anchor", "middle")
                   .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
