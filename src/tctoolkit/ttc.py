@@ -218,8 +218,19 @@ def readJsText(dirname, filename):
     '''
     read the entire text content of javascript file.
     '''
-    jsfile = os.path.join(dirname, filename)
+    jsfile = os.path.join(dirname, *filename)
+    
     return open(jsfile, "r").read()
+
+def getJsDirPath():
+    '''
+    get the javascript directory path based on path of the current script.
+    '''
+    srcdir = os.path.dirname(os.path.abspath(__file__))
+    jsdir = os.path.join(srcdir, 'thirdparty', 'javascript')
+    jsdir = os.path.abspath(jsdir)
+    return jsdir
+    
 
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
@@ -238,11 +249,12 @@ def RunMain():
         dirname = args[0]
             
         tagcld = HtmlSourceTagCloud(dirname, options.pattern)
+        jsdir = getJsDirPath()
         
         with FileOrStdout(options.outfile) as outf:
             #read the text of d3js file
-            d3jstext = readJsText(JSPATH, "d3.min.js");
-            d3cloud_text = readJsText(JSPATH, "d3.layout.cloud.js");
+            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
+            d3cloud_text = readJsText(jsdir, ["d3js", "d3.layout.cloud.js"]);
             outf.write(OutputTagCloud(tagcld,d3jstext, d3cloud_text))
                 
         
