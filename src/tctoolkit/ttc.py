@@ -22,13 +22,19 @@ from thirdparty.templet import stringfunction
 JSPATH="./thirdparty/javascript/d3js/"
 
 @stringfunction
-def OutputTagCloud(tagcld):
+def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
     '''<!DOCTYPE html>
     <html>        
     <head>
     <meta charset="utf-8">
-    <script src="$JSPATH/d3.js"></script>
-    <script src="$JSPATH/d3.layout.cloud.js"></script>
+    <script>
+        // Embedd the text of d3.js
+        $d3js_text
+    </script>
+    <script>
+        // Embedd the text of d3.layout.cloudjs
+        $d3cloud_text
+    </script>
     <style type="text/css">    
     .tagcloud { display:inline-block;}
     .colorscale { display:inline-block;vertical-align:top;}
@@ -208,7 +214,13 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
         
         return(tagJsonStr)
     
-    
+def readJsText(dirname, filename):
+    '''
+    read the entire text content of javascript file.
+    '''
+    jsfile = os.path.join(dirname, filename)
+    return open(jsfile, "r").read()
+
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
     parser = OptionParser(usage)
@@ -228,7 +240,10 @@ def RunMain():
         tagcld = HtmlSourceTagCloud(dirname, options.pattern)
         
         with FileOrStdout(options.outfile) as outf:
-            outf.write(OutputTagCloud(tagcld))
+            #read the text of d3js file
+            d3jstext = readJsText(JSPATH, "d3.min.js");
+            d3cloud_text = readJsText(JSPATH, "d3.layout.cloud.js");
+            outf.write(OutputTagCloud(tagcld,d3jstext, d3cloud_text))
                 
         
 if(__name__ == "__main__"):
