@@ -29,25 +29,34 @@ def OutputTagCloud(tagcld):
     <meta charset="utf-8">
     <script src="$JSPATH/d3.js"></script>
     <script src="$JSPATH/d3.layout.cloud.js"></script>
-    <style type="text/css">
-    .tagword { border : 1px groove blue }
-    .tagcloud { text-align:justify }
+    <style type="text/css">    
+    .tagcloud { display:inline-block;}
+    .colorscale { display:inline-block;vertical-align:top;}
     </style>
     </head>
     <body>
     <div>
         <h2 align="center">Language Keyword Tag Cloud</h2>
-        <div id="keyword" class="tagcloud"></div>
+        <div>
+            <div class="colorscale"></div>
+            <div id="keyword" class="tagcloud"></div>        
+        </div>
     </div>
     <hr/>
     <div>
         <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
-        <div id="names" class="tagcloud"></div>
+        <div>
+            <div class="colorscale"></div>
+            <div id="names" class="tagcloud"></div>
+        </div>
     </div>
     <hr/>
     <div>
         <h2 align="center">Class Name/Function Name Tag Cloud</h2>
-        <div id="classnames" class="tagcloud"></div>
+        <div>
+            <div class="colorscale"></div>
+            <div id="classnames" class="tagcloud"></div>
+        </div>
     </div>
     <hr/>
     <div id="colorscale">
@@ -102,19 +111,20 @@ def OutputTagCloud(tagcld):
                   .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                    })
-                  .text(function(d) { return d.text + '('+d.color+')'; });
+                  .text(function(d) { return d.text;});
             }
         }
         
-        function drawColorScale(selector, fill)
-        {
-            var clrScale = d3.select('body').select(selector).append('div').append('ul').selectAll();
-            clrScale.style("list-style-type","none").style("margin",0).style("padding",0);
-             var legend = clrScale.data(fill.range())
-                .enter().append("li")
-                    .style("display", "inline")
-                    .style("background-color", function(d, i){return colors[i];} )
-                    .text(function(d) { return d});
+        function drawColorScale(clrscaleDivs, fill)
+        {            
+            var clrScale = clrscaleDivs.append('div').append('ul').style("list-style-type","none").style("margin",0).style("padding",0)
+            clrScale = clrScale.selectAll();
+            var range = fill.range().slice(0); // deep copy returned array
+            range.reverse(); // show blue at bottom to red at top.            
+             var legend = clrScale.data(range)
+                .enter().append("li")                    
+                    .style("background-color", function(d, i){return range[i];} )
+                    .html('&nbsp;&nbsp;&nbsp;');
         }
         
         var width=900;
@@ -128,7 +138,10 @@ def OutputTagCloud(tagcld):
         // Show the tag cloud for class names and function names only
         var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
         drawTagCloud(classNamesAndFreq, "#classnames",width, height);
-        drawColorScale("#colorscale", fill);
+        
+        var clrScaleDivs = d3.select('body').selectAll('.colorscale');
+        drawColorScale(clrScaleDivs, fill);
+        
       </script>
 
     </body>
