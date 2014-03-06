@@ -1,3 +1,5 @@
 include tctoolkit/*.py
 include tctoolkit/README.htm
+include tctoolkit/thirdparty/*.js
+
 
