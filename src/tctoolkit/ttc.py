@@ -234,7 +234,15 @@ def getJsDirPath():
 
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
-    parser = OptionParser(usage)
+    description = '''Token Tag Cloud (C) Nitin Bhide
+    Token Tag cloud parses the source code files and displays three tag clouds.
+    (1) Tag cloud of keyword
+    (2) Tag cloud of class names and variable names
+    (3) Tag cloud of class names and function names    
+    The size of word is based on number of occurances of that 'token' in the various source code files
+    The color of word is based on number of files that 'token' is found.
+    '''
+    parser = OptionParser(usage,description=description)
 
     parser.add_option("-p", "--pattern", dest="pattern", default='*.c',
                       help="create tag cloud of files matching the pattern. Default is '*.c' ")
@@ -244,7 +252,7 @@ def RunMain():
     (options, args) = parser.parse_args()
     
     if( len(args) < 1):
-        print "Invalid number of arguments. Use ttc.py --help to see the details."
+        parser.error( "Invalid number of arguments. Use ttc.py --help to see the details.")
     else:        
         dirname = args[0]
             
