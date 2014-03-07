@@ -19,7 +19,7 @@ import tempfile
 import os
 import shutil
 from pygments import highlight
-from pygments.lexers import CppLexer,get_lexer_for_filename
+from pygments.lexers import CppLexer
 from pygments.formatters import HtmlFormatter
 
 
@@ -118,7 +118,7 @@ class CodeDupDetect(object):
                 out.write('<h1 id="match_%i">MATCH %i</h1><ul>'%(id,id))
                 out.write(' '.join(['<li>%s:%i-%i</li>'%(m.srcfile(), m.getStartLine(), m.getStartLine() + m.getLineCount()) for m in matches]))
                 out.write('</ul><div class="highlight">')
-                highlight(''.join(code([s for s in matches][0])),get_lexer_for_filename(m.srcfile()), formatter, outfile=out)
+                highlight(''.join(code([s for s in matches][0])),Tokenizer.get_lexer2(m.srcfile()), formatter, outfile=out)
                 out.write('<a href="#">Up</a></div>')
                 id += 1
             out.write('</body></html>')
