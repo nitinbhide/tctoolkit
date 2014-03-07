@@ -276,7 +276,11 @@ class DupTreeItem(TreeItem):
         
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
-    parser = OptionParser(usage)
+    description = """Code Duplication Detector. (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
+    Uses RabinKarp algorithm for finding exact duplicates. Fuzzy duplication detection support is
+    experimental.
+    """
+    parser = OptionParser(usage,description=description)
 
     parser.add_option("-p", "--pattern", dest="pattern", default='',
                       help="find duplications with files matching the pattern")
