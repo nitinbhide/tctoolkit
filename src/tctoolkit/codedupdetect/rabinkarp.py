@@ -89,9 +89,12 @@ class RabinKarp(object):
     #        self.token_hash[token] = thash
     #    return thash 
         
-    def addAllTokens(self,tknzr):
+    def addAllTokens(self,srcfile):
         curhash =0
         matchlen=0
+        #empty the tokenqueue since we are starting a new file
+        self.tokenqueue.clear()
+        tknzr = self.getTokanizer(srcfile)
         for token in tknzr:
             curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
             curhash = self.addToken(curhash,token)
@@ -102,10 +105,10 @@ class RabinKarp(object):
             '''
             if the number of tokens are reached patternsize then
             then remove hash value of first token from the rolling hash
-            '''
-            (thash, firsttoken) = self.tokenqueue.popleft()
+            '''            
+            (thash, firsttoken) = self.tokenqueue.popleft()            
             #add the current hash value in hashset
-            if(matchlen==0):
+            if(matchlen==0):                
                 matchlen=self.findMatches(curhash,firsttoken,tknzr)
             else:
                 matchlen=matchlen-1
@@ -125,6 +128,11 @@ class RabinKarp(object):
         maxmatchlen=0
         matches = self.matchstore.getHashMatch(curhash)
         if( matches!= None):
+            #print "queue string %s" % ' '.join([tkn[1][3] for tkn in self.tokenqueue])
+            #print "hash =%d match count = %d" % (curhash, len(matches))
+            #print "curpos = %s" % str(tokendata1)
+            assert(tknzr.srcfile== tokendata1[0])
+            
             for tokendata2 in matches:
                 matchlen,sha1_hash,match_end1,match_end2 =self.findMatchLength(tknzr,tokendata1,tokendata2)
                 
@@ -150,11 +158,13 @@ class RabinKarp(object):
             tknzr2 = tknzr1
                 
             if( tokendata2[0] != tokendata1[0]): #filenames are different, get the different tokenizer
-                tknzr2 = self.getTokanizer(tokendata2)
+                srcfile2 = tokendata2[0]
+                tknzr2 = self.getTokanizer(srcfile2)
 
+            assert(tknzr1.srcfile== tokendata1[0])
+            assert(tknzr2.srcfile== tokendata2[0])
             sha1 = hashlib.sha1()
                         
-                
             for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1[2]),tknzr2.get_tokens_frompos(tokendata2[2])):
                 if( matchdata1[3] != matchdata2[3]):                    
                     break
@@ -164,20 +174,18 @@ class RabinKarp(object):
                 matchlen = matchlen+1
             sha1_hash = sha1.digest()
             
-            #if tokendata2[0] == "E:\\users\\nitinb\\sources\\personal\\tctools\\test\\apache_httpd\\server\\mpm\\worker\\worker.c" \
-            #    or tokendata1[0] == "E:\\users\\nitinb\\sources\\personal\\tctools\\test\\apache_httpd\\server\\mpm\\worker\\worker.c":
-            #    import pdb
-            #    pdb.set_trace()
-            
         return(matchlen,sha1_hash, matchend1,matchend2)
 
-    def getTokanizer(self,tokendata):
-        srcfile = tokendata[0]
+    
+    def getTokanizer(self,srcfile):
+        '''
+        get the tokenizer for the given source file.
+        '''
         tknizer = self.tokenizers.get(srcfile)
         if(tknizer == None):
             tknizer = tokenizer.Tokenizer(srcfile, fuzzy=self.fuzzy)
             self.tokenizers[srcfile] = tknizer
-            
+        assert(tknizer.srcfile == srcfile)
         return(tknizer)
     
             

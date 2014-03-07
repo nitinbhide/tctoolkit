@@ -33,18 +33,17 @@ class CodeDupDetect(object):
 
     def __findcopies(self):
         totalfiles = len(self.filelist)
-        i=0
-        for srcfile in self.filelist:
-                i=i+1
-                print "Analyzing file %s (%d of %d)" %(srcfile,i,totalfiles)
-                tknzr = Tokenizer(srcfile, fuzzy=self.fuzzy)
-                rk = RabinKarp(self.minmatch,self.matchstore, self.fuzzy)
-                rk.addAllTokens(tknzr)
+        
+        rk = RabinKarp(self.minmatch,self.matchstore, self.fuzzy)
+            
+        for i, srcfile in enumerate(self.filelist):
+            print "Analyzing file %s (%d of %d)" %(srcfile,i+1,totalfiles)
+            rk.addAllTokens(srcfile)
         self.foundcopies = True
 
     def findcopies(self):
         if( self.foundcopies == False):
-                self.__findcopies()
+            self.__findcopies()
         return(self.matchstore.iter_matches())
 
     def printmatches(self,output):
