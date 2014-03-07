@@ -30,17 +30,25 @@ class Tokenizer(object):
         self.update_token_list()        
         return(self.tokenlist.__iter__())
     
+    @classmethod
+    def get_lexer2(selfcls, filename):
+        '''
+        search lexer in the lexers list first based on the file extension.
+        if it not there then call the get_lexer_for_filename
+        '''
+        name, extension = os.path.splitext(filename)
+        if(extension not in Tokenizer.__LEXERS_CACHE):
+            pyglexer = get_lexer_for_filename(filename,stripall=True)
+            Tokenizer.__LEXERS_CACHE[extension] = pyglexer
+        return Tokenizer.__LEXERS_CACHE[extension]
+
     def get_lexer(self):
         '''
         search lexer in the lexers list first based on the file extension.
         if it not there then call the get_lexer_for_filename
         '''
-        name, extension = os.path.splitext(self.srcfile)
-        if(extension not in Tokenizer.__LEXERS_CACHE):
-            pyglexer = get_lexer_for_filename(self.srcfile,stripall=True)
-            Tokenizer.__LEXERS_CACHE[extension] = pyglexer
-        return Tokenizer.__LEXERS_CACHE[extension]
-
+        return Tokenizer.get_lexer2(self.srcfile)
+        
     def update_token_list(self):
         if(self.tokenlist==None):
             self.tokenlist = list()
