@@ -126,7 +126,7 @@ class RabinKarp(object):
 
     def findMatches(self,curhash,tokendata1,tknzr):
         maxmatchlen=0
-        matches = self.matchstore.getHashMatch(curhash)
+        matches = self.matchstore.getHashMatch(curhash,tokendata1)
         if( matches!= None):
             #print "queue string %s" % ' '.join([tkn[1][3] for tkn in self.tokenqueue])
             #print "hash =%d match count = %d" % (curhash, len(matches))
