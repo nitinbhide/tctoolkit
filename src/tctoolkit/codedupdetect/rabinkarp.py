@@ -36,17 +36,17 @@ def FNV8_hash(str):
     '''
     8 bit FNV hash created by XOR folding the FNV32 hash of the string
     '''
-    hash = FNV_OFFSET_BASIS
+    fhash = FNV_OFFSET_BASIS
     for ch in str:
-        hash = hash ^ ord(ch)
-        hash = hash * FNV_PRIME
-        hash = hash & 0xFFFFFFFF #ensure that hash remains 32 bit.
+        fhash = fhash ^ ord(ch)
+        fhash = fhash * FNV_PRIME
+        fhash = fhash & 0xFFFFFFFF #ensure that hash remains 32 bit.
     #now fold it with XOR folding
     #print "token hash ", hash
-    hash = (hash >> 16) ^ (hash & 0xFFFF)
-    hash = (hash >> 8) ^ (hash & 0xFF)
+    fhash = (fhash >> 16) ^ (fhash & 0xFFFF)
+    fhash = (fhash >> 8) ^ (fhash & 0xFF)
     #print "hash after folding ", hash
-    return(hash)
+    return(fhash)
     
 class RabinKarp(object):
     def __init__(self, patternsize, matchstore, fuzzy=False):
