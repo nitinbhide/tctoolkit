@@ -75,15 +75,17 @@ class MatchStore:
         self.hashset = dict()
         self.matchlist = dict()
         
-    def addHash(self,fhash, tokendata):
-        hashdata = self.hashset.get(fhash)
+    def addHash(self,rhash, tokendata):
+        rhash = hash((rhash,tokendata[3])) # create a new hash with (rolling hash value and actual token string)
+        hashdata = self.hashset.get(rhash)
         if( hashdata == None):
             hashdata = []
         hashdata.append(tokendata)
-        self.hashset[fhash] = hashdata
+        self.hashset[rhash] = hashdata
 
-    def getHashMatch(self,fhash):
-        return(self.hashset.get(fhash))
+    def getHashMatch(self,rhash, tokendata):
+        rhash = hash((rhash, tokendata[3])) # create a new hash with (rolling hash value and actual token string)
+        return(self.hashset.get(rhash))
     
         
     def addExactMatch(self, matchlen, sha1_hash, matchstart1,matchend1,matchstart2,matchend2):
