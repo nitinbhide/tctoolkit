@@ -58,7 +58,7 @@ class CDDApp(object):
 
     def run(self):
         filelist = self.getFileList()        
-        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy)
+        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy, min_lines=self.options.min_lines)
         
         if self.options.format.lower() == 'html':
             self.cdd.html_output(self.options.filename)
@@ -296,8 +296,12 @@ def RunMain():
                       help="output file format. Supported : txt, html")
     parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
                       help="Minimum token count for matched patterns.")
+    parser.add_option("", "--lines", dest="min_lines", default=3, type="int",
+                      help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
+    parser.add_option("-g", "--log", dest="log", default=True, action="store_true",
+                      help="Enable logging. Log file generated in the current directory as cdd.log")
     (options, args) = parser.parse_args()
     
     if options.report != None:
@@ -306,7 +310,10 @@ def RunMain():
         
     if( len(args) < 1):
         print "Invalid number of arguments. Use cdd.py --help to see the details."
-    else:        
+    else:
+        if options.log == True:
+            logging.basicConfig(filename='cdd.log',level=logging.DEBUG)
+            
         dirname = args[0]
         app = CDDApp(dirname, options)
         app.run()
