@@ -39,6 +39,7 @@ class CodeDupDetect(object):
             
         for i, srcfile in enumerate(self.filelist):
             print "Analyzing file %s (%d of %d)" %(srcfile,i+1,totalfiles)
+            logging.info("Analyzing file %s (%d of %d)" %(srcfile,i+1,totalfiles))
             rk.addAllTokens(srcfile)
         self.foundcopies = True
 
