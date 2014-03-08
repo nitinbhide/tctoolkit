@@ -300,7 +300,7 @@ def RunMain():
                       help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
-    parser.add_option("-g", "--log", dest="log", default=True, action="store_true",
+    parser.add_option("-g", "--log", dest="log", default=False, action="store_true",
                       help="Enable logging. Log file generated in the current directory as cdd.log")
     (options, args) = parser.parse_args()
     
@@ -312,7 +312,7 @@ def RunMain():
         print "Invalid number of arguments. Use cdd.py --help to see the details."
     else:
         if options.log == True:
-            logging.basicConfig(filename='cdd.log',level=logging.DEBUG)
+            logging.basicConfig(filename='cdd.log',level=logging.INFO)
             
         dirname = args[0]
         app = CDDApp(dirname, options)
