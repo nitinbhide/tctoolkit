@@ -16,7 +16,7 @@ _NODEID = 0
 DEFAULT_COLOR_PROP = 'color'
 DEFAULT_SIZE_PROP = 'size'
 
-class TreemapNode:
+class TreemapNode(object):
     def __init__(self, name,accumulateSizes=True):
         self.children = dict()
         self.name = name

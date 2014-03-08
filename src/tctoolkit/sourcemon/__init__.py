@@ -69,7 +69,7 @@ class SMTree(TreemapNode):
     hierarchical tree data structure
     '''
     def __init__(self, filename):
-        TreemapNode.__init__(self,filename)
+        super(SMTree, self).__init__(filename)
         if( filename.endswith('.csv')):
             self.createFromCSV(filename)
         elif( filename.endswith('.xml')):
