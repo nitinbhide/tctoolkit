@@ -11,6 +11,7 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 '''
+import logging
 
 from collections import deque
 from itertools import izip
@@ -18,6 +19,7 @@ import operator
 import hashlib
 import tokenizer
 
+MAX_SINGLE_FILEMATCHES = 50 #Maximum number of matches to find in a single file
 HASH_BASE = 256
 HASH_MOD =16777619;  #make sure it is a prime
 
@@ -49,14 +51,16 @@ def FNV8_hash(str):
     return(fhash)
     
 class RabinKarp(object):
-    def __init__(self, patternsize, matchstore, fuzzy=False):
-        self.patternsize = patternsize
+    def __init__(self, patternsize, min_lines, matchstore, fuzzy=False):
+        self.patternsize = patternsize #minimum number of tokens to match
+        self.min_lines = min_lines #minimum number of lines to match.
         self.matchstore = matchstore
         self.fuzzy=fuzzy
         self.tokenqueue = deque()
         self.tokenizers = dict()
         self.token_hash = dict()
         self.__rollhashbase =1
+        self.curfilematches = 0; #number of matches found the current file.
         for i in xrange(0, patternsize-1):
             self.__rollhashbase = (self.__rollhashbase*HASH_BASE) % HASH_MOD;
 
@@ -94,10 +98,13 @@ class RabinKarp(object):
         matchlen=0
         #empty the tokenqueue since we are starting a new file
         self.tokenqueue.clear()
+        self.curfilematches=0
         tknzr = self.getTokanizer(srcfile)
         for token in tknzr:
             curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
             curhash = self.addToken(curhash,token)
+            if self.curfilematches > MAX_SINGLE_FILEMATCHES:
+                break
 
     def rollCurHash(self,tknzr,curhash,pastmatchlen):
         matchlen=pastmatchlen
@@ -124,22 +131,50 @@ class RabinKarp(object):
         self.tokenqueue.append((thash,tokendata))
         return(curhash)
 
+    def findPossibleMatches(self, tokendata1, hashmatches):
+        '''
+        filter the hashmatches for probabble matches. Current this filter checks
+        if the match is in the same file and if in the same file then the
+        distance between the tokens has to be at least 'patternsize'.
+        This avoidds 'self' matches for sitations like "[0,0,0,0,0,0]"
+        '''
+        srcfile = tokendata1[0]
+        srclineno = tokendata1[1]
+        for matchtoken in hashmatches:
+            matchfile = matchtoken[0]            
+            if( srcfile == matchfile):
+                #token are from same files. Now check the line numbers. The linenumbers
+                #difference has to be at least 3
+                matchlineno = matchtoken[1]
+                if abs(matchlineno-srclineno) > 3:
+                    yield matchtoken
+            else:
+                #token are from different files.
+                yield matchtoken
+                
     def findMatches(self,curhash,tokendata1,tknzr):
+        '''
+        search for matches for the current rolling hash in the matchstore.
+        If the hash match is found then go for full comparision to search for the match.
+        '''
+        assert(tknzr.srcfile== tokendata1[0])
         maxmatchlen=0
+            
         matches = self.matchstore.getHashMatch(curhash,tokendata1)
         if( matches!= None):
-            #print "queue string %s" % ' '.join([tkn[1][3] for tkn in self.tokenqueue])
-            #print "hash =%d match count = %d" % (curhash, len(matches))
-            #print "curpos = %s" % str(tokendata1)
             assert(tknzr.srcfile== tokendata1[0])
             
-            for tokendata2 in matches:
+            for tokendata2 in self.findPossibleMatches(tokendata1, matches):
                 matchlen,sha1_hash,match_end1,match_end2 =self.findMatchLength(tknzr,tokendata1,tokendata2)
                 
-                if(matchlen >= self.patternsize):
+                #matchlen has to be at least pattern size
+                #and matched line count has to be atleast self.min_lines
+                if (matchlen >= self.patternsize and (match_end1[1]-tokendata1[1]) >= self.min_lines):
                     #add the exact match to match store.
                     self.matchstore.addExactMatch(matchlen,sha1_hash,tokendata1,match_end1,tokendata2,match_end2)
                     maxmatchlen =max(maxmatchlen,matchlen)
+                    self.curfilematches = self.curfilematches+1
+                    
         return(maxmatchlen)
         
     def findMatchLength(self, tknzr1,tokendata1, tokendata2):
