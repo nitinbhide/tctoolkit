@@ -56,7 +56,11 @@ class Tokenizer(object):
                 self.tokenlist.append(token)
                 self.pos_dict[token[2]] = idx
     
-    def get_tokens(self):                
+    def get_tokens(self):
+        '''
+        token tupple is returned. Format of token data tuple is
+        (source file path, line number of token, charposition of token, text value of the token)
+        '''
         linenum=1
         pyglexer = self.get_lexer()
         with open(self.srcfile,"r") as code:
@@ -65,7 +69,7 @@ class Tokenizer(object):
                 if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
                     #we are doing fuzzy matching. Hence replace the names
                     #e.g. variable names by value 'Variable'.
-                    newvalue='#variable'
+                    newvalue='#variable#'
                 else:
                     newvalue = value.strip()
                 if( newvalue !='' and ttype not in Token.Comment):
