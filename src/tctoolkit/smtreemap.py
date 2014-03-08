@@ -25,7 +25,6 @@ SMFILEFORMATS =[
     ('Source Monitor CSV','*.csv'),
     ]
 
-
 class FileTreeItem(TreeItem):
     def __init__(self, smtreenode, tmcanvas):
         self.node = smtreenode
@@ -142,7 +141,10 @@ class App(object):
 
 def RunMain():
     usage = "usage: %prog [options] <source monitor xml or csv filename>"
-    parser = OptionParser(usage)
+    description = '''SourceMonitor treemap display.
+    (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
+    '''
+    parser = OptionParser(usage,description=description)
 
     (options, args) = parser.parse_args()
     
