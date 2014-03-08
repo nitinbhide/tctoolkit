@@ -81,18 +81,33 @@ def TreemapHtml(treemap):
         </script>
         <script>
         var w = 960,
-        h = 500,
-        color = d3.scale.category20c();
+        h = 500;
+        
+        var colorMap = d3.scale.linear()
+            .domain([-1, 0, 1])
+            .range(["green", "white", "red"]);
+        
+        function updateColorMap(){
+            var propdata = d3.select(getCurPropElem("#color")).datum();
+            colorMap = d3.scale.linear()
+                .domain([propdata.min, propdata.threshold, propdata.max])
+                .range(["green", "white", "red"]);
+        }
+        
+        function getCurPropElem(sel) {
+            // get the current property name from the dropdown 'sel'.
+            var elem = d3.select(sel)[0][0];
+            var propname = elem[elem.selectedIndex];
+            return propname;
+        }
     
         function valueFunc(d) {
-            var sizeElem = d3.select("#size")[0][0];
-            var valueprop = sizeElem[sizeElem.selectedIndex].text;
+            var valueprop = getCurPropElem("#size").text;
             return d[valueprop]; 
         }
         
         function colorFunc(d) {
-            var sizeElem = d3.select("#color")[0][0];
-            var colorprop = sizeElem[sizeElem.selectedIndex].text;
+            var colorprop = getCurPropElem("#color").text;
             return d[colorprop]; 
         }
         
@@ -107,22 +122,29 @@ def TreemapHtml(treemap):
             .style("height", h + "px");
     
         function redrawTreemap() {
+            // set colors domain range before drawing the treemap
+            updateColorMap();
+            
             div.selectAll("div")
                 .data(treemap.value(valueFunc))
               .transition()
                 .duration(1500)
-                .style("background", function(d) { return d.children ? color(colorFunc(d)) : null; })
+                .style("background", function(d) { return d.children ? null : colorMap(colorFunc(d)); })
                 .call(cell);
         }
         function drawTreemap(json) {
+          // set colors domain range before drawing the treemap
+          updateColorMap();
+          
           div.data([json]).selectAll("div")
               .data(treemap.nodes)
             .enter().append("div")
               .attr("class", "cell")
-              .style("background", function(d) { return d.children ? color(colorFunc(d)) : null; })
+              .style("background", function(d) { return d.children ? null : colorMap(colorFunc(d)); })
               .call(cell)
               .text(function(d) { return d.children ? null : d.name; });
         
+            
           d3.select("#size").on("change", redrawTreemap);
           d3.select("#color").on("change", redrawTreemap);
         };
@@ -139,8 +161,8 @@ def TreemapHtml(treemap):
             //update the list of properties for color and size dropdown
             d3.selectAll(sel).selectAll().data(proplist)
                 .enter().append("option")
-                    .attr("value", function(d) { return d;})
-                    .text(function(d) { return d});
+                    .attr("value", function(d) { return d.name;})
+                    .text(function(d) { return d.name});
             d3.select("#size option[value='Lines']").attr("selected", "selected");
             d3.select("#color option[value='MaxComplexity']").attr("selected", "selected");
         }
@@ -162,7 +184,7 @@ class D3JSTreemap(SMTree):
     '''
     def __init__(self, smfile):
         super(D3JSTreemap, self).__init__(smfile)
-        self.propnames = set()
+        self.propnames = dict()
         
     def getNodeDict(self, node):
         '''
@@ -173,7 +195,9 @@ class D3JSTreemap(SMTree):
         nodedict['name'] = node.name
         for prop, value in node.properties.iteritems():
             nodedict[prop] = value
-            self.propnames.add(prop)
+            minmax = self.propnames.get(prop,(sys.maxint,0))
+            minmax = (min(minmax[0], value), max(minmax[1], value))
+            self.propnames[prop] = minmax
         
         children = list()
         for childname, childnode in node.children.iteritems():
@@ -188,7 +212,12 @@ class D3JSTreemap(SMTree):
         return json.dumps(self.getNodeDict(self))
     
     def getPropertyNames(self):
-        return "[%s]" % ','.join(['"%s"' % name for name in self.propnames])
+        proplist = list()
+        for prop, minmax in self.propnames.iteritems():
+            propdict = {"name":prop, "min":minmax[0], "max":minmax[1], "threshold":COLOR_PROP_CONFIG.get(prop,minmax[0])}
+            proplist.append(propdict)
+        
+        return json.dumps(proplist)
     
     
 def RunMain():
