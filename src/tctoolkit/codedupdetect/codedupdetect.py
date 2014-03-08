@@ -10,17 +10,18 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
 
-import matchstore
-from rabinkarp import RabinKarp
-from tokenizer import Tokenizer
-
-
+import logging
 import tempfile
 import os
 import shutil
 from pygments import highlight
 from pygments.lexers import CppLexer
 from pygments.formatters import HtmlFormatter
+
+import matchstore
+from rabinkarp import RabinKarp
+from tokenizer import Tokenizer
+
 
 
 class CodeDupDetect(object):
