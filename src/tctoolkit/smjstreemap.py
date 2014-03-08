@@ -54,18 +54,23 @@ def TreemapHtml(treemap):
                 position: absolute;
                 text-indent: 2px;
             }
+            #propselector {
+                margin-bottom: 1em;    
+            }
         </style>
       </head>
       <body>
         <div class="body">
             <div class="content">
                 <h1 id='treemap'>Source Monitor Treemap</h1>
-                <div>
-                    <div style="display:inline-block">
+                <div id="propselector">
+                    <div style="display:inline-block;margin-right:2em;">
+                        Size :&nbsp;
                         <select class="properties" id="size">
                         </select>
                     </div>
                     <div style="display:inline-block">
+                        Color :&nbsp;
                         <select class="properties" id="color">
                         </select>
                     </div>
