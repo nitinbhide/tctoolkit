@@ -24,9 +24,10 @@ from pygments.formatters import HtmlFormatter
 
 
 class CodeDupDetect(object):
-    def __init__(self,filelist, minmatch=100, fuzzy=False):
+    def __init__(self,filelist, minmatch=100, fuzzy=False,min_lines=3):
         self.matchstore = matchstore.MatchStore(minmatch)
         self.minmatch = minmatch #minimum number of tokens to be matched.
+        self.min_lines = min_lines # minimum number of lines to match
         self.filelist = filelist
         self.foundcopies = False
         self.fuzzy = fuzzy
@@ -34,7 +35,7 @@ class CodeDupDetect(object):
     def __findcopies(self):
         totalfiles = len(self.filelist)
         
-        rk = RabinKarp(self.minmatch,self.matchstore, self.fuzzy)
+        rk = RabinKarp(self.minmatch,self.min_lines, self.matchstore, self.fuzzy)
             
         for i, srcfile in enumerate(self.filelist):
             print "Analyzing file %s (%d of %d)" %(srcfile,i+1,totalfiles)
