@@ -13,12 +13,17 @@ import fnmatch
 import os
 import string
 import sys
+import time
 from contextlib import contextmanager
 
 IGNOREDIRS = ['.svn','.cvs'] 
 
 @contextmanager
 def FileOrStdout(filename):
+    '''
+    return an file or stdout if the name is None that can used with 'with' statement.
+    '''
+    #enter code
     output = sys.stdout
     if( filename != None):        
         try:
@@ -26,10 +31,27 @@ def FileOrStdout(filename):
         except:
             pass
     yield(output)
+    #exit code
     if( output != sys.stdout):
         output.close()
+
+@contextmanager
+def TimeIt(fout,prefix=''):
+    '''
+    return a timer context manager. return the elapsed time.
+    '''
+    start_time = time.clock()
+    
+    yield
+    
+    end_time = time.clock()
+    timediff = end_time - start_time
+    fout.write("%s : %.2f seconds" % (prefix, timediff))
     
 def RemoveIgnoreDirs(dirs):
+    '''
+    remove directories in the IGNOREDIRS list from the 'dirs'
+    '''
     for ignoredir in IGNOREDIRS:
         if ignoredir in dirs:
             dirs.remove(ignoredir)            
@@ -115,3 +137,4 @@ def getJsDirPath():
     jsdir = os.path.join(srcdir, '..','thirdparty', 'javascript')
     jsdir = os.path.abspath(jsdir)
     return jsdir
+

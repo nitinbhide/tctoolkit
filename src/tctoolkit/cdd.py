@@ -316,7 +316,8 @@ def RunMain():
             
         dirname = args[0]
         app = CDDApp(dirname, options)
-        app.run()
+        with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
+            app.run()
             
 if(__name__ == "__main__"):    
     RunMain()
