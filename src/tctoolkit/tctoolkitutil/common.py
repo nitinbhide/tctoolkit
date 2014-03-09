@@ -71,27 +71,27 @@ def PreparePygmentsFileList(dirname):
     Use the lexer list and file extensions from the Pygments and prepare the list of files for which
     lexers are available.
     '''
+    import fnmatch,re
     from pygments.lexers import get_all_lexers
-    import fnmatch
-
+    
     #Prepare a list of fnmatch patterns from lexers
     fnmatchpatlist = []
     for lexer in get_all_lexers():
         fnmatchpatlist = fnmatchpatlist+[pat for pat in lexer[2]]
 
-    rawfilelist = GetDirFileList(dirname)
-
     #since one fnmatch pattern can exist in multiple lexers. We need remove duplicates from the fnmatch pattern list
     fnmatchpatlist=set(fnmatchpatlist)
+
+    #combine the match patterns to a single regex
+    matchregex = '|'.join([fnmatch.translate(pat) for pat in fnmatchpatlist])
+    matchregex = re.compile(matchregex)
     
+    rawfilelist = GetDirFileList(dirname)
+
     filelist = []
     for fname in rawfilelist:
-        for pattern in fnmatchpatlist:
-            if(fnmatch.fnmatch(fname,pattern)):
-                filelist.append(fname)
-                #match is found.now break out of pattern matching loop
-                #but continue the outer loop
-                break
+        if (matchregex.match(fname) != None):
+            filelist.append(fname)
     return(filelist)
 
 def FindFileInPathList(fname, pathlist, extList=None):
