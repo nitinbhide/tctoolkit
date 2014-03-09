@@ -16,10 +16,9 @@ import sys
 
 from optparse import OptionParser
 
-from tokentagcloud.tokentagcloud import *
 from thirdparty.templet import stringfunction
-
-JSPATH="./thirdparty/javascript/d3js/"
+from tokentagcloud.tokentagcloud import *
+from tctoolkitutil.common import readJsText,getJsDirPath
 
 @stringfunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
@@ -216,22 +215,6 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
         
         return(tagJsonStr)
     
-def readJsText(dirname, filename):
-    '''
-    read the entire text content of javascript file.
-    '''
-    jsfile = os.path.join(dirname, *filename)
-    
-    return open(jsfile, "r").read()
-
-def getJsDirPath():
-    '''
-    get the javascript directory path based on path of the current script.
-    '''
-    srcdir = os.path.dirname(os.path.abspath(__file__))
-    jsdir = os.path.join(srcdir, 'thirdparty', 'javascript')
-    jsdir = os.path.abspath(jsdir)
-    return jsdir
     
 
 def RunMain():

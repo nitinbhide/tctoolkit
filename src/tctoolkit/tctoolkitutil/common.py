@@ -98,3 +98,20 @@ def StripAtStart(src, strtostrip):
     if( src.startswith(strtostrip)):
         src = src[len(strtostrip):]
     return(src)    
+
+def readJsText(dirname, filename):
+    '''
+    read the entire text content of javascript file.
+    '''
+    jsfile = os.path.join(dirname, *filename)
+    
+    return open(jsfile, "r").read()
+
+def getJsDirPath():
+    '''
+    get the javascript directory path based on path of the current script.
+    '''
+    srcdir = os.path.dirname(os.path.abspath(__file__))
+    jsdir = os.path.join(srcdir, '..','thirdparty', 'javascript')
+    jsdir = os.path.abspath(jsdir)
+    return jsdir
