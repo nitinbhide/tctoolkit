@@ -15,15 +15,18 @@ from optparse import OptionParser
 
 from thirdparty.templet import *
 from sourcemon import *
+from tctoolkitutil.common import readJsText,getJsDirPath
 
 @stringfunction
-def TreemapHtml(treemap):
+def TreemapHtml(treemap,d3jstext):
     '''<!DOCTYPE html>
     <html>
       <head>
         <meta http-equiv="content-type" content="text/html;charset=utf-8">
         <title>d3.js ~ Treemap</title>
-        <script type="text/javascript" src="./thirdparty/javascript/d3js/d3.js"></script>
+        <script type="text/javascript">
+        $d3jstext
+        </script>
         <style type="text/css">
                 body {
               font: 14px Helvetica Neue;
@@ -273,9 +276,11 @@ def RunMain():
     else:            
         smfile = args[0]
         htmlfilename = args[1]
+        jsdir = getJsDirPath()
         treemap = D3JSTreemap(smfile)
+        d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
         with open(htmlfilename, "w") as outf:
-            outf.write(TreemapHtml(treemap))
+            outf.write(TreemapHtml(treemap,d3jstext))
             
 if( __name__ == "__main__"):
     RunMain()
