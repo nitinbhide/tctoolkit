@@ -39,24 +39,47 @@
 <h2 class="style1">Using the Tools</h2>
     
 <ol>
-  <li><h3>Using Code Duplication Detector</h3></li>
-  <pre>cdd.py [options] &lt;directory name&gt;</pre>Duplication results are displayed sorted in the descending order of number of duplicate lines found.
-  <p>  Options:
-  <pre>-h, --help : show this help message and exit</pre>
-  <pre>-p PATTERN, --pattern=PATTERN : find duplications with files matching the pattern</pre>
-If file pattern is not specified, CDD will check all the extensions supported by Pygments.
-    <pre>-t, --treemap         : display the duplication as treemap </pre>
-    <p>Treemap option shows the entire directory tree as 'treemap' and gives a 'big picture' view of proliferation of duplication.  </p>
-    <ul>
-      <li><em>Green rectangles</em> : These files don't have any duplication      </li>
-      <li><em>White rectangles</em> : These files have low number of duplicated lines (around 10)      </li>
-      <li><em>Red rectangles</em> : These files have large number of duplicates      </li>
-      <li><em>Magenta lines inside the rectangles</em> : show the relative location of duplicate
-        lines in the file.      <br />
-      </li>
-    </ul>
-	<li><h3>Using Token Tag Cloud</h3></li>
-	<br />
+	<li>
+		<div><h3>Using Code Duplication Detector</h3>
+		<pre>cdd.py [options] &lt;directory name&gt;</pre>Duplication results are displayed sorted in the descending order of number of duplicate lines found.
+		<p>Options:
+			<pre>-h, --help                     : show this help message and exit</pre>
+			<pre>-p PATTERN, --pattern=PATTERN  : find duplications with files matching the pattern.
+					If file pattern is not specified, CDD will check all the extensions supported by Pygments.</pre>
+			<pre>-t, --treemap                  : display the duplication as treemap </pre>
+			 
+			<p>Treemap option shows the entire directory tree as 'treemap' and gives a 'big picture'
+				view of proliferation of duplication.</p>
+		</p>
+		<ul>
+		  <li><em>Green rectangles</em> : These files don't have any duplication      </li>
+		  <li><em>White rectangles</em> : These files have low number of duplicated lines (around 10)      </li>
+		  <li><em>Red rectangles</em> : These files have large number of duplicates      </li>
+		  <li><em>Magenta lines inside the rectangles</em> : show the relative location of duplicate
+			lines in the file.      <br />
+		  </li>
+		</ul>
+	  </div>
+	</li>
+	<li>
+		<div><h3>Using Token Tag Cloud</h3>
+			<pre>ttc.py [options] &lt;directory name&gt;</pre>
+			<div>
+				Token Tag cloud parses the source code files and displays three tag clouds.
+				<ol><li>Tag cloud of keyword</li>
+				<li>Tag cloud of class names and variable names</li>
+				<li>Tag cloud of class names and function names</li>
+				</ol>
+				The size of word is based on number of occurances of that 'token' in the various source code files
+				The color of word is based on number of files that 'token' is found.
+			</div>
+			<p>Options:
+				<pre>-h, --help            			: show this help message and exit</pre>
+				<pre>-p PATTERN, --pattern=PATTERN	: create tag cloud of files matching the pattern.Default is '*.c</pre>
+				<pre>-o OUTFILE, --outfile=OUTFILE	: outfile name. Output to stdout if not specified</pre>
+			</p>
+		</div>
+	</li>
 	<li><h3>Using SMTreemap</h3></li>
 </ol>
 
