@@ -57,6 +57,18 @@ def TreemapHtml(treemap):
             #propselector {
                 margin-bottom: 1em;    
             }
+            .tooltip {
+                position:absolute;
+                z-index: 10;
+                background-color:#FFFFF0;
+                padding:3px;
+                border:2px solid #808080;
+            }
+            .tooltip ul {
+                list-style-type:none;
+                padding:3px;
+                margin:0px;
+            }
         </style>
       </head>
       <body>
@@ -102,8 +114,8 @@ def TreemapHtml(treemap):
         function getCurPropElem(sel) {
             // get the current property name from the dropdown 'sel'.
             var elem = d3.select(sel)[0][0];
-            var propname = elem[elem.selectedIndex];
-            return propname;
+            elem = elem[elem.selectedIndex];
+            return elem;
         }
     
         function valueFunc(d) {
@@ -116,6 +128,21 @@ def TreemapHtml(treemap):
             return d[colorprop]; 
         }
         
+        function setTooltipText(d) {
+            var colorprop = getCurPropElem("#color").text;
+            var valueprop = getCurPropElem("#size").text;
+            
+            var tooltiphtml = "<ul><li>" +d.name+ "</li><li>"
+                                +valueprop+":"+d[valueprop]+"</li><li>"
+                                +colorprop+":"+d[colorprop]+"</li></ul>";
+            tooltip.html(tooltiphtml);
+        }
+        
+        var tooltip = d3.select("body")
+            .append("div")
+            .classed({"tooltip":true})
+            .style("visibility", "hidden");
+            
         var treemap = d3.layout.treemap()
             .size([w, h])
             .sticky(true)
@@ -137,6 +164,7 @@ def TreemapHtml(treemap):
                 .style("background", function(d) { return d.children ? null : colorMap(colorFunc(d)); })
                 .call(cell);
         }
+        
         function drawTreemap(json) {
           // set colors domain range before drawing the treemap
           updateColorMap();
@@ -147,9 +175,14 @@ def TreemapHtml(treemap):
               .attr("class", "cell")
               .style("background", function(d) { return d.children ? null : colorMap(colorFunc(d)); })
               .call(cell)
-              .text(function(d) { return d.children ? null : d.name; });
-        
-            
+              .text(function(d) { return d.children ? null : d.name; })
+              	.on("mouseover", function(d){
+                        setTooltipText(d);
+                        tooltip.style("visibility", "visible");
+                        return tooltip;})
+                .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");})
+                .on("mouseout", function(){return tooltip.style("visibility", "hidden");});
+     
           d3.select("#size").on("change", redrawTreemap);
           d3.select("#color").on("change", redrawTreemap);
         };
