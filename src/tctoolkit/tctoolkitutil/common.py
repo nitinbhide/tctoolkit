@@ -16,7 +16,7 @@ import sys
 import time
 from contextlib import contextmanager
 
-IGNOREDIRS = ['.svn','.cvs'] 
+IGNOREDIRS = set(['.svn','.cvs', '.hg', '.git'])
 
 @contextmanager
 def FileOrStdout(filename):
@@ -52,9 +52,7 @@ def RemoveIgnoreDirs(dirs):
     '''
     remove directories in the IGNOREDIRS list from the 'dirs'
     '''
-    for ignoredir in IGNOREDIRS:
-        if ignoredir in dirs:
-            dirs.remove(ignoredir)            
+    dirs = list(set(dirs) - IGNOREDIRS)
     return(dirs)
 
 def GetDirFileList(dirname):
