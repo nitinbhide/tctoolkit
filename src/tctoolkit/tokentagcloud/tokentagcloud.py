@@ -23,6 +23,11 @@ from tctoolkitutil.common import *
 from tctoolkitutil.tagcloud import TagCloud
 
 class Tokenizer(object):
+    '''
+    tokenizing the source files
+    '''
+    __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
+    
     def __init__(self, srcfile, ignore_comments=True):
         self.srcfile = srcfile
         self.tokenlist=None
@@ -48,7 +53,7 @@ class Tokenizer(object):
         return(ignore)
     
     def get_tokens(self):
-        pyglexer = get_lexer_for_filename(self.srcfile,stripall=True)
+        pyglexer = Tokenizer.get_lexer(self.srcfile)
         
         linenum=1
         with open(self.srcfile, "r") as code:
@@ -56,6 +61,18 @@ class Tokenizer(object):
                 newvalue = value.strip()
                 if( self.ignore_type(ttype,newvalue)==False):
                     yield ttype,newvalue
+
+    @classmethod
+    def get_lexer(selfcls, filename):
+        '''
+        search lexer in the lexers list first based on the file extension.
+        if it not there then call the get_lexer_for_filename
+        '''
+        name, extension = os.path.splitext(filename)
+        if(extension not in Tokenizer.__LEXERS_CACHE):
+            pyglexer = get_lexer_for_filename(filename,stripall=True)
+            Tokenizer.__LEXERS_CACHE[extension] = pyglexer
+        return Tokenizer.__LEXERS_CACHE[extension]
                 
 
 class SourceCodeTagCloud(object):
@@ -80,6 +97,7 @@ class SourceCodeTagCloud(object):
         
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
+        print "Adding tags information of file: %s" % srcfile
         tokenizer = Tokenizer(srcfile)
         fileTokenset = set()
         for ttype, value in tokenizer:
