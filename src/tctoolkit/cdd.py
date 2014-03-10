@@ -20,9 +20,6 @@ from tctoolkitutil.common import *
 from codedupdetect.codedupdetect import CodeDupDetect
 
 import string, os, datetime
-
-CLR_PROP = 'duplicate lines'
-SIZE_PROP = 'filesize'
         
 class CDDApp(object):
     def __init__(self, dirname, options):

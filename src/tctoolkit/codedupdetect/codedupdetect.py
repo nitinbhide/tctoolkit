@@ -104,11 +104,6 @@ class CodeDupDetect(object):
                 for i in range(match.getStartLine()):
                     src.readline()
                 return [src.readline() for i in range(match.getLineCount())]
-        #try:
-        #    import chardet
-        #    lexer = CppLexer(encoding='chardet')
-        #except:
-        #    lexer = CppLexer(encoding='utf-8')
             
         formatter = HtmlFormatter(encoding='utf-8')
         with open(outfile_fn, 'wb') as out:
