@@ -6,3 +6,7 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 '''
+from .tokenizer import Tokenizer
+from .codedupdetect import CodeDupDetect
+from .matchstore import MatchData
+from .rabinkarp import RabinKarp
