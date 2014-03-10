@@ -292,8 +292,8 @@ def RunMain():
                       help="Output html to given filename.This is essentially combination '-f html -o <filename>")
     parser.add_option("-o", "--out", dest="filename", default=None,
                       help="output file name. This is simple text file")
-    parser.add_option("-f", "--fmt", dest="format", default="txt",
-                      help="output file format. Supported : txt, html")
+    parser.add_option("-f", "--fmt", dest="format", default=None,
+                      help="output file format. If not specified, determined from outputfile extension. Supported : txt, html")
     parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
                       help="Minimum token count for matched patterns.")
     parser.add_option("", "--lines", dest="min_lines", default=3, type="int",
@@ -307,7 +307,15 @@ def RunMain():
     if options.report != None:
         options.format = 'html'
         options.filename = options.report
-        
+
+    if options.format == None:
+        #auto detect the format based on the out file extension.
+        options.format = 'txt'
+        if options.filename:
+            name, ext = os.path.splitext(options.filename)
+            if ext in set(['.html', '.htm', '.xhtml']):
+                options.format = 'html'
+
     if( len(args) < 1):
         print "Invalid number of arguments. Use cdd.py --help to see the details."
     else:
