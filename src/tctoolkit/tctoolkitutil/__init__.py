@@ -7,3 +7,6 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 '''
 
+from .common import *
+from .tagcloud import TagCloud
+from .treemapdata import TreemapNode
