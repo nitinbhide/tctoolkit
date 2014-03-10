@@ -14,6 +14,7 @@ import logging
 import tempfile
 import os
 import shutil
+from itertools import tee,izip
 
 import matchstore
 from rabinkarp import RabinKarp
@@ -93,3 +94,45 @@ class CodeDupDetect(object):
                 shutil.copy(tmp_source_name, fn)
                 begin_no += 1
     
+    def getCooccuranceData(self, dirname):
+        '''
+        create a co-occurance data in nodes and links list format. Something that can be
+        dumped to json quickly
+        '''
+        groups = dict() #key = directory name, value = index
+        nodes = dict() # key = filename, value = index
+        links = dict() #key (filename, filename), value = number of ocurrances
+
+        def addGroup(filename):
+            dir = os.path.dirname(filename)
+            if dir not in groups:
+                groups[dir] = len(groups)
+
+        def addNode(filename):
+            filename = os.path.relpath(filename, dirname)
+            addGroup(filename)
+            if filename not in nodes:
+                nodes[filename] = len(nodes)
+        
+        def addLink(file1, file2):
+            file1 = os.path.relpath(file1, dirname)
+            file2 = os.path.relpath(file2, dirname)
+            if file1 > file2:
+                file1,file2 = file2, file1
+            links[(file1,file2)] = links.get((file1,file2), 0)+1
+        
+        def pairwise(iterable):
+            "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+            a, b = tee(iterable)
+            next(b, None)
+            return izip(a, b)
+
+        for matchset in self.findcopies():
+            #for each matchset first add files into the nodes dictionary
+            matchset = list(matchset)
+            for match in matchset:
+                addNode(match.srcfile())
+            for match1, match2 in pairwise(matchset):
+                addLink(match1.srcfile(), match2.srcfile())
+
+        return groups, nodes, links
