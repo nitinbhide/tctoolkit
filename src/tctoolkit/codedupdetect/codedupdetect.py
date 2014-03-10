@@ -14,15 +14,10 @@ import logging
 import tempfile
 import os
 import shutil
-from pygments import highlight
-from pygments.lexers import CppLexer
-from pygments.formatters import HtmlFormatter
 
 import matchstore
 from rabinkarp import RabinKarp
 from tokenizer import Tokenizer
-
-
 
 class CodeDupDetect(object):
     def __init__(self,filelist, minmatch=100, fuzzy=False,min_lines=3):
@@ -97,26 +92,4 @@ class CodeDupDetect(object):
                 tmp_source.close()
                 shutil.copy(tmp_source_name, fn)
                 begin_no += 1
-
-    def html_output(self,outfile_fn):
-        def code(match):
-            with open(match.srcfile(), 'rb') as src:
-                for i in range(match.getStartLine()):
-                    src.readline()
-                return [src.readline() for i in range(match.getLineCount())]
-            
-        formatter = HtmlFormatter(encoding='utf-8')
-        with open(outfile_fn, 'wb') as out:
-            out.write('<html><head><style type="text/css">%s</style></head><body>'%formatter.get_style_defs('.highlight'))
-            id = 0
-            copies = sorted(self.findcopies(),reverse=True,key=lambda x:x.matchedlines)
-            out.write('<ul>%s</ul>'%'\n'.join(['<a href="#match_%i">Match %i</a>'%(i,i) for i in range(len(copies))]))
-            for matches in copies:
-                out.write('<h1 id="match_%i">MATCH %i</h1><ul>'%(id,id))
-                out.write(' '.join(['<li>%s:%i-%i</li>'%(m.srcfile(), m.getStartLine(), m.getStartLine() + m.getLineCount()) for m in matches]))
-                out.write('</ul><div class="highlight">')
-                highlight(''.join(code([s for s in matches][0])),Tokenizer.get_lexer2(m.srcfile()), formatter, outfile=out)
-                out.write('<a href="#">Up</a></div>')
-                id += 1
-            out.write('</body></html>')
-            
+    
