@@ -14,13 +14,78 @@ from __future__ import with_statement
 import sys
 import logging
 
+import string, os, datetime
 from optparse import OptionParser
 
-from tctoolkitutil.common import *
-from codedupdetect.codedupdetect import CodeDupDetect
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
 
-import string, os, datetime
+from tctoolkitutil.common import *
+from thirdparty.templet import *
+from codedupdetect import CodeDupDetect
+
+class HtmlWriter(object):
+    '''
+    class to output the duplication information in html format
+    '''
+    def __init__(self, cddapp):
+        self.cddapp = cddapp
+        self.formatter = HtmlFormatter(encoding='utf-8')
+
+    def getCssStyle(self):
+        return self.formatter.get_style_defs('.highlight')
+
+    def getMatches(self):
+        return self.cddapp.getMatches()
+
+    def write(self, fname):
+        with open(fname, "w") as outf:
+            outf.write(self.output())
+
+    @stringfunction
+    def output(self):
+        '''<!DOCTYPE html>
+        <html>
+            <head>
+                <style type="text/css">${self.getCssStyle()}</style>
+            </head>
+            <body>
+                <div>
+                 ${[self.getMatchLink(i, match) for i, match in enumerate(self.getMatches())]}
+                </div>
+                <div>
+                    ${[self.getMatchHtml(i, match) for i, match in enumerate(self.getMatches())]}
+                </div>
+            </body>
+        </html>
+        '''
+    
+    @stringfunction
+    def getMatchLink(self, i, matchset):
+        '''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
+
+    @stringfunction
+    def getMatchHtml(self, i, matchset):
+        '''<div id="match_$i">
+                <h1>MATCH ${i+1}</h1>
+               <ul>
+               ${[self.getMatchInfo(m) for m in matchset]}
+               </ul>
+               <div class="highlight">               
+                    ${self.getSyntaxHighlightedSource(matchset)}
+                    <a href="#">Up</a>
+               </div>
+           </div>
+        '''
+
+    @stringfunction
+    def getMatchInfo(self, match):
+        '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}</li>'''
+
+    def getSyntaxHighlightedSource(self, matchset):                
+        return  highlight(''.join(matchset.getMatchSource()),matchset.getSourceLexer(), self.formatter, outfile=None)
         
+
 class CDDApp(object):
     def __init__(self, dirname, options):
         self.dirname=dirname
@@ -44,7 +109,10 @@ class CDDApp(object):
         self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy, min_lines=self.options.min_lines)
         
         if self.options.format.lower() == 'html':
-            self.cdd.html_output(self.options.filename)
+            #self.cdd.html_output(self.options.filename)
+            htmlwriter = HtmlWriter(self)            
+            htmlwriter.write(self.options.filename)
+
         else:
             #assume that format is 'txt'.
             self.printDuplicates(self.options.filename)
