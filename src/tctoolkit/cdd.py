@@ -54,7 +54,7 @@ class HtmlWriter(object):
         assert(len(nodelist) == len(nodes))
         for node, index in nodes.iteritems():
             groupname = os.path.dirname(node)
-            nodelist[index] = {'name':node, 'group':groups[groupname] }
+            nodelist[index] = {'name':os.path.basename(node), 'group':groups[groupname], 'fullpath':node}
         #create a list of link dictionaries
         for link, value in links.iteritems():
             source = link[0]
@@ -76,7 +76,7 @@ class HtmlWriter(object):
                 z = d3.scale.linear().domain([0, 4]).clamp(true),
                 c = d3.scale.category10().domain(d3.range(10));
 
-            var svg = d3.select("body").append("svg")
+            var svg = d3.select("#co_ocm").append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .style("margin-left", -margin.left + "px")
@@ -133,7 +133,7 @@ class HtmlWriter(object):
                   .attr("x", -6)
                   .attr("y", x.rangeBand() / 2)
                   .attr("dy", ".32em")
-                  .attr("text-anchor", "end")
+                  .attr("text-anchor", "end")                  
                   .text(function(d, i) { return nodes[i].name; });
 
               var column = svg.selectAll(".column")
@@ -219,6 +219,22 @@ class HtmlWriter(object):
             <head>
                 <meta http-equiv="content-type" content="text/html;charset=utf-8">
                 <style type="text/css">${self.getCssStyle()}</style>
+                <style type="text/css">
+                #co_ocm {
+                    margin-top:20px;
+                }
+                #co_ocm .background {
+                    fill: #eee;
+                }
+
+                #co_ocm line {
+                    stroke: #fff;
+                }
+
+                #co_ocm text.active {
+                    fill: red;
+                }
+                </style>
                 <script src="./thirdparty/javascript/d3js/d3.js"></script>
             </head>
             <body>
@@ -227,6 +243,8 @@ class HtmlWriter(object):
                 </div>
                 <div>
                     ${[self.getMatchHtml(i, match) for i, match in enumerate(self.getMatches())]}
+                </div>
+                <div id="co_ocm">
                 </div>
             </body>
             <script>
