@@ -19,8 +19,8 @@ setup(name='TCToolkit', version ='0.6.0',
       url='http://code.google.com/p/tctoolkit',
       requires = ['pygments'],
       packages=['tctoolkit', 'tctoolkit.codedupdetect','tctoolkit.tctoolkitutil',
-                'tctoolkit.featureanalysis', 'tctoolkit.tcdepends',
-                'tctoolkit.tokentagcloud'],
+                'tctoolkit.featureanalysis', 'tctoolkit.tcdepends', 'tctoolkit.sourcemon',
+				'tctoolkit.thirdparty', 'tctoolkit.tokentagcloud'],
       package_dir = {'': '.'},
-      package_data= {'tctoolkit':['README.htm']}
+      package_data= {'tctoolkit':['README.htm'], 'tctoolkit.thirdparty': ['javascript/d3js/*.*']}
      )
