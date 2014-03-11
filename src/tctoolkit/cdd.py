@@ -119,6 +119,7 @@ class HtmlWriter(object):
                 .selectAll('.rowtitle')
                     .data(nodes)
                     .enter().append("text")
+                      .attr("class", "rowtitle")
                       .attr("x", 6)
                       .attr("y", x.rangeBand() / 2)
                       .attr("text-anchor", "end")
@@ -127,10 +128,11 @@ class HtmlWriter(object):
                       .attr("transform", function(d, i) { return "translate(0, "+x(i) + ")"; });
 
               var columntitles = svg.append('g')
-                .attr("transform", "translate(" + margin.left + ","+margin.top+")")
+                .attr("transform", "translate(" + margin.left + ","+margin.top+")")                
                 .selectAll('.columntitle')
                 .data(nodes)
                 .enter().append("text")
+                  .attr("class", "columntitle")
                   .attr("x", 6)
                   .attr("y", x.rangeBand() / 2)
                   .attr("text-anchor", "start")
@@ -191,8 +193,10 @@ class HtmlWriter(object):
               }
                               
               function mouseover(p) {
-                d3.selectAll(".rowtitle text").classed("active", function(d, i) { return i == p.y; });
-                d3.selectAll(".columntitle text").classed("active", function(d, i) { return i == p.x; });
+                d3.selectAll("text.rowtitle").classed("active", function(d, i) {
+                 return i == p.y; 
+                });
+                d3.selectAll("text.columntitle").classed("active", function(d, i) { return i == p.x; });
                 setTooltipText(p);
               }
 
@@ -227,13 +231,7 @@ class HtmlWriter(object):
                 t.selectAll(".columntitle")
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
-
-              /*
-              var timeout = setTimeout(function() {
-                order("group");
-                d3.select("#order").property("selectedIndex", 2).node().focus();
-              }, 5000);
-              */
+              
               order("group");
             };
 
