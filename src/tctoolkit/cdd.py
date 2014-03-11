@@ -112,7 +112,7 @@ class HtmlWriter(object):
               };
 
               // The default sort order.
-              x.domain(orders.name);
+              x.domain(orders.group);
 
               var rowtitles = svg.append('g')
                 .attr("transform", "translate(" + margin.left + ","+margin.top+")")
@@ -221,6 +221,11 @@ class HtmlWriter(object):
                 t.selectAll(".column")
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+
+                t.selectAll(".rowtitle")
+                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+                t.selectAll(".columntitle")
+                    .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
 
               /*
@@ -229,11 +234,12 @@ class HtmlWriter(object):
                 d3.select("#order").property("selectedIndex", 2).node().focus();
               }, 5000);
               */
+              order("group");
             };
 
             //duplication co-occurance data
             var dupData = ${self.getCooccuranceData()};
-            drawCooccurrence(dupData);
+            drawCooccurrence(dupData);            
         '''
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
