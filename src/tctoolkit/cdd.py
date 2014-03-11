@@ -68,21 +68,23 @@ class HtmlWriter(object):
         '''
         // Co-occurance matrix
         function drawCooccurrence(cooc_mat) {
-            var margin = {top: 80, right: 0, bottom: 10, left: 80};                
-            var width = cooc_mat.nodes.length*10;
+            var margin = {top: 100, right: 100, bottom: 10, left: 80};                
+            var width = cooc_mat.nodes.length*15;
             var height = width;
 
             var x = d3.scale.ordinal().rangeBands([0, width]),
                 z = d3.scale.linear().domain([0, 4]).clamp(true),
                 c = d3.scale.category10().domain(d3.range(10));
-
+            
+            var tooltip = d3.select("body")
+                    .append("div")
+                    .classed("tooltip", true)
+                    .style("visibility", "hidden");
+        
             var svg = d3.select("#co_ocm").append("svg")
                 .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .style("margin-left", -margin.left + "px")
-              .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-            
+                .attr("height", height + margin.top + margin.bottom)                
+              
               var matrix = [],
                   nodes = cooc_mat.nodes,
                   n = nodes.length;
@@ -96,10 +98,8 @@ class HtmlWriter(object):
 
               // Convert links to matrix; count character occurrences.
               cooc_mat.links.forEach(function(link) {
-                matrix[link.source][link.target].z += link.value;
-                matrix[link.target][link.source].z += link.value;
-                matrix[link.source][link.source].z += link.value;
-                matrix[link.target][link.target].z += link.value;
+                matrix[link.source][link.target].z = link.value;                
+                matrix[link.target][link.source].z = link.value;                
                 nodes[link.source].count += link.value;
                 nodes[link.target].count += link.value;
               });
@@ -114,10 +114,37 @@ class HtmlWriter(object):
               // The default sort order.
               x.domain(orders.name);
 
+              var rowtitles = svg.append('g')
+                .attr("transform", "translate(" + margin.left + ","+margin.top+")")
+                .selectAll('.rowtitle')
+                    .data(nodes)
+                    .enter().append("text")
+                      .attr("x", 6)
+                      .attr("y", x.rangeBand() / 2)
+                      .attr("text-anchor", "end")
+                      .attr("width", margin.left)
+                      .text(function(d, i) { return d.name; })
+                      .attr("transform", function(d, i) { return "translate(0, "+x(i) + ")"; });
+
+              var columntitles = svg.append('g')
+                .attr("transform", "translate(" + margin.left + ","+margin.top+")")
+                .selectAll('.columntitle')
+                .data(nodes)
+                .enter().append("text")
+                  .attr("x", 6)
+                  .attr("y", x.rangeBand() / 2)
+                  .attr("text-anchor", "start")
+                  .text(function(d, i) { return d.name; })
+                  .attr("transform", function(d, i) { return "translate(" + x(i) + ",0)rotate(-45)"; });              
+
+              
+              svg = svg.append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                          
               svg.append("rect")
                   .attr("class", "background")
                   .attr("width", width)
-                  .attr("height", height);
+                  .attr("height", height);                  
 
               var row = svg.selectAll(".row")
                   .data(matrix)
@@ -128,14 +155,7 @@ class HtmlWriter(object):
 
               row.append("line")
                   .attr("x2", width);
-
-              row.append("text")
-                  .attr("x", -6)
-                  .attr("y", x.rangeBand() / 2)
-                  .attr("dy", ".32em")
-                  .attr("text-anchor", "end")                  
-                  .text(function(d, i) { return nodes[i].name; });
-
+              
               var column = svg.selectAll(".column")
                   .data(matrix)
                 .enter().append("g")
@@ -144,14 +164,7 @@ class HtmlWriter(object):
 
               column.append("line")
                   .attr("x1", -width);
-
-              column.append("text")
-                  .attr("x", 6)
-                  .attr("y", x.rangeBand() / 2)
-                  .attr("dy", ".32em")
-                  .attr("text-anchor", "start")
-                  .text(function(d, i) { return nodes[i].name; });
-
+              
               function row(row) {
                 var cell = d3.select(this).selectAll(".cell")
                     .data(row.filter(function(d) { return d.z; }))
@@ -163,16 +176,29 @@ class HtmlWriter(object):
                     .style("fill-opacity", function(d) { return z(d.z); })
                     .style("fill", function(d) { return nodes[d.x].group == nodes[d.y].group ? c(nodes[d.x].group) : null; })
                     .on("mouseover", mouseover)
-                    .on("mouseout", mouseout);
+                    .on("mouseout", mouseout)                    
+                    .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");});
               }
 
+              // Prepare the tooltip
+              function setTooltipText(d) {                    
+                    var tooltiphtml = "<ul><li>File 1:"+nodes[d.x].name+"</li>"+
+                        "<li>File 2:"+nodes[d.y].name + "</li>"+
+                        "<li>Count:"+d.z+"</li></ul>";
+
+                    tooltip.html(tooltiphtml);
+                    tooltip.style("visibility", "visible");
+              }
+                              
               function mouseover(p) {
-                d3.selectAll(".row text").classed("active", function(d, i) { return i == p.y; });
-                d3.selectAll(".column text").classed("active", function(d, i) { return i == p.x; });
+                d3.selectAll(".rowtitle text").classed("active", function(d, i) { return i == p.y; });
+                d3.selectAll(".columntitle text").classed("active", function(d, i) { return i == p.x; });
+                setTooltipText(p);
               }
 
               function mouseout() {
                 d3.selectAll("text").classed("active", false);
+                tooltip.style("visibility", "hidden");
               }
 
               d3.select("#order").on("change", function() {
@@ -234,6 +260,18 @@ class HtmlWriter(object):
                 #co_ocm text.active {
                     fill: red;
                 }
+                 .tooltip {
+                    position:absolute;
+                    z-index: 10;
+                    background-color:#FFFFF0;
+                    padding:3px;
+                    border:2px solid #808080;
+                }
+                .tooltip ul {
+                    list-style-type:none;
+                    padding:3px;
+                    margin:0px;
+                }
                 </style>
                 <script src="./thirdparty/javascript/d3js/d3.js"></script>
             </head>
@@ -244,8 +282,11 @@ class HtmlWriter(object):
                 <div>
                     ${[self.getMatchHtml(i, match) for i, match in enumerate(self.getMatches())]}
                 </div>
-                <div id="co_ocm">
-                </div>
+                <div>
+                    <h1>Duplication Cooccurance Matrix</h1>
+                    <div id="co_ocm">                    
+                    </div>
+                </div>                
             </body>
             <script>
             ${self.outputCooccurenceMatrix()}
