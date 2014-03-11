@@ -277,7 +277,9 @@ class HtmlWriter(object):
                     margin:0px;
                 }
                 </style>
-                <script src="./thirdparty/javascript/d3js/d3.js"></script>
+                <script >
+                    ${self.getD3JS()}
+                </script>
             </head>
             <body>
                 <div>
@@ -323,7 +325,10 @@ class HtmlWriter(object):
 
     def getSyntaxHighlightedSource(self, matchset):                
         return  highlight(''.join(matchset.getMatchSource()),matchset.getSourceLexer(), self.formatter, outfile=None)
-        
+    
+    def getD3JS(self):
+        jsdir = getJsDirPath()
+        return readJsText(jsdir, ["d3js", "d3.min.js"]);
 
 class CDDApp(object):
     def __init__(self, dirname, options):
