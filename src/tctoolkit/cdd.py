@@ -283,10 +283,11 @@ class HtmlWriter(object):
                 <div>
                  ${[self.getMatchLink(i, match) for i, match in enumerate(self.getMatches())]}
                 </div>
-                <div>
+                <div style="margin-top:10px">Goto <a href="#dup_co_ocm">Duplication Cooccurance Matrix</a></div>
+                <div style="margin-top:10px">
                     ${[self.getMatchHtml(i, match) for i, match in enumerate(self.getMatches())]}
                 </div>
-                <div>
+                <div id="dup_co_ocm">
                     <h1>Duplication Cooccurance Matrix</h1>
                     <div id="co_ocm">                    
                     </div>
