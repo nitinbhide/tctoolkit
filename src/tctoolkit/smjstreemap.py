@@ -276,8 +276,10 @@ def RunMain():
     else:            
         smfile = args[0]
         htmlfilename = args[1]
-        jsdir = getJsDirPath()
+        
         treemap = D3JSTreemap(smfile)
+
+        jsdir = getJsDirPath()
         d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
         with open(htmlfilename, "w") as outf:
             outf.write(TreemapHtml(treemap,d3jstext))
