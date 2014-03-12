@@ -135,4 +135,9 @@ class CodeDupDetect(object):
             for match1, match2 in pairwise(matchset):
                 addLink(match1.srcfile(), match2.srcfile())
 
+        #the child folders should be near to each other. Hence reindex of groups list again.
+        groupslist = sorted(groups.keys())
+        for i, grp in enumerate(groupslist):
+            groups[grp] = i
+
         return groups, nodes, links
