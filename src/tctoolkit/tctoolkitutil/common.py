@@ -52,14 +52,14 @@ def RemoveIgnoreDirs(dirs):
     '''
     remove directories in the IGNOREDIRS list from the 'dirs'
     '''
-    dirs = list(set(dirs) - IGNOREDIRS)
-    return(dirs)
+    dirs2 = list(set(dirs) - IGNOREDIRS)    
+    dirs[:] = dirs2    
 
 def GetDirFileList(dirname):
     rawfilelist = []
     #prepare list of all files ignore the directories defined in 'ignoredirs' list.
     for root, dirs, files in os.walk(dirname):
-        dirs = RemoveIgnoreDirs(dirs)
+        RemoveIgnoreDirs(dirs)
         for fname in files:
             rawfilelist.append(os.path.join(root, fname))
     return(rawfilelist)
@@ -82,6 +82,7 @@ def PreparePygmentsFileList(dirname):
 
     #combine the match patterns to a single regex
     matchregex = '|'.join([fnmatch.translate(pat) for pat in fnmatchpatlist])
+    
     matchregex = re.compile(matchregex)
     
     rawfilelist = GetDirFileList(dirname)
