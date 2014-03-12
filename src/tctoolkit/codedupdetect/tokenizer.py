@@ -9,9 +9,9 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 '''
-from __future__ import with_statement
 
 import os
+import logging
 from pygments.lexers import get_lexer_for_filename
 from pygments.filter import simplefilter
 from pygments.token import Token, is_token_subtype
@@ -37,10 +37,17 @@ class Tokenizer(object):
         if it not there then call the get_lexer_for_filename
         '''
         name, extension = os.path.splitext(filename)
-        if(extension not in Tokenizer.__LEXERS_CACHE):
-            pyglexer = get_lexer_for_filename(filename,stripall=True)
-            Tokenizer.__LEXERS_CACHE[extension] = pyglexer
-        return Tokenizer.__LEXERS_CACHE[extension]
+        pyglexer = Tokenizer.__LEXERS_CACHE.get(extension, None)
+
+        if(pyglexer == None):
+            try:
+                pyglexer = get_lexer_for_filename(filename,stripall=True)          
+                Tokenizer.__LEXERS_CACHE[extension] = pyglexer                            
+            except:
+                logging.warning("Lexer not found for file %s" % filename)
+                pyglexer = None
+
+        return pyglexer
 
     def get_lexer(self):
         '''
@@ -63,18 +70,20 @@ class Tokenizer(object):
         '''
         linenum=1
         pyglexer = self.get_lexer()
-        with open(self.srcfile,"r") as code:
-            for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):    
-                #print ttype
-                if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
-                    #we are doing fuzzy matching. Hence replace the names
-                    #e.g. variable names by value 'Variable'.
-                    newvalue='#variable#'
-                else:
-                    newvalue = value.strip()
-                if( newvalue !='' and ttype not in Token.Comment):
-                    yield self.srcfile, linenum,charpos,newvalue
-                linenum=linenum+value.count('\n')
+        
+        if pyglexer != None:
+            with open(self.srcfile,"r") as code:
+                for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):    
+                    #print ttype
+                    if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
+                        #we are doing fuzzy matching. Hence replace the names
+                        #e.g. variable names by value 'Variable'.
+                        newvalue='#variable#'
+                    else:
+                        newvalue = value.strip()
+                    if( newvalue !='' and ttype not in Token.Comment):
+                        yield self.srcfile, linenum,charpos,newvalue
+                    linenum=linenum+value.count('\n')
                 
         
     def get_tokens_frompos(self, fromcharpos):
