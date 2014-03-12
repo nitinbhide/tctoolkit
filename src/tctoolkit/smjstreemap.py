@@ -271,7 +271,7 @@ def RunMain():
 
     (options, args) = parser.parse_args()
     
-    if( len(args) < 1):
+    if( len(args) < 2):
         print "Invalid number of arguments. Use smtreemapjs.py --help to see the details."
     else:            
         smfile = args[0]
