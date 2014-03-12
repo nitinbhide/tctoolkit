@@ -52,6 +52,11 @@ class HtmlWriter(object):
         linklist = list()
         #create a list of node dictionaries
         assert(len(nodelist) == len(nodes))
+        grouplist = [None]*len(groups)
+
+        for group, index in groups.iteritems():
+            grouplist[index] = group
+            
         for node, index in nodes.iteritems():
             groupname = os.path.dirname(node)
             nodelist[index] = {'name':os.path.basename(node), 'group':groups[groupname], 'fullpath':node}
@@ -61,7 +66,7 @@ class HtmlWriter(object):
             target = link[1]
             linklist.append({ 'source':nodes[source], 'target':nodes[target], 'value':value})
 
-        return json.dumps({ 'nodes':nodelist, 'links' : linklist})
+        return json.dumps({ 'groups': grouplist, 'nodes':nodelist, 'links' : linklist})
 
     @stringfunction
     def outputCooccurenceMatrix(self):
@@ -88,6 +93,7 @@ class HtmlWriter(object):
               var matrix = [],
                   nodes = cooc_mat.nodes,
                   n = nodes.length;
+              var groups = cooc_mat.groups;
 
               // Compute index per node.
               nodes.forEach(function(node, i) {
@@ -184,8 +190,10 @@ class HtmlWriter(object):
 
               // Prepare the tooltip
               function setTooltipText(d) {                    
-                    var tooltiphtml = "<ul><li>File 1:"+nodes[d.x].name+"</li>"+
-                        "<li>File 2:"+nodes[d.y].name + "</li>"+
+                    var node1 = nodes[d.x];
+                    var node2 = nodes[d.y];
+                    var tooltiphtml = "<ul><li>File 1: "+groups[node1.group]+'/'+node1.name+"</li>"+
+                        "<li>File 2: "+groups[node2.group]+'/'+node2.name + "</li>"+
                         "<li>Count:"+d.z+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
