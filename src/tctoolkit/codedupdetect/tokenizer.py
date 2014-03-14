@@ -87,10 +87,7 @@ class Tokenizer(object):
                 
         
     def get_tokens_frompos(self, fromcharpos):
-        self.update_token_list()
-        if fromcharpos not in self.pos_dict:
-            import pdb
-            pdb.set_trace()
+        self.update_token_list()        
         idx = self.pos_dict[fromcharpos]
         return self.tokenlist[idx:]
 
