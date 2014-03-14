@@ -77,8 +77,13 @@ class HtmlWriter(object):
             var width = cooc_mat.nodes.length*15;
             var height = width;
 
+            var colors =  ["#a50026", "#d73027","#f46d43","#fdae61","#fee090","#ffffbf",
+                        "#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
+            //console.log(colors);
+            colors.reverse();
+
             var x = d3.scale.ordinal().rangeBands([0, width]),
-                z = d3.scale.linear().domain([0, 4]).clamp(true),
+                z = d3.scale.linear().range(colors),
                 c = d3.scale.category10().domain(d3.range(10));
             
             var tooltip = d3.select("body")
@@ -103,12 +108,19 @@ class HtmlWriter(object):
               });
 
               // Convert links to matrix; count character occurrences.
+              var maxLinkValue = 0;
               cooc_mat.links.forEach(function(link) {
-                matrix[link.source][link.target].z = link.value;                
-                matrix[link.target][link.source].z = link.value;                
-                nodes[link.source].count += link.value;
-                nodes[link.target].count += link.value;
+                var lines = link.value.lines;
+                matrix[link.source][link.target].z = lines;                
+                matrix[link.target][link.source].z = lines;                
+                nodes[link.source].count += lines;
+                nodes[link.target].count += lines;
+                maxLinkValue = d3.max([maxLinkValue, lines]);
               });
+
+              // update the color scale domain.
+              var step = (Math.log(maxLinkValue+1) - 0)/(1.0*colors.length);
+              z.domain(d3.range(0, Math.log(maxLinkValue+1),step));
 
               // Precompute the orders.
               var orders = {
@@ -181,8 +193,8 @@ class HtmlWriter(object):
                     .attr("x", function(d) { return x(d.x); })
                     .attr("width", x.rangeBand())
                     .attr("height", x.rangeBand())
-                    .style("fill-opacity", function(d) { return z(d.z); })
-                    .style("fill", function(d) { return nodes[d.x].group == nodes[d.y].group ? c(nodes[d.x].group) : null; })
+                    /*.style("fill-opacity", function(d) { return z(d.z); })*/
+                    .style("fill", function(d) { return z(Math.log(d.z));})
                     .on("mouseover", mouseover)
                     .on("mouseout", mouseout)                    
                     .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");});
@@ -194,7 +206,7 @@ class HtmlWriter(object):
                     var node2 = nodes[d.y];
                     var tooltiphtml = "<ul><li>File 1: "+groups[node1.group]+'/'+node1.name+"</li>"+
                         "<li>File 2: "+groups[node2.group]+'/'+node2.name + "</li>"+
-                        "<li>Count:"+d.z+"</li></ul>";
+                        "<li>Lines:"+d.z+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
                     tooltip.style("visibility", "visible");
