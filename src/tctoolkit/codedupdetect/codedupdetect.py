@@ -103,24 +103,31 @@ class CodeDupDetect(object):
         nodes = dict() # key = filename, value = index
         links = dict() #key (filename, filename), value = number of ocurrances
 
+        #add group (directory of the file) into the groups list
         def addGroup(filename):
             dir = os.path.dirname(filename)
             if dir not in groups:
                 groups[dir] = len(groups)
 
+        #add file into file list
         def addNode(filename):
             filename = os.path.relpath(filename, dirname)
             addGroup(filename)
             if filename not in nodes:
                 nodes[filename] = len(nodes)
         
-        def addLink(file1, file2):
-            file1 = os.path.relpath(file1, dirname)
-            file2 = os.path.relpath(file2, dirname)
+        #add a link (duplication) between two files into links list.
+        def addLink(match1, match2):
+            file1 = os.path.relpath(match1.srcfile(), dirname)
+            file2 = os.path.relpath(match2.srcfile(), dirname)
             if file1 > file2:
                 file1,file2 = file2, file1
-            links[(file1,file2)] = links.get((file1,file2), 0)+1
+            linkinfo = links.get((file1,file2), {'lines':0, 'count':0})
+            linkinfo['lines'] = linkinfo['lines']+match1.getLineCount()
+            linkinfo['count'] = linkinfo['count']+1
+            links[(file1,file2)] = linkinfo
         
+        #copied from python recipes to get 'two' items at a time from list. (n, n+1)
         def pairwise(iterable):
             "s -> (s0,s1), (s1,s2), (s2, s3), ..."
             a, b = tee(iterable)
@@ -133,7 +140,7 @@ class CodeDupDetect(object):
             for match in matchset:
                 addNode(match.srcfile())
             for match1, match2 in pairwise(matchset):
-                addLink(match1.srcfile(), match2.srcfile())
+                addLink(match1, match2)
 
         #the child folders should be near to each other. Hence reindex of groups list again.
         groupslist = sorted(groups.keys())
