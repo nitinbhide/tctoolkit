@@ -73,7 +73,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                         "#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
         console.log(colors);
         colors.reverse();
-        var fill =  d3.scale.ordinal();
+        var fill =  d3.scale.linear();
         fill.range(colors);
         
         function drawTagCloud(wordsAndFreq, selector, width, height)
@@ -88,8 +88,9 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
             fontSize.range([10,100])
             // color is calculated based on how many files the word is found
             minColor = d3.min(wordsAndFreq, function(d) { return d.color});
-            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});            
-            fill.domain([Math.log(minColor), Math.log(maxColor+1)]);
+            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});
+            var step = (Math.log(maxColor+1)-Math.log(minColor))/colors.length;            
+            fill.domain(d3.range(Math.log(minColor), Math.log(maxColor+1), step));
           
             d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
