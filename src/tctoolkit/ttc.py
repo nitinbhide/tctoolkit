@@ -18,7 +18,7 @@ from optparse import OptionParser
 
 from thirdparty.templet import stringfunction
 from tokentagcloud.tokentagcloud import *
-from tctoolkitutil.common import readJsText,getJsDirPath
+from tctoolkitutil import readJsText,getJsDirPath
 
 @stringfunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
