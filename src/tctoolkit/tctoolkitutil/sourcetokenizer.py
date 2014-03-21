@@ -81,26 +81,26 @@ class SourceCodeTokenizer(object):
 Filter Functions to get tokens of specific type only
 '''
 
-def TagTypeFilter(taginfo, freq, tagType):
+def TagTypeFilter(word, ttype, freq, tagType):
     validtag = None
-    if(freq > 1 and taginfo[1] in tagType):
-        validtag = (taginfo[0], freq)
+    if(freq > 1 and ttype in tagType):
+        validtag = (word, freq)
     return(validtag)
     
-def KeywordFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Keyword))    
+def KeywordFilter(word, ttype, freq):
+    return(TagTypeFilter(word, ttype, freq, Token.Keyword))    
 
-def NameFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Name))    
+def NameFilter(word, ttype, freq):
+    return(TagTypeFilter(word, ttype, freq, Token.Name))    
     
-def ClassNameFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Name.Class))    
+def ClassNameFilter(word, ttype, freq):
+    return(TagTypeFilter(word, ttype, freq, Token.Name.Class))    
     
-def FuncNameFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Name.Function))
+def FuncNameFilter(word, ttype, freq):
+    return(TagTypeFilter(word, ttype, freq, Token.Name.Function))
 
-def ClassFuncNameFilter(taginfo, freq):
-    validtag = ClassNameFilter(taginfo, freq)
+def ClassFuncNameFilter(word, ttype, freq):
+    validtag = ClassNameFilter(word, ttype, freq)
     if( validtag == None):
-        validtag = FuncNameFilter(taginfo, freq)
+        validtag = FuncNameFilter(word, ttype, freq)
     return(validtag)

@@ -16,18 +16,32 @@ import locale
 
 
 class TagCloud(object):
+    '''
+    store the information about tags
+    '''
     def __init__(self):
         self.tagDict = dict()
+        self.tagTypeDict = dict()
             
-    def addWord(self, word):
+    def addWord(self, word, ttype):
+        '''
+        add word, update frequency and type of the word
+        '''
         freq = self.tagDict.get(word, 0)
         freq = freq +1
         self.tagDict[word] = freq
+        #now update the word
+        cur_ttype = self.tagTypeDict.get(word, None)
+        if cur_ttype == None or (ttype != cur_ttype and ttype in cur_ttype):
+            self.tagTypeDict[word] = ttype
         
     def filterWords(self, filterFunc):
+        '''
+        filter the words using the filter function
+        '''
         tagDict = dict()
         for word, freq in self.tagDict.iteritems():
-            taginfo = filterFunc(word, freq)
+            taginfo = filterFunc(word, self.tagTypeDict[word], freq)
             if(taginfo != None):
                 tagDict[taginfo[0]] = taginfo[1]
         return(tagDict)

@@ -70,7 +70,7 @@ class SourceCodeTagCloud(object):
         tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
         for ttype, value in tokenizer:
-            self.tagcloud.addWord((value,ttype))            
+            self.tagcloud.addWord(value,ttype)
             if value not in fileTokenset:
                 self.fileTagCount[value] = self.fileTagCount.get(value, 0)+1
                 fileTokenset.add(value)
