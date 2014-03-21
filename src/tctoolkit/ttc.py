@@ -138,13 +138,13 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         var width=900;
         var height = width*3.0/4.0;
         // Show the tag cloud for keywords
-        var keywordsAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=KeywordFilter)};        
+        var keywordsAndFreq = ${ tagcld.getJSON(filterFunc=KeywordFilter)};        
         drawTagCloud(keywordsAndFreq, "#keyword",width, height);
         // Show the tag cloud for names (class names, function names and variable names)
-        var namesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=NameFilter) }    ;        
+        var namesAndFreq = ${ tagcld.getJSON(filterFunc=NameFilter) }    ;        
         drawTagCloud(namesAndFreq, "#names",width, height);
         // Show the tag cloud for class names and function names only
-        var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
+        var classNamesAndFreq = ${ tagcld.getJSON(filterFunc=ClassFuncNameFilter) };        
         drawTagCloud(classNamesAndFreq, "#classnames",width, height);
         
         var clrScaleDivs = d3.select('body').selectAll('.colorscale');
@@ -157,7 +157,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
     '''    
 
 
-class HtmlSourceTagCloud(SourceCodeTagCloud):
+class D3SourceTagCloud(SourceCodeTagCloud):
     '''
     Generate source code tag cloud in HTML format
     '''
@@ -165,9 +165,9 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
     MAXFONTSIZE = 8
 
     def __init__(self, dirname, pattern):
-        super(HtmlSourceTagCloud, self).__init__(dirname, pattern)
+        super(D3SourceTagCloud, self).__init__(dirname, pattern)
                 
-    def getTagCloudJSON(self, numWords=100, filterFunc=None):
+    def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
 
         tagWordList = self.getTags(numWords, filterFunc)
@@ -205,7 +205,7 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        tagcld = HtmlSourceTagCloud(dirname, options.pattern)
+        tagcld = D3SourceTagCloud(dirname, options.pattern)
         jsdir = getJsDirPath()
         
         with FileOrStdout(options.outfile) as outf:
