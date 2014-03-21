@@ -59,6 +59,9 @@ class SourceCodeTokenizer(object):
         if pyglexer != None:
             with open(self.srcfile, "r") as code:
                 for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):
+                    #NOTE : do not call 'strip' on the 'value variable hear.
+                    #if derived class wants to calculate line numbers, the 'strip' call will screw up
+                    #the line number computation.
                     yield charpos, ttype, value
         
     def get_tokens(self):
