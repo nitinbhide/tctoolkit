@@ -23,7 +23,7 @@ class Tokenizer(SourceCodeTokenizer):
     tokenizer for code duplication detection.
     '''
     def __init__(self, srcfile, fuzzy=False):
-        super(Tokenizer, self).__init__(srcfile, True)
+        super(Tokenizer, self).__init__(srcfile)
         self.fuzzy = fuzzy
         self.pos_dict = dict()        
                        

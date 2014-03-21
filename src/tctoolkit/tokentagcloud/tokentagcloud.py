@@ -14,10 +14,35 @@ import operator
 import math
 import string
 
+from pygments.token import Token
+
 from tctoolkitutil.common import *
 from tctoolkitutil import TagCloud
 from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+
+class TagCloudTokenizer(SourceCodeTokenizer):
+    '''
+    create tokenizer useful for tag cloud generation. (ignore comments, single character variable names, etc)
+    '''
+    def __init__(self, srcfile, ignore_comments=True):
+        super(TagCloudTokenizer, self).__init__(srcfile)
+        self.ignore_comments = ignore_comments
+
+    def ignore_type(self, ttype,value):
+        ignore = False
+        if(self.ignore_comments==True and ttype in Token.Comment ):
+            ignore=True
+        if( ttype in Token.Operator or ttype in Token.Punctuation):
+            ignore = True
+        if( ignore==False and value ==''):
+            ignore=True
+        if( ignore==False and ttype in Token.Name and len(value) < 2):
+            ignore=True
+        if( ignore == False and ttype in Token.Literal and len(value) < 2):
+            ignore = True
+        return(ignore)
+
 
 class SourceCodeTagCloud(object):
     '''
@@ -42,7 +67,7 @@ class SourceCodeTagCloud(object):
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
         print "Adding tags information of file: %s" % srcfile
-        tokenizer = SourceCodeTokenizer(srcfile)
+        tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
         for ttype, value in tokenizer:
             self.tagcloud.addWord((value,ttype))            
