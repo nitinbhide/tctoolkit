@@ -26,11 +26,7 @@ class Tokenizer(SourceCodeTokenizer):
         super(Tokenizer, self).__init__(srcfile, True)
         self.fuzzy = fuzzy
         self.pos_dict = dict()        
-        
-    def __iter__(self):
-        self.update_token_list()        
-        return(self.tokenlist.__iter__())
-               
+                       
     def update_token_list(self):
         if(self.tokenlist==None):
             self.tokenlist = list()
@@ -44,21 +40,18 @@ class Tokenizer(SourceCodeTokenizer):
         (source file path, line number of token, charposition of token, text value of the token)
         '''
         linenum=1
-        pyglexer = self.get_lexer()
-        
-        if pyglexer != None:
-            with open(self.srcfile,"r") as code:
-                for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):    
-                    #print ttype
-                    if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
-                        #we are doing fuzzy matching. Hence replace the names
-                        #e.g. variable names by value 'Variable'.
-                        newvalue='#variable#'
-                    else:
-                        newvalue = value.strip()
-                    if( newvalue !='' and ttype not in Token.Comment):
-                        yield self.srcfile, linenum,charpos,newvalue
-                    linenum=linenum+value.count('\n')
+        for charpos,ttype,value in self._parse_tokens():    
+            #print ttype
+            if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
+                #we are doing fuzzy matching. Hence replace the names
+                #e.g. variable names by value 'Variable'.
+                newvalue='#variable#'
+            else:
+                newvalue = value.strip()
+                if( newvalue !='' and ttype not in Token.Comment):
+                    yield self.srcfile, linenum,charpos,newvalue
+
+            linenum=linenum+value.count('\n')
                 
         
     def get_tokens_frompos(self, fromcharpos):

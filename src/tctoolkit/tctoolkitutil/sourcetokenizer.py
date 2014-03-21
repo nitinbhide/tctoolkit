@@ -28,9 +28,12 @@ class SourceCodeTokenizer(object):
         self.ignore_comments = ignore_comments
         
     def __iter__(self):
+        self.update_token_list()
+        return(self.tokenlist.__iter__())
+
+    def update_token_list(self):
         if(self.tokenlist==None):
             self.tokenlist = [token for token in self.get_tokens()]
-        return(self.tokenlist.__iter__())
 
     def ignore_type(self, ttype,value):
         ignore = False
@@ -46,16 +49,27 @@ class SourceCodeTokenizer(object):
             ignore = True
         return(ignore)
     
-    def get_tokens(self):
+    def _parse_tokens(self):
+        '''
+        parse the tokens from the source file and return the raw parsed tokens.
+        get_tokens functions will internally use this function.
+        '''
         pyglexer = self.get_lexer()
+         
+        if pyglexer != None:
+            with open(self.srcfile, "r") as code:
+                for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):
+                    yield charpos, ttype, value
         
-        linenum=1
-        with open(self.srcfile, "r") as code:
-            for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):    
-                newvalue = value.strip()
-                if( self.ignore_type(ttype,newvalue)==False):
-                    yield ttype,newvalue
-
+    def get_tokens(self):
+        '''
+        iteratore over the tokens
+        '''
+        for charpos,ttype,value in self._parse_tokens():
+            value = value.strip()            
+            if( self.ignore_type(ttype,value)==False):
+                    yield ttype,value
+                
     def get_lexer(self):
         '''
         return lexer for self.srcfile
