@@ -12,50 +12,24 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 import os
 import logging
+
+from tctoolkitutil import SourceCodeTokenizer
+
 from pygments.lexers import get_lexer_for_filename
 from pygments.filter import simplefilter
 from pygments.token import Token, is_token_subtype
 
 
-class Tokenizer(object):
-    __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
-    
+class Tokenizer(SourceCodeTokenizer):    
     def __init__(self, srcfile, fuzzy=False):
-        self.srcfile = srcfile
-        self.tokenlist=None
+        super(Tokenizer, self).__init__(srcfile, True)
         self.fuzzy = fuzzy
         self.pos_dict = dict()        
         
     def __iter__(self):
         self.update_token_list()        
         return(self.tokenlist.__iter__())
-    
-    @classmethod
-    def get_lexer2(selfcls, filename):
-        '''
-        search lexer in the lexers list first based on the file extension.
-        if it not there then call the get_lexer_for_filename
-        '''
-        name, extension = os.path.splitext(filename)
-        pyglexer = Tokenizer.__LEXERS_CACHE.get(extension, None)
-
-        if(pyglexer == None):
-            try:
-                pyglexer = get_lexer_for_filename(filename,stripall=True)          
-                Tokenizer.__LEXERS_CACHE[extension] = pyglexer                            
-            except:
-                logging.warning("Lexer not found for file %s" % filename)
-                pyglexer = None
-
-        return pyglexer
-
-    def get_lexer(self):
-        '''
-        search lexer in the lexers list first based on the file extension.
-        if it not there then call the get_lexer_for_filename
-        '''
-        return Tokenizer.get_lexer2(self.srcfile)
-        
+               
     def update_token_list(self):
         if(self.tokenlist==None):
             self.tokenlist = list()

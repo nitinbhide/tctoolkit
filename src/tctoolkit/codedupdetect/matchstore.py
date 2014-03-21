@@ -93,7 +93,7 @@ class MatchSet:
         '''
         get lexer for firstMatch of this matcheset
         '''
-        return tokenizer.Tokenizer.get_lexer2(self.firstMatch.srcfile())
+        return tokenizer.Tokenizer.get_lexer_for(self.firstMatch.srcfile())
 
 class MatchStore:
     def __init__(self,minmatch):
