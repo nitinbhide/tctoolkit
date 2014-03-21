@@ -22,10 +22,9 @@ class SourceCodeTokenizer(object):
     '''
     __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
     
-    def __init__(self, srcfile, ignore_comments=True):
+    def __init__(self, srcfile):
         self.srcfile = srcfile
-        self.tokenlist=None
-        self.ignore_comments = ignore_comments
+        self.tokenlist=None        
         
     def __iter__(self):
         self.update_token_list()
@@ -34,21 +33,7 @@ class SourceCodeTokenizer(object):
     def update_token_list(self):
         if(self.tokenlist==None):
             self.tokenlist = [token for token in self.get_tokens()]
-
-    def ignore_type(self, ttype,value):
-        ignore = False
-        if(self.ignore_comments==True and ttype in Token.Comment ):
-            ignore=True
-        if( ttype in Token.Operator or ttype in Token.Punctuation):
-            ignore = True
-        if( ignore==False and value ==''):
-            ignore=True
-        if( ignore==False and ttype in Token.Name and len(value) < 2):
-            ignore=True
-        if( ignore == False and ttype in Token.Literal and len(value) < 2):
-            ignore = True
-        return(ignore)
-    
+        
     def _parse_tokens(self):
         '''
         parse the tokens from the source file and return the raw parsed tokens.
