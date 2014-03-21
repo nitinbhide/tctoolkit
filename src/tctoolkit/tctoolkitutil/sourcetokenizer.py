@@ -71,10 +71,18 @@ class SourceCodeTokenizer(object):
         if it not there then call the get_lexer_for_filename
         '''
         name, extension = os.path.splitext(filename)
+        pyglexer = SourceCodeTokenizer.__LEXERS_CACHE.get(extension, None)
+
         if(extension not in SourceCodeTokenizer.__LEXERS_CACHE):
-            pyglexer = get_lexer_for_filename(filename,stripall=True)
-            SourceCodeTokenizer.__LEXERS_CACHE[extension] = pyglexer
-        return SourceCodeTokenizer.__LEXERS_CACHE[extension]
+            try:
+                pyglexer = get_lexer_for_filename(filename,stripall=True)
+                SourceCodeTokenizer.__LEXERS_CACHE[extension] = pyglexer
+            except:
+                #ignore the lexer not found exceptions
+                assert(pyglexer == None)
+                pass
+
+        return pyglexer
                 
 
 '''
