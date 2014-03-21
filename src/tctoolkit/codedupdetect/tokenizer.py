@@ -15,12 +15,13 @@ import logging
 
 from tctoolkitutil import SourceCodeTokenizer
 
-from pygments.lexers import get_lexer_for_filename
-from pygments.filter import simplefilter
 from pygments.token import Token, is_token_subtype
 
 
 class Tokenizer(SourceCodeTokenizer):    
+    '''
+    tokenizer for code duplication detection.
+    '''
     def __init__(self, srcfile, fuzzy=False):
         super(Tokenizer, self).__init__(srcfile, True)
         self.fuzzy = fuzzy
