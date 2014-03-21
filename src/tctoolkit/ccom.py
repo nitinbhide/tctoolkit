@@ -16,6 +16,7 @@ import string
 import sys
 import itertools
 import fnmatch
+import json
 
 from optparse import OptionParser
 
@@ -27,141 +28,269 @@ from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import GetDirFileList,FileOrStdout
 
-@stringfunction
-def OutputCCOM(tagcld, d3js_text, d3cloud_text):
-    '''<!DOCTYPE html>
-    <html>        
-    <head>
-    <meta charset="utf-8">
-    <script>
-        // Embedd the text of d3.js
-        $d3js_text
-    </script>
-    <script>
-        // Embedd the text of d3.layout.cloudjs
-        $d3cloud_text
-    </script>
-    <style type="text/css">    
-    .tagcloud { display:inline-block;}
-    .colorscale { display:inline-block;vertical-align:top;}
-    </style>
-    </head>
-    <body>
-    <div>
-        <h2 align="center">Language Keyword Tag Cloud</h2>
-        <div>
-            <div class="colorscale"></div>
-            <div id="keyword" class="tagcloud"></div>        
-        </div>
-    </div>
-    <hr/>
-    <div>
-        <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
-        <div>
-            <div class="colorscale"></div>
-            <div id="names" class="tagcloud"></div>
-        </div>
-    </div>
-    <hr/>
-    <div>
-        <h2 align="center">Class Name/Function Name Tag Cloud</h2>
-        <div>
-            <div class="colorscale"></div>
-            <div id="classnames" class="tagcloud"></div>
-        </div>
-    </div>
-    <hr/>
-    <div id="colorscale">
-    </div>    
-    <script>
-        var minColor = 0, maxColor=0;
-        // color scale is reversed ColorBrewer RdYlBu
-        var colors =  ["#a50026", "#d73027","#f46d43","#fdae61","#fee090","#ffffbf",
-                        "#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
-        console.log(colors);
-        colors.reverse();
-        var fill =  d3.scale.linear();
-        fill.range(colors);
-        
-        function drawTagCloud(wordsAndFreq, selector, width, height)
-        {
-            //console.log("selector is " + selector);
-            // Font size is calculated based on word frequency
-            var minFreq = d3.min(wordsAndFreq, function(d) { return d.size});
-            var maxFreq = d3.max(wordsAndFreq, function(d) { return d.size});
-            
-            var fontSize = d3.scale.log();
-            fontSize.domain([minFreq, maxFreq]);
-            fontSize.range([10,100])
-            // color is calculated based on how many files the word is found
-            minColor = d3.min(wordsAndFreq, function(d) { return d.color});
-            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});
-            var step = (Math.log(maxColor+1)-Math.log(minColor))/colors.length;            
-            fill.domain(d3.range(Math.log(minColor), Math.log(maxColor+1), step));
-          
-            d3.layout.cloud().size([width, height])
-                .words(wordsAndFreq)
-                .padding(5)            
-                .font("Impact")
-                .rotate(function() { return 0})
-                .fontSize(function(d) { return fontSize(+d.size); })
-                .on("end", draw)
-                .start();
-          
-            function draw(words) {
-               // console.log("calling draw");
-              d3.select('body').select(selector).append("svg")
-                  .attr("width", width)
-                  .attr("height", height)
-                .append("g")
-                  .attr("transform", "translate("+width/2+","+height/2+")")
-                .selectAll("text")
-                  .data(words)
-                .enter().append("text")
-                  .style("font-size", function(d) { return d.size + "px"; })
-                  .style("font-family", "Impact")
-                  .style("fill", function(d, i) {
-                    return fill(Math.log(d.color)); })
-                  .attr("text-anchor", "middle")
-                  .attr("transform", function(d) {
-                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-                   })
-                  .text(function(d) { return d.text;});
-            }
-        }
-        
-        function drawColorScale(clrscaleDivs, fill)
-        {            
-            var clrScale = clrscaleDivs.append('div').append('ul').style("list-style-type","none").style("margin",0).style("padding",0)
-            clrScale = clrScale.selectAll();
-            var range = fill.range().slice(0); // deep copy returned array
-            range.reverse(); // show blue at bottom to red at top.            
-             var legend = clrScale.data(range)
-                .enter().append("li")                    
-                    .style("background-color", function(d, i){return range[i];} )
-                    .html('&nbsp;&nbsp;&nbsp;');
-        }
-        
-        var width=900;
-        var height = width*3.0/4.0;
-        // Show the tag cloud for keywords
-        var keywordsAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=KeywordFilter)};        
-        drawTagCloud(keywordsAndFreq, "#keyword",width, height);
-        // Show the tag cloud for names (class names, function names and variable names)
-        var namesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=NameFilter) }    ;        
-        drawTagCloud(namesAndFreq, "#names",width, height);
-        // Show the tag cloud for class names and function names only
-        var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
-        drawTagCloud(classNamesAndFreq, "#classnames",width, height);
-        
-        var clrScaleDivs = d3.select('body').selectAll('.colorscale');
-        drawColorScale(clrScaleDivs, fill);
-        
-      </script>
+class HtmlCCOMWriter(object):
+    '''
+    Output html of Co-occurance matrix data.
+    '''
+    def __init__(self, ccom):
+        self.ccom = ccom
 
-    </body>
-    </html>
-    '''    
+    def write(self, fname):
+        '''
+        write the Cooccurence matrix to html file <fname>
+        '''
+        with FileOrStdout(fname) as outf:
+            jsdir = getJsDirPath()
+            #read the text of d3js file
+            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
+            outf.write(self.outputHtml(d3jstext))
+
+    @stringfunction
+    def outputCComScript(self):
+        '''
+        // Co-occurance matrix
+        function drawCooccurrence(cooc_mat) {
+            var margin = {top: 100, right: 100, bottom: 10, left: 80};                
+            var width = cooc_mat.nodes.length*15;
+            var height = width;
+
+            var colors =  ["#a50026", "#d73027","#f46d43","#fdae61","#fee090","#ffffbf",
+                        "#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
+            //console.log(colors);
+            colors.reverse();
+
+            var x = d3.scale.ordinal().rangeBands([0, width]),
+                z = d3.scale.linear().range(colors),
+                c = d3.scale.category10().domain(d3.range(10));
+            
+            var tooltip = d3.select("body")
+                    .append("div")
+                    .classed("tooltip", true)
+                    .style("visibility", "hidden");
+        
+            var svg = d3.select("#co_ocm").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)                
+              
+              var matrix = [],
+                  nodes = cooc_mat.nodes,
+                  n = nodes.length;
+              
+              // Compute index per node.
+              nodes.forEach(function(node, i) {
+                node.index = i;
+                node.count = 0;
+                matrix[i] = d3.range(n).map(function(j) { return {x: j, y: i, z: 0}; });
+              });
+
+              // Convert links to matrix; count character occurrences.
+              var maxLinkValue = 0;
+              cooc_mat.links.forEach(function(link) {
+                var count = link.value.count;
+                matrix[link.source][link.target].z = count;                
+                matrix[link.target][link.source].z = count;                
+                nodes[link.source].count += count;
+                nodes[link.target].count += count;
+                maxLinkValue = d3.max([maxLinkValue, count]);
+              });
+
+              // update the color scale domain.
+              var step = (Math.log(maxLinkValue+1) - 0)/(1.0*colors.length);
+              z.domain(d3.range(0, Math.log(maxLinkValue+1),step));
+
+              // Precompute the orders.
+              var orders = {
+                name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
+                count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
+              };
+
+              // The default sort order.
+              x.domain(orders.name);
+
+              var rowtitles = svg.append('g')
+                .attr("transform", "translate(" + margin.left + ","+margin.top+")")
+                .selectAll('.rowtitle')
+                    .data(nodes)
+                    .enter().append("text")
+                      .attr("class", "rowtitle")
+                      .attr("x", 6)
+                      .attr("y", x.rangeBand() / 2)
+                      .attr("text-anchor", "end")
+                      .attr("width", margin.left)
+                      .text(function(d, i) { return d.name; })
+                      .attr("transform", function(d, i) { return "translate(0, "+x(i) + ")"; });
+
+              var columntitles = svg.append('g')
+                .attr("transform", "translate(" + margin.left + ","+margin.top+")")                
+                .selectAll('.columntitle')
+                .data(nodes)
+                .enter().append("text")
+                  .attr("class", "columntitle")
+                  .attr("x", 6)
+                  .attr("y", x.rangeBand() / 2)
+                  .attr("text-anchor", "start")
+                  .text(function(d, i) { return d.name; })
+                  .attr("transform", function(d, i) { return "translate(" + x(i) + ",0)rotate(-45)"; });              
+
+              
+              svg = svg.append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                          
+              svg.append("rect")
+                  .attr("class", "background")
+                  .attr("width", width)
+                  .attr("height", height);                  
+
+              var row = svg.selectAll(".row")
+                  .data(matrix)
+                .enter().append("g")
+                  .attr("class", "row")
+                  .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+                  .each(row);
+
+              row.append("line")
+                  .attr("x2", width);
+              
+              var column = svg.selectAll(".column")
+                  .data(matrix)
+                .enter().append("g")
+                  .attr("class", "column")
+                  .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+
+              column.append("line")
+                  .attr("x1", -width);
+              
+              function row(row) {
+                var cell = d3.select(this).selectAll(".cell")
+                    .data(row.filter(function(d) { return d.z; }))
+                  .enter().append("rect")
+                    .attr("class", "cell")
+                    .attr("x", function(d) { return x(d.x); })
+                    .attr("width", x.rangeBand())
+                    .attr("height", x.rangeBand())
+                    /*.style("fill-opacity", function(d) { return z(d.z); })*/
+                    .style("fill", function(d) { return z(Math.log(d.z));})
+                    .on("mouseover", mouseover)
+                    .on("mouseout", mouseout)                    
+                    .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");});
+              }
+
+              // Prepare the tooltip
+              function setTooltipText(d) {                    
+                    var node1 = nodes[d.x];
+                    var node2 = nodes[d.y];
+                    var tooltiphtml = "<ul><li>Class 1: "+node1.name+"</li>"+
+                        "<li>Class 2: "+node2.name + "</li>"+
+                        "<li>Count:"+d.z+"</li></ul>";
+
+                    tooltip.html(tooltiphtml);
+                    tooltip.style("visibility", "visible");
+              }
+                              
+              function mouseover(p) {
+                d3.selectAll("text.rowtitle").classed("active", function(d, i) {
+                 return i == p.y; 
+                });
+                d3.selectAll("text.columntitle").classed("active", function(d, i) { return i == p.x; });
+                setTooltipText(p);
+              }
+
+              function mouseout() {
+                d3.selectAll("text").classed("active", false);
+                tooltip.style("visibility", "hidden");
+              }
+
+              d3.select("#order").on("change", function() {
+                clearTimeout(timeout);
+                order(this.value);
+              });
+
+              function order(value) {
+                x.domain(orders[value]);
+
+                var t = svg.transition().duration(2500);
+
+                t.selectAll(".row")
+                    .delay(function(d, i) { return x(i) * 4; })
+                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+                  .selectAll(".cell")
+                    .delay(function(d) { return x(d.x) * 4; })
+                    .attr("x", function(d) { return x(d.x); });
+
+                t.selectAll(".column")
+                    .delay(function(d, i) { return x(i) * 4; })
+                    .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+
+                t.selectAll(".rowtitle")
+                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+                t.selectAll(".columntitle")
+                    .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
+              }
+              
+              order("name");
+            };
+
+            //duplication co-occurance data
+            var ccomData = ${self.getCoocurrenceData()};
+            drawCooccurrence(ccomData);            
+        '''
+        #duplication co-occurance matrix data.
+        # similar to http://bost.ocks.org/mike/miserables/
+
+    @stringfunction
+    def outputHtml(self, d3js_text):
+        '''<!DOCTYPE html>
+        <html>        
+        <head>
+        <meta charset="utf-8">
+        <style type="text/css">
+                #co_ocm {
+                    margin-top:20px;
+                }
+                #co_ocm .background {
+                    fill: #eee;
+                }
+
+                #co_ocm line {
+                    stroke: #fff;
+                }
+
+                #co_ocm text.active {
+                    fill: red;
+                }
+                 .tooltip {
+                    position:absolute;
+                    z-index: 10;
+                    background-color:#FFFFF0;
+                    padding:3px;
+                    border:2px solid #808080;
+                }
+                .tooltip ul {
+                    list-style-type:none;
+                    padding:3px;
+                    margin:0px;
+                }
+        </style>
+        <script>
+            // Embedd the text of d3.js
+            $d3js_text
+        </script>
+        </head>
+        <body>
+            <div><h1>Class Co occurance Matrix</h1></div>
+            <div id="co_ocm"></div>
+        </body>
+        <script>
+            ${self.outputCComScript()}
+        </script>
+        </html>
+        '''
+
+    def getCoocurrenceData(self):
+        '''
+        return co-occurance data in JSON format.
+        '''
+        return self.ccom.getJSON()
 
 class NameTokenizer(SourceCodeTokenizer):
     '''
@@ -196,19 +325,11 @@ class ClassCoOccurMatrix(object):
         create a co-occurance data in nodes and links list format. Something that can be
         dumped to json quickly
         '''
-        groups = dict() #key = directory name, value = index
         nodes = dict() # key = classname, value = index
         links = dict() #key (classname1, classname2), value = number of ocurrances
 
-        #add group (directory of the file) into the groups list
-        def addGroup(filename):
-            dir = os.path.dirname(filename)
-            if dir not in groups:
-                groups[dir] = len(groups)
-
         #add file into file list
         def addNode(classname):            
-            addGroup(classname)
             if classname not in nodes:
                 nodes[classname] = len(nodes)
         
@@ -223,12 +344,7 @@ class ClassCoOccurMatrix(object):
         for co_pair, count in self.ccom.iteritems():
             addLink(co_pair[0], co_pair[1])
 
-        #the child folders should be near to each other. Hence reindex of groups list again.
-        groupslist = sorted(groups.keys())
-        for i, grp in enumerate(groupslist):
-            groups[grp] = i
-
-        return groups, nodes, links
+        return nodes, links
                                 
     def create(self):
         flist = GetDirFileList(self.dirname)    
@@ -253,7 +369,10 @@ class ClassCoOccurMatrix(object):
 
         self.ccom[name_tupple] = self.ccom.get(name_tupple, 0)+1
         
-    def __addFile(self, srcfile):        
+    def __addFile(self, srcfile):
+        '''
+        extracted all tokens from a source file and then add it to co-occurence matrix
+        '''
         print "Adding class names information of file: %s" % srcfile
 
         #create a list of classnames and keep it in classnames set
@@ -268,6 +387,26 @@ class ClassCoOccurMatrix(object):
                 self.class_tokens.add(value)
             
         self.file_tokens[srcfile] = names
+
+    def getJSON(self):
+        '''
+        create a co-occurance data in JSON format.
+        '''
+        nodes, links = self.getCooccuranceData()
+        nodelist = [None]* len(nodes)
+        linklist = list()
+        #create a list of node dictionaries
+        assert(len(nodelist) == len(nodes))
+            
+        for node, index in nodes.iteritems():
+            nodelist[index] = {'name':node}
+        #create a list of link dictionaries
+        for link, value in links.iteritems():
+            source = link[0]
+            target = link[1]
+            linklist.append({ 'source':nodes[source], 'target':nodes[target], 'value':value})
+
+        return json.dumps({'nodes':nodelist, 'links' : linklist})
 
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
@@ -292,13 +431,8 @@ def RunMain():
         dirname = args[0]
             
         ccom = ClassCoOccurMatrix(dirname, options.pattern)
-        jsdir = getJsDirPath()
-        
-        with FileOrStdout(options.outfile) as outf:
-            #read the text of d3js file
-            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
-            #outf.write(OutputCCOM(ccom,d3jstext))
-                
+        writer = HtmlCCOMWriter(ccom)
+        writer.write(options.outfile)
         
 if(__name__ == "__main__"):
     RunMain()
