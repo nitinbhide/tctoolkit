@@ -85,18 +85,21 @@ class HtmlCCOMWriter(object):
 
               // Convert links to matrix; count character occurrences.
               var maxLinkValue = 0;
+              var minLinkValue = 999999999;
               cooc_mat.links.forEach(function(link) {
                 var count = link.value.count;
                 matrix[link.source][link.target].z = count;                
                 matrix[link.target][link.source].z = count;                
                 nodes[link.source].count += count;
                 nodes[link.target].count += count;
-                maxLinkValue = d3.max([maxLinkValue, count]);
+                maxLinkValue = Math.max(maxLinkValue, count);
+                minLinkValue = Math.min(minLinkValue, count);
               });
+              minLinkValue = Math.Max(minLinkValue, 1)
 
               // update the color scale domain.
-              var step = (Math.log(maxLinkValue+1) - 0)/(1.0*colors.length);
-              z.domain(d3.range(0, Math.log(maxLinkValue+1),step));
+              var step = (Math.log(maxLinkValue+1) - Math.log(minLinkValue))/(1.0*colors.length);
+              z.domain(d3.range(Math.log(minLinkValue), Math.log(maxLinkValue+1),step));
 
               // Precompute the orders.
               var orders = {
