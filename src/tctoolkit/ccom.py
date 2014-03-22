@@ -102,6 +102,13 @@ class HtmlCCOMWriter(object):
               var orders = {
                 name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
                 count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
+                group:d3.range(n).sort(function(a, b) { 
+                    var cmp = nodes[b].group - nodes[a].group; 
+                    if (cmp == 0) {
+                        cmp = nodes[b].count - nodes[a].count
+                    }
+                    return cmp;
+                }),
               };
 
               // The default sort order.
@@ -227,7 +234,7 @@ class HtmlCCOMWriter(object):
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               
-              order("name");
+              order("group");
             };
 
             //duplication co-occurance data
@@ -331,7 +338,7 @@ class ClassCoOccurMatrix(object):
         #add file into file list
         def addNode(classname):            
             if classname not in nodes:
-                nodes[classname] = len(nodes)
+                nodes[classname] = { 'count': 0, 'index' : len(nodes)}
         
         #add a link (co-occurance) between two classnames into links list.
         def addLink(cname1, cname2):
@@ -339,13 +346,68 @@ class ClassCoOccurMatrix(object):
                 cname1,cname2 = cname2, cname1
             addNode(cname1)
             addNode(cname2)
-            links[(cname1,cname2)] = {'count': self.ccom[(cname1,cname2)]}
+            linkcount = self.ccom[(cname1,cname2)]
+            links[(cname1,cname2)] = {'count': linkcount}
+            nodes[cname1]['count'] = nodes[cname1]['count']+linkcount
+            nodes[cname2]['count'] = nodes[cname2]['count']+linkcount
                            
         for co_pair, count in self.ccom.iteritems():
             addLink(co_pair[0], co_pair[1])
 
+        groups = self.detectGroups(nodes, links)
+
         return nodes, links
-                                
+    
+    def detectGroups(self, nodes, links):
+        '''
+        simple group/cluster detection algorithm.
+        1. start with node with highest number of links
+        2. find all the nodes linked to this node.
+        3. these form one group.
+        4. Repeat this process
+        '''
+        #first create a node set for search
+        nodeset = set(nodes.iterkeys())
+        
+        def keyfunc(x):
+            return nodes[x]['count']
+
+        def findMaxCountNode(nodeset):
+            maxnode = max(nodeset, key= keyfunc)
+            return maxnode
+
+        def findConnectedNode(nodeset, node):
+            #find the node connected to 'node', return it.
+            for link in links.iterkeys():
+                if(link[0] == node and link[1] in nodeset):
+                    return link[1]
+                if link[1] == node and link[0] in nodeset:
+                    return link[0]
+            return None
+
+        groups = list()
+        
+        while len(nodeset) > 0:
+            maxnode = findMaxCountNode(nodeset)
+            #remove maxnode from nodeset
+            nodeset.remove(maxnode)
+            #now trace all the nodes connected to this node.
+            curgroup = list()
+            groups.append(curgroup)
+            curgroup.append(maxnode)
+            connode = findConnectedNode(nodeset, maxnode)
+            while connode != None:
+                nodeset.remove(connode)
+                curgroup.append(connode)
+                connode = findConnectedNode(nodeset, maxnode)
+        #update the group index in the nodes dictionary
+        groupkey = 'group'
+        for grpidx, group in enumerate(groups):
+            for node in group:
+                nodes[node][groupkey] = grpidx
+
+        return groups
+                            
     def create(self):
         flist = GetDirFileList(self.dirname)    
         #first add all names into the set
@@ -398,13 +460,13 @@ class ClassCoOccurMatrix(object):
         #create a list of node dictionaries
         assert(len(nodelist) == len(nodes))
             
-        for node, index in nodes.iteritems():
-            nodelist[index] = {'name':node}
+        for node, nodedata in nodes.iteritems():
+            nodelist[nodedata['index']] = {'name':node, 'count':nodedata['count'], 'group':nodedata['group']}
         #create a list of link dictionaries
         for link, value in links.iteritems():
             source = link[0]
             target = link[1]
-            linklist.append({ 'source':nodes[source], 'target':nodes[target], 'value':value})
+            linklist.append({ 'source':nodes[source]['index'], 'target':nodes[target]['index'], 'value':value})
 
         return json.dumps({'nodes':nodelist, 'links' : linklist})
 
