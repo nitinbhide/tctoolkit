@@ -319,9 +319,13 @@ class ClassCoOccurMatrix(object):
     '''
     Generate Class Co-occurance matrix in HTML format
     '''    
-    def __init__(self, dirname, pattern):
+    def __init__(self, dirname, pattern, mincoocurrance):
+        '''
+        mincoocurrance : minimum number of co-cocurrances to consider this in display
+        '''
         self.dirname = dirname
         self.pattern = pattern
+        self.mincoocurrance = int(mincoocurrance)
         self.ccom = dict()
         self.file_tokens = dict()
         self.class_tokens = set()
@@ -344,12 +348,13 @@ class ClassCoOccurMatrix(object):
         def addLink(cname1, cname2):
             if cname1 > cname2:
                 cname1,cname2 = cname2, cname1
-            addNode(cname1)
-            addNode(cname2)
             linkcount = self.ccom[(cname1,cname2)]
-            links[(cname1,cname2)] = {'count': linkcount}
-            nodes[cname1]['count'] = nodes[cname1]['count']+linkcount
-            nodes[cname2]['count'] = nodes[cname2]['count']+linkcount
+            if linkcount > self.mincoocurrance:
+                addNode(cname1)
+                addNode(cname2)
+                links[(cname1,cname2)] = {'count': linkcount}
+                nodes[cname1]['count'] = nodes[cname1]['count']+linkcount
+                nodes[cname2]['count'] = nodes[cname2]['count']+linkcount
                            
         for co_pair, count in self.ccom.iteritems():
             addLink(co_pair[0], co_pair[1])
@@ -484,6 +489,8 @@ def RunMain():
                       help="create tag cloud of files matching the pattern. Default is '*.c' ")
     parser.add_option("-o", "--outfile", dest="outfile", default=None,
                       help="outfile name. Output to stdout if not specified")
+    parser.add_option("-m", "--minimum", dest="mincoocurrance", default=2,type = 'int',
+                      help="minimum coocurrance count required")
     
     (options, args) = parser.parse_args()
     
@@ -492,7 +499,7 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        ccom = ClassCoOccurMatrix(dirname, options.pattern)
+        ccom = ClassCoOccurMatrix(dirname, options.pattern, options.mincoocurrance)
         writer = HtmlCCOMWriter(ccom)
         writer.write(options.outfile)
         
