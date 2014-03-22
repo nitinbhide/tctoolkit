@@ -14,15 +14,11 @@ import logging
 import tempfile
 import os
 import shutil
-from pygments import highlight
-from pygments.lexers import CppLexer
-from pygments.formatters import HtmlFormatter
+from itertools import tee,izip
 
 import matchstore
 from rabinkarp import RabinKarp
 from tokenizer import Tokenizer
-
-
 
 class CodeDupDetect(object):
     def __init__(self,filelist, minmatch=100, fuzzy=False,min_lines=3):
@@ -97,31 +93,58 @@ class CodeDupDetect(object):
                 tmp_source.close()
                 shutil.copy(tmp_source_name, fn)
                 begin_no += 1
+    
+    def getCooccuranceData(self, dirname):
+        '''
+        create a co-occurance data in nodes and links list format. Something that can be
+        dumped to json quickly
+        '''
+        groups = dict() #key = directory name, value = index
+        nodes = dict() # key = filename, value = index
+        links = dict() #key (filename, filename), value = number of ocurrances
 
-    def html_output(self,outfile_fn):
-        def code(match):
-            with open(match.srcfile(), 'rb') as src:
-                for i in range(match.getStartLine()):
-                    src.readline()
-                return [src.readline() for i in range(match.getLineCount())]
-        #try:
-        #    import chardet
-        #    lexer = CppLexer(encoding='chardet')
-        #except:
-        #    lexer = CppLexer(encoding='utf-8')
-            
-        formatter = HtmlFormatter(encoding='utf-8')
-        with open(outfile_fn, 'wb') as out:
-            out.write('<html><head><style type="text/css">%s</style></head><body>'%formatter.get_style_defs('.highlight'))
-            id = 0
-            copies = sorted(self.findcopies(),reverse=True,key=lambda x:x.matchedlines)
-            out.write('<ul>%s</ul>'%'\n'.join(['<a href="#match_%i">Match %i</a>'%(i,i) for i in range(len(copies))]))
-            for matches in copies:
-                out.write('<h1 id="match_%i">MATCH %i</h1><ul>'%(id,id))
-                out.write(' '.join(['<li>%s:%i-%i</li>'%(m.srcfile(), m.getStartLine(), m.getStartLine() + m.getLineCount()) for m in matches]))
-                out.write('</ul><div class="highlight">')
-                highlight(''.join(code([s for s in matches][0])),Tokenizer.get_lexer2(m.srcfile()), formatter, outfile=out)
-                out.write('<a href="#">Up</a></div>')
-                id += 1
-            out.write('</body></html>')
-            
+        #add group (directory of the file) into the groups list
+        def addGroup(filename):
+            dir = os.path.dirname(filename)
+            if dir not in groups:
+                groups[dir] = len(groups)
+
+        #add file into file list
+        def addNode(filename):
+            filename = os.path.relpath(filename, dirname)
+            addGroup(filename)
+            if filename not in nodes:
+                nodes[filename] = len(nodes)
+        
+        #add a link (duplication) between two files into links list.
+        def addLink(match1, match2):
+            file1 = os.path.relpath(match1.srcfile(), dirname)
+            file2 = os.path.relpath(match2.srcfile(), dirname)
+            if file1 > file2:
+                file1,file2 = file2, file1
+            linkinfo = links.get((file1,file2), {'lines':0, 'count':0})
+            linkinfo['lines'] = linkinfo['lines']+match1.getLineCount()
+            linkinfo['count'] = linkinfo['count']+1
+            links[(file1,file2)] = linkinfo
+        
+        #copied from python recipes to get 'two' items at a time from list. (n, n+1)
+        def pairwise(iterable):
+            "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+            a, b = tee(iterable)
+            next(b, None)
+            return izip(a, b)
+
+        for matchset in self.findcopies():
+            #for each matchset first add files into the nodes dictionary
+            matchset = list(matchset)
+            for match in matchset:
+                addNode(match.srcfile())
+            for match1, match2 in pairwise(matchset):
+                addLink(match1, match2)
+
+        #the child folders should be near to each other. Hence reindex of groups list again.
+        groupslist = sorted(groups.keys())
+        for i, grp in enumerate(groupslist):
+            groups[grp] = i
+
+        return groups, nodes, links

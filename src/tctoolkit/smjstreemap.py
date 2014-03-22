@@ -271,13 +271,15 @@ def RunMain():
 
     (options, args) = parser.parse_args()
     
-    if( len(args) < 1):
+    if( len(args) < 2):
         print "Invalid number of arguments. Use smtreemapjs.py --help to see the details."
     else:            
         smfile = args[0]
         htmlfilename = args[1]
-        jsdir = getJsDirPath()
+        
         treemap = D3JSTreemap(smfile)
+
+        jsdir = getJsDirPath()
         d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
         with open(htmlfilename, "w") as outf:
             outf.write(TreemapHtml(treemap,d3jstext))

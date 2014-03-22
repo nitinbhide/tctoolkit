@@ -18,7 +18,7 @@ from optparse import OptionParser
 
 from thirdparty.templet import stringfunction
 from tokentagcloud.tokentagcloud import *
-from tctoolkitutil.common import readJsText,getJsDirPath
+from tctoolkitutil import readJsText,getJsDirPath
 
 @stringfunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
@@ -73,7 +73,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                         "#e0f3f8","#abd9e9","#74add1","#4575b4","#313695"];
         console.log(colors);
         colors.reverse();
-        var fill =  d3.scale.ordinal();
+        var fill =  d3.scale.linear();
         fill.range(colors);
         
         function drawTagCloud(wordsAndFreq, selector, width, height)
@@ -88,8 +88,9 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
             fontSize.range([10,100])
             // color is calculated based on how many files the word is found
             minColor = d3.min(wordsAndFreq, function(d) { return d.color});
-            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});            
-            fill.domain([Math.log(minColor), Math.log(maxColor+1)]);
+            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});
+            var step = (Math.log(maxColor+1)-Math.log(minColor))/colors.length;            
+            fill.domain(d3.range(Math.log(minColor), Math.log(maxColor+1), step));
           
             d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
@@ -137,13 +138,13 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         var width=900;
         var height = width*3.0/4.0;
         // Show the tag cloud for keywords
-        var keywordsAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=KeywordFilter)};        
+        var keywordsAndFreq = ${ tagcld.getJSON(filterFunc=KeywordFilter)};        
         drawTagCloud(keywordsAndFreq, "#keyword",width, height);
         // Show the tag cloud for names (class names, function names and variable names)
-        var namesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=NameFilter) }    ;        
+        var namesAndFreq = ${ tagcld.getJSON(filterFunc=NameFilter) }    ;        
         drawTagCloud(namesAndFreq, "#names",width, height);
         // Show the tag cloud for class names and function names only
-        var classNamesAndFreq = ${ tagcld.getTagCloudJSON(filterFunc=ClassFuncNameFilter) };        
+        var classNamesAndFreq = ${ tagcld.getJSON(filterFunc=ClassFuncNameFilter) };        
         drawTagCloud(classNamesAndFreq, "#classnames",width, height);
         
         var clrScaleDivs = d3.select('body').selectAll('.colorscale');
@@ -156,7 +157,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
     '''    
 
 
-class HtmlSourceTagCloud(SourceCodeTagCloud):
+class D3SourceTagCloud(SourceCodeTagCloud):
     '''
     Generate source code tag cloud in HTML format
     '''
@@ -164,46 +165,9 @@ class HtmlSourceTagCloud(SourceCodeTagCloud):
     MAXFONTSIZE = 8
 
     def __init__(self, dirname, pattern):
-        super(HtmlSourceTagCloud, self).__init__(dirname, pattern)
-        self.maxFreqLog = 0.0
-        self.minFreqLog = 0.0
-        self.fontsizevariation = HtmlSourceTagCloud.MAXFONTSIZE-HtmlSourceTagCloud.MINFONTSIZE
-        assert(self.fontsizevariation > 0)
-        
-    def __getTagFontSize(self, freq):
-        #change the font size between MINFONTSIZE to MAXFONTSIZE relative to current font size
-        #now calculate the scaling factor for scaling the freq to fontsize.
-        scalingFactor = self.fontsizevariation/(self.maxFreqLog-self.minFreqLog)
-        fontsize = int(HtmlSourceTagCloud.MINFONTSIZE+((math.log(freq)-self.minFreqLog)*scalingFactor)+0.5)
-        #now round off to ensure that font size remains in MINFONTSIZE and MAXFONTSIZE
-        assert(fontsize >= HtmlSourceTagCloud.MINFONTSIZE and fontsize <= HtmlSourceTagCloud.MAXFONTSIZE)
-        return(fontsize)
-    
-    def getTagCloudHtml(self,numWords=100, filterFunc=None):
-        tagHtmlStr = ''
-
-        tagWordList = self.getTags(numWords, filterFunc)
+        super(D3SourceTagCloud, self).__init__(dirname, pattern)
                 
-        if( len(tagWordList) > 0):                        
-            minFreq = min(tagWordList,key=operator.itemgetter(1))[1]
-            self.minFreqLog = math.log(minFreq)            
-            maxFreq = max(tagWordList,key=operator.itemgetter(1))[1]
-            self.maxFreqLog = math.log(maxFreq)
-            difflog = self.maxFreqLog-self.minFreqLog
-            #if the minfreqlog and maxfreqlog are nearly same then makesure that difference is at least 0.001 to avoid
-            #division by zero errors later.
-            assert(difflog >= 0.0)
-            if( difflog < 0.001):
-                self.maxFreqLog = self.minFreqLog+0.001
-            #change minFreqLog in such a way smallest log(freq)-minFreqLog is greater than 0
-            self.minFreqLog = self.minFreqLog-((self.maxFreqLog-self.minFreqLog)/self.fontsizevariation)
-            
-            #change the font size between "-2" to "+8" relative to current font size
-            tagHtmlStr = ' '.join([('<font size="%+d" class="tagword">%s(%d)</font>\n'%(self.__getTagFontSize(freq), x,freq))
-                                       for x,freq in tagWordList])
-        return(tagHtmlStr)
-    
-    def getTagCloudJSON(self, numWords=100, filterFunc=None):
+    def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
 
         tagWordList = self.getTags(numWords, filterFunc)
@@ -241,7 +205,7 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        tagcld = HtmlSourceTagCloud(dirname, options.pattern)
+        tagcld = D3SourceTagCloud(dirname, options.pattern)
         jsdir = getJsDirPath()
         
         with FileOrStdout(options.outfile) as outf:

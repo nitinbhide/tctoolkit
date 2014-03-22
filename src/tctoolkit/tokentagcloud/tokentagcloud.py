@@ -10,33 +10,24 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
 
-from __future__ import with_statement
-
-from pygments.lexers import get_lexer_for_filename
-from pygments.filter import simplefilter
-from pygments.token import Token
-
 import operator
 import math
 import string
-from tctoolkitutil.common import *
-from tctoolkitutil.tagcloud import TagCloud
 
-class Tokenizer(object):
+from pygments.token import Token
+
+from tctoolkitutil.common import *
+from tctoolkitutil import TagCloud
+from tctoolkitutil import SourceCodeTokenizer
+from tctoolkitutil import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+
+class TagCloudTokenizer(SourceCodeTokenizer):
     '''
-    tokenizing the source files
+    create tokenizer useful for tag cloud generation. (ignore comments, single character variable names, etc)
     '''
-    __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
-    
     def __init__(self, srcfile, ignore_comments=True):
-        self.srcfile = srcfile
-        self.tokenlist=None
+        super(TagCloudTokenizer, self).__init__(srcfile)
         self.ignore_comments = ignore_comments
-        
-    def __iter__(self):
-        if(self.tokenlist==None):
-            self.tokenlist = [token for token in self.get_tokens()]
-        return(self.tokenlist.__iter__())
 
     def ignore_type(self, ttype,value):
         ignore = False
@@ -51,29 +42,7 @@ class Tokenizer(object):
         if( ignore == False and ttype in Token.Literal and len(value) < 2):
             ignore = True
         return(ignore)
-    
-    def get_tokens(self):
-        pyglexer = Tokenizer.get_lexer(self.srcfile)
-        
-        linenum=1
-        with open(self.srcfile, "r") as code:
-            for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):    
-                newvalue = value.strip()
-                if( self.ignore_type(ttype,newvalue)==False):
-                    yield ttype,newvalue
 
-    @classmethod
-    def get_lexer(selfcls, filename):
-        '''
-        search lexer in the lexers list first based on the file extension.
-        if it not there then call the get_lexer_for_filename
-        '''
-        name, extension = os.path.splitext(filename)
-        if(extension not in Tokenizer.__LEXERS_CACHE):
-            pyglexer = get_lexer_for_filename(filename,stripall=True)
-            Tokenizer.__LEXERS_CACHE[extension] = pyglexer
-        return Tokenizer.__LEXERS_CACHE[extension]
-                
 
 class SourceCodeTagCloud(object):
     '''
@@ -98,10 +67,10 @@ class SourceCodeTagCloud(object):
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
         print "Adding tags information of file: %s" % srcfile
-        tokenizer = Tokenizer(srcfile)
+        tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
         for ttype, value in tokenizer:
-            self.tagcloud.addWord((value,ttype))            
+            self.tagcloud.addWord(value,ttype)
             if value not in fileTokenset:
                 self.fileTagCount[value] = self.fileTagCount.get(value, 0)+1
                 fileTokenset.add(value)
@@ -124,30 +93,3 @@ def NameTagCloud(dirname, pattern):
     
     return(taghtml)
 
-'''
-Filter Functions to get extract tag clouds
-'''
-
-def TagTypeFilter(taginfo, freq, tagType):
-    validtag = None
-    if(freq > 1 and taginfo[1] in tagType):
-        validtag = (taginfo[0], freq)
-    return(validtag)
-    
-def KeywordFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Keyword))    
-
-def NameFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Name))    
-    
-def ClassNameFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Name.Class))    
-    
-def FuncNameFilter(taginfo, freq):
-    return(TagTypeFilter(taginfo, freq, Token.Name.Function))
-
-def ClassFuncNameFilter(taginfo, freq):
-    validtag = ClassNameFilter(taginfo, freq)
-    if( validtag == None):
-        validtag = FuncNameFilter(taginfo, freq)
-    return(validtag)

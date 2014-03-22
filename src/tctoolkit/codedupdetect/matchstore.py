@@ -28,10 +28,12 @@ class MatchData:
 ##        print "End : ",endtoken
 
     def __cmp__(self,other):
-        val = cmp(self.srcfile(),other.srcfile())
-        if( val==0):
-            #file name is same now. Compareline numbers
-            val=cmp(self.getStartLine(),other.getStartLine())
+        val = 1
+        if other != None:
+            val = cmp(self.srcfile(),other.srcfile())
+            if( val==0):
+                #file name is same now. Compareline numbers
+                val=cmp(self.getStartLine(),other.getStartLine())
         return(val)
 
     def __hash__(self):
@@ -53,22 +55,46 @@ class MatchSet:
     def __init__(self):
         self.matchset=set()
         self.matchedlines = None
+        self.firstMatch = None
 
     def addMatch(self, matchlen, matchstart, matchend):
+        '''
+        add the match information in the match data set
+        '''
         matchdata = MatchData(matchlen, matchstart,matchend)
         self.matchset.add(matchdata)
+        if self.firstMatch == None:
+            self.firstMatch = matchdata
+
         lc = matchdata.getLineCount()
         if( self.matchedlines == None):
             self.matchedlines = lc
         else:
             self.matchedlines = min(self.matchedlines,lc)
+
         
     def __len__(self):
         return(len(self.matchset))
 
     def __iter__(self):
         return(self.matchset.__iter__())
-    
+
+    def getMatchSource(self):
+        '''
+        extract the source code from the first file in matchset.
+        '''
+        match = self.firstMatch
+        with open(match.srcfile(), 'rb') as src:
+            for i in range(match.getStartLine()):
+                src.readline()
+            return [src.readline() for i in range(match.getLineCount())]
+        
+    def getSourceLexer(self):
+        '''
+        get lexer for firstMatch of this matcheset
+        '''
+        return tokenizer.Tokenizer.get_lexer_for(self.firstMatch.srcfile())
+
 class MatchStore:
     def __init__(self,minmatch):
         self.minmatch = minmatch
