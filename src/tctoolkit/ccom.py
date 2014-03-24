@@ -231,11 +231,11 @@ class HtmlCCOMWriter(object):
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
                 
-                d3.selectAll(".rowtitle")
-                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; });
+                t = rowtitles.transition().duration(2500);
+                t.attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; });
 
-                d3.selectAll(".columntitle")
-                    .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
+                t = columntitles.transition().duration(2500);                
+                t.attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               
               order("group");
