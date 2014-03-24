@@ -9,8 +9,6 @@ and is released under the New BSD License: http://www.opensource.org/licenses/bs
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
 
-from __future__ import with_statement
-
 import sys
 import logging
 
@@ -21,7 +19,7 @@ from optparse import OptionParser
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 
-from tctoolkitutil.common import *
+from tctoolkitutil import *
 from thirdparty.templet import *
 from codedupdetect import CodeDupDetect
 
@@ -360,11 +358,13 @@ class CDDApp(object):
 
     def getFileList(self):
         if( self.filelist == None):
+            filelister = DirFileLister(self.dirname)
+            if( self.options.lang != None):
+                self.filelist = filelister.getFilesForLang(self.options.lang)
             if( self.options.pattern ==''):
-                self.filelist = PreparePygmentsFileList(self.dirname)
+                self.filelist = filelister.getPygmentsFiles()
             else:
-                rawfilelist = GetDirFileList(self.dirname)
-                self.filelist = fnmatch.filter(rawfilelist,self.options.pattern)
+                self.filelist = filelister.getMatchingFiles(self.options.pattern)                
                 
         return(self.filelist)
 
@@ -432,7 +432,11 @@ def RunMain():
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     parser.add_option("-g", "--log", dest="log", default=False, action="store_true",
                       help="Enable logging. Log file generated in the current directory as cdd.log")
+    parser.add_option("-l", "--lang", dest="lang", default=None,
+                      help="programming language. Pattern will be ignored if language is defined")
+    
     (options, args) = parser.parse_args()
+
     
     if options.report != None:
         options.format = 'html'
