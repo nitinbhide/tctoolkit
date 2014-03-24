@@ -95,7 +95,7 @@ class HtmlCCOMWriter(object):
                 maxLinkValue = Math.max(maxLinkValue, count);
                 minLinkValue = Math.min(minLinkValue, count);
               });
-              minLinkValue = Math.Max(minLinkValue, 1)
+              minLinkValue = Math.max(minLinkValue, 1)
 
               // update the color scale domain.
               var step = (Math.log(maxLinkValue+1) - Math.log(minLinkValue))/(1.0*colors.length);
