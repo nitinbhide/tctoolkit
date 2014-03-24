@@ -16,7 +16,7 @@ import string
 
 from pygments.token import Token
 
-from tctoolkitutil.common import *
+from tctoolkitutil import DirFileLister
 from tctoolkitutil import TagCloud
 from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
@@ -48,21 +48,21 @@ class SourceCodeTagCloud(object):
     '''
     wrapper class for generating the data for source code tag cloud
     '''
-    def __init__(self, dirname, pattern):
+    def __init__(self, dirname, pattern='*.c', lang=None):
         self.dirname = dirname
         self.pattern = pattern
+        self.lang = lang
         self.tagcloud = None #Stores frequency of tag cloud.
         self.fileTagCount = dict() #Store information about how many files that tag was found
         self.createTagCloud()
         
         
     def createTagCloud(self):
-        flist = GetDirFileList(self.dirname)    
         self.tagcloud = TagCloud()
     
-        for fname in flist:
-            if fnmatch.fnmatch(fname,self.pattern):
-                self.__addFile(fname)        
+        dirlister= DirFileLister(self.dirname)    
+        for fname in dirlister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
+            self.__addFile(fname)
         
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
