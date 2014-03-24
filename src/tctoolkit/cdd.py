@@ -202,8 +202,8 @@ class HtmlWriter(object):
               function setTooltipText(d) {                    
                     var node1 = nodes[d.x];
                     var node2 = nodes[d.y];
-                    var tooltiphtml = "<ul><li>File 1: "+groups[node1.group]+'/'+node1.name+"</li>"+
-                        "<li>File 2: "+groups[node2.group]+'/'+node2.name + "</li>"+
+                    var tooltiphtml = "<ul><li>Column : "+groups[node1.group]+'/'+node1.name+"</li>"+
+                        "<li>Row : "+groups[node2.group]+'/'+node2.name + "</li>"+
                         "<li>Lines:"+d.z+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
@@ -244,9 +244,9 @@ class HtmlWriter(object):
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
 
-                d3.selectAll(".rowtitle")
+                rowtitles.transition().duration(2500)
                     .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
-                d3.selectAll(".columntitle")
+                columntitles.transition().duration(2500)
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               
