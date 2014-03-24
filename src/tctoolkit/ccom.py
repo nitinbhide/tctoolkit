@@ -189,8 +189,8 @@ class HtmlCCOMWriter(object):
               function setTooltipText(d) {                    
                     var node1 = nodes[d.x];
                     var node2 = nodes[d.y];
-                    var tooltiphtml = "<ul><li>Class 1: "+node1.name+"</li>"+
-                        "<li>Class 2: "+node2.name + "</li>"+
+                    var tooltiphtml = "<ul><li>Column : "+node1.name+"</li>"+
+                        "<li>Row : "+node2.name + "</li>"+
                         "<li>Count:"+d.z+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
@@ -230,10 +230,11 @@ class HtmlCCOMWriter(object):
                 t.selectAll(".column")
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+                
+                d3.selectAll(".rowtitle")
+                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; });
 
-                t.selectAll(".rowtitle")
-                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
-                t.selectAll(".columntitle")
+                d3.selectAll(".columntitle")
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               

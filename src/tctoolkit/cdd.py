@@ -244,9 +244,9 @@ class HtmlWriter(object):
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
 
-                t.selectAll(".rowtitle")
+                d3.selectAll(".rowtitle")
                     .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
-                t.selectAll(".columntitle")
+                d3.selectAll(".columntitle")
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               
