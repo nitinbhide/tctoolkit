@@ -160,12 +160,9 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
 class D3SourceTagCloud(SourceCodeTagCloud):
     '''
     Generate source code tag cloud in HTML format
-    '''
-    MINFONTSIZE = -2
-    MAXFONTSIZE = 8
-
-    def __init__(self, dirname, pattern):
-        super(D3SourceTagCloud, self).__init__(dirname, pattern)
+    '''    
+    def __init__(self, dirname, pattern='*.c', lang=None):
+        super(D3SourceTagCloud, self).__init__(dirname, pattern, lang)
                 
     def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
@@ -197,6 +194,8 @@ def RunMain():
                       help="create tag cloud of files matching the pattern. Default is '*.c' ")
     parser.add_option("-o", "--outfile", dest="outfile", default=None,
                       help="outfile name. Output to stdout if not specified")
+    parser.add_option("-l", "--lang", dest="lang", default=None,
+                      help="programming language. Pattern will be ignored if language is defined")
     
     (options, args) = parser.parse_args()
     
@@ -205,7 +204,7 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        tagcld = D3SourceTagCloud(dirname, options.pattern)
+        tagcld = D3SourceTagCloud(dirname, pattern=options.pattern, lang=options.lang)
         jsdir = getJsDirPath()
         
         with FileOrStdout(options.outfile) as outf:
