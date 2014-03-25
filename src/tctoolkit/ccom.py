@@ -104,9 +104,9 @@ class HtmlCCOMWriter(object):
               // Precompute the orders.
               var orders = {
                 name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
-                count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
+                count: d3.range(n).sort(function(a, b) { return nodes[a].count - nodes[b].count; }),
                 group:d3.range(n).sort(function(a, b) { 
-                    var cmp = nodes[b].group - nodes[a].group; 
+                    var cmp = nodes[a].group - nodes[b].group; 
                     if (cmp == 0) {
                         cmp = nodes[b].count - nodes[a].count
                     }
@@ -378,12 +378,9 @@ class ClassCoOccurMatrix(object):
         '''
         #first create a node set for search
         nodeset = set(nodes.iterkeys())
-        
-        def keyfunc(x):
-            return nodes[x]['count']
-
+                
         def findMaxCountNode(nodeset):
-            maxnode = max(nodeset, key= keyfunc)
+            maxnode = max(nodeset, key= lambda n: nodes[n]['count'])
             return maxnode
 
         def findConnectedNode(nodeset, node):
