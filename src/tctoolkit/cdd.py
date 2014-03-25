@@ -123,8 +123,8 @@ class HtmlWriter(object):
               // Precompute the orders.
               var orders = {
                 name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
-                count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
-                group: d3.range(n).sort(function(a, b) { return nodes[b].group - nodes[a].group; })
+                count: d3.range(n).sort(function(a, b) { return nodes[a].count - nodes[b].count; }),
+                group: d3.range(n).sort(function(a, b) { return nodes[a].group - nodes[b].group; })
               };
 
               // The default sort order.
