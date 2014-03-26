@@ -361,7 +361,7 @@ class CDDApp(object):
             filelister = DirFileLister(self.dirname)
             if( self.options.lang != None):
                 self.filelist = filelister.getFilesForLang(self.options.lang)
-            if( self.options.pattern ==''):
+            elif( self.options.pattern ==''):
                 self.filelist = filelister.getPygmentsFiles()
             else:
                 self.filelist = filelister.getMatchingFiles(self.options.pattern)                
