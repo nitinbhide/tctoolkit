@@ -40,18 +40,18 @@ class Tokenizer(SourceCodeTokenizer):
         (source file path, line number of token, charposition of token, text value of the token)
         '''
         linenum=1
-        for charpos,ttype,value in self._parse_tokens():    
+        for srctoken in self._parse_tokens():    
             #print ttype
-            if( self.fuzzy and is_token_subtype(ttype,Token.Name)):
+            if( self.fuzzy and srctoken.is_type(Token.Name)):
                 #we are doing fuzzy matching. Hence replace the names
                 #e.g. variable names by value 'Variable'.
-                newvalue='#variable#'
+                value='#variable#'
             else:
-                newvalue = value.strip()
-                if( newvalue !='' and ttype not in Token.Comment):
-                    yield self.srcfile, linenum,charpos,newvalue
+                value = srctoken.value
+                if( value !='' and srctoken.ttype not in Token.Comment):
+                    yield self.srcfile, linenum,srctoken.charpos,value
 
-            linenum=linenum+value.count('\n')
+            linenum=linenum + srctoken.num_lines
                 
         
     def get_tokens_frompos(self, fromcharpos):

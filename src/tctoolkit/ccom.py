@@ -310,11 +310,11 @@ class NameTokenizer(SourceCodeTokenizer):
     def __init__(self, srcfile):
         super(NameTokenizer, self).__init__(srcfile)
         
-    def ignore_type(self, ttype,value):
+    def ignore_type(self, srctoken):
         ignore = False
-        if(ttype in Token.Comment ):
+        if(srctoken.is_type(Token.Comment) ):
             ignore=True
-        if( ttype not in  Token.Name):
+        elif( srctoken.ttype not in  Token.Name):
             ignore = True        
         return(ignore)
 
@@ -450,10 +450,10 @@ class ClassCoOccurMatrix(object):
 
         tokenizer = NameTokenizer(srcfile)
         
-        for ttype, value in tokenizer:
-            value =value.strip()
+        for srctoken in tokenizer:
+            value =srctoken.value.strip()
             names.add(value)
-            if ttype in Token.Name.Class:
+            if srctoken.is_type(Token.Name.Class):
                 self.class_tokens.add(value)
             
         self.file_tokens[srcfile] = names

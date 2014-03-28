@@ -61,18 +61,18 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
     </div>
     <hr/>
     <div>
-        <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
+        <h2 align="center">Class Names Tag Cloud</h2>
         <div>
             <div class="colorscale"></div>
-            <div id="names" class="tagcloud"></div>
+            <div id="classnames" class="tagcloud"></div>
         </div>
     </div>
     <hr/>
     <div>
-        <h2 align="center">Class Name/Function Name Tag Cloud</h2>
+        <h2 align="center">Function Name Tag Cloud</h2>
         <div>
             <div class="colorscale"></div>
-            <div id="classnames" class="tagcloud"></div>
+            <div id="functionnames" class="tagcloud"></div>
         </div>
     </div>
     <hr/>
@@ -176,12 +176,12 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         // Show the tag cloud for keywords
         var keywordsAndFreq = ${ tagcld.getJSON(filterFunc=KeywordFilter)};        
         drawTagCloud(keywordsAndFreq, "#keyword",width, height);
-        // Show the tag cloud for names (class names, function names and variable names)
-        var namesAndFreq = ${ tagcld.getJSON(filterFunc=NameFilter) }    ;        
-        drawTagCloud(namesAndFreq, "#names",width, height);
-        // Show the tag cloud for class names and function names only
-        var classNamesAndFreq = ${ tagcld.getJSON(filterFunc=ClassFuncNameFilter) };        
-        drawTagCloud(classNamesAndFreq, "#classnames",width, height);
+        // Show the tag cloud for class names 
+        var classnamesAndFreq = ${ tagcld.getJSON(filterFunc=ClassNameFilter) }    ;        
+        drawTagCloud(classnamesAndFreq, "#classnames",width, height);
+        // Show the tag cloud for function names only
+        var funcNamesAndFreq = ${ tagcld.getJSON(filterFunc=FuncNameFilter) };        
+        drawTagCloud(funcNamesAndFreq, "#functionnames",width, height);
         
         var clrScaleDivs = d3.select('body').selectAll('.colorscale');
         drawColorScale(clrScaleDivs, fill);
