@@ -29,18 +29,16 @@ class TagCloudTokenizer(SourceCodeTokenizer):
         super(TagCloudTokenizer, self).__init__(srcfile)
         self.ignore_comments = ignore_comments
 
-    def ignore_type(self, ttype,value):
+    def ignore_type(self, srctoken):
         ignore = False
-        if(self.ignore_comments==True and ttype in Token.Comment ):
+        if(self.ignore_comments==True and srctoken.is_type(Token.Comment)):
             ignore=True
-        if( ttype in Token.Operator or ttype in Token.Punctuation):
+        elif( srctoken.is_type(Token.Operator) or srctoken.is_type(Token.Punctuation)):
             ignore = True
-        if( ignore==False and value ==''):
+        elif( srctoken.value ==''):
             ignore=True
-        if( ignore==False and ttype in Token.Name and len(value) < 2):
-            ignore=True
-        if( ignore == False and ttype in Token.Literal and len(value) < 2):
-            ignore = True
+        elif( (srctoken.is_type(Token.Name) or srctoken.is_type(Token.Literal)) and len(srctoken.value) < 2):
+            ignore=True        
         return(ignore)
 
 
@@ -69,8 +67,9 @@ class SourceCodeTagCloud(object):
         print "Adding tags information of file: %s" % srcfile
         tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
-        for ttype, value in tokenizer:
-            self.tagcloud.addWord(value,ttype)
+        for srctoken in tokenizer:
+            value = srctoken.value
+            self.tagcloud.addWord(value,srctoken.ttype)
             if value not in fileTokenset:
                 self.fileTagCount[value] = self.fileTagCount.get(value, 0)+1
                 fileTokenset.add(value)
