@@ -28,18 +28,7 @@ class SourceToken(object):
     
     def is_type(self, oftype):
         return self.ttype in oftype
-
-    def update_type(self, prevtoken):
-        '''
-        update the token type based on the previous token value. 
-        Useful for detecting class names in languages like c++ or java, c#. Typically for strings
-        like 'new A()' , A is detected as 'function' as determined by pygments.
-        '''
-        if prevtoken and self.value == 'ProjectRequest':
-            print "%s : %s " % (self.value, prevtoken.value)
-        if prevtoken != None and prevtoken.ttype in Token.Keyword and prevtoken.value == 'new' and self.is_type(Token.Name):
-            self.ttype = Token.Name.Class
-
+    
     @property
     def value(self):
         return self.rawvalue.strip()
@@ -81,13 +70,19 @@ class SourceCodeTokenizer(object):
                     #if derived class wants to calculate line numbers, the 'strip' call will screw up
                     #the line number computation.          
                     srctoken = SourceToken(ttype, value,charpos)
-                    srctoken.update_type(prevtoken)
+                    self.update_type(srctoken, prevtoken)
                     yield srctoken
                     if srctoken.value != '':
                         prevtoken = srctoken
        
     def ignore_type(self, srctoken):
         return False
+
+    def update_type(self, srctoken, prevtoken):
+        '''
+        place holder do nothing
+        '''
+        pass
 
     def get_tokens(self):
         '''
