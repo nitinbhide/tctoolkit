@@ -41,6 +41,15 @@ class TagCloudTokenizer(SourceCodeTokenizer):
             ignore=True        
         return(ignore)
 
+    def update_type(self, srctoken, prevtoken):
+        '''
+        update the token type based on the previous token value. 
+        Useful for detecting class names in languages like c++ or java, c#. Typically for strings
+        like 'new A()' , A is detected as 'function' as determined by pygments.
+        '''
+        if prevtoken != None and prevtoken.ttype in Token.Keyword and prevtoken.value == 'new' and srctoken.is_type(Token.Name):
+            srctoken.ttype = Token.Name.Class
+
 
 class SourceCodeTagCloud(object):
     '''
