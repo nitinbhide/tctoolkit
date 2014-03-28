@@ -314,7 +314,7 @@ class NameTokenizer(SourceCodeTokenizer):
         ignore = False
         if(srctoken.is_type(Token.Comment) ):
             ignore=True
-        elif( srctoken.ttype not in  Token.Name):
+        elif( not srctoken.is_type(Token.Name)):
             ignore = True        
         return(ignore)
 
