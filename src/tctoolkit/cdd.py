@@ -9,8 +9,6 @@ and is released under the New BSD License: http://www.opensource.org/licenses/bs
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
 
-from __future__ import with_statement
-
 import sys
 import logging
 
@@ -21,7 +19,7 @@ from optparse import OptionParser
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 
-from tctoolkitutil.common import *
+from tctoolkitutil import *
 from thirdparty.templet import *
 from codedupdetect import CodeDupDetect
 
@@ -125,8 +123,8 @@ class HtmlWriter(object):
               // Precompute the orders.
               var orders = {
                 name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
-                count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
-                group: d3.range(n).sort(function(a, b) { return nodes[b].group - nodes[a].group; })
+                count: d3.range(n).sort(function(a, b) { return nodes[a].count - nodes[b].count; }),
+                group: d3.range(n).sort(function(a, b) { return nodes[a].group - nodes[b].group; })
               };
 
               // The default sort order.
@@ -204,8 +202,8 @@ class HtmlWriter(object):
               function setTooltipText(d) {                    
                     var node1 = nodes[d.x];
                     var node2 = nodes[d.y];
-                    var tooltiphtml = "<ul><li>File 1: "+groups[node1.group]+'/'+node1.name+"</li>"+
-                        "<li>File 2: "+groups[node2.group]+'/'+node2.name + "</li>"+
+                    var tooltiphtml = "<ul><li>Column : "+groups[node1.group]+'/'+node1.name+"</li>"+
+                        "<li>Row : "+groups[node2.group]+'/'+node2.name + "</li>"+
                         "<li>Lines:"+d.z+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
@@ -246,9 +244,9 @@ class HtmlWriter(object):
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
 
-                t.selectAll(".rowtitle")
+                rowtitles.transition().duration(2500)
                     .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
-                t.selectAll(".columntitle")
+                columntitles.transition().duration(2500)
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               
@@ -360,11 +358,13 @@ class CDDApp(object):
 
     def getFileList(self):
         if( self.filelist == None):
-            if( self.options.pattern ==''):
-                self.filelist = PreparePygmentsFileList(self.dirname)
+            filelister = DirFileLister(self.dirname)
+            if( self.options.lang != None):
+                self.filelist = filelister.getFilesForLang(self.options.lang)
+            elif( self.options.pattern ==''):
+                self.filelist = filelister.getPygmentsFiles()
             else:
-                rawfilelist = GetDirFileList(self.dirname)
-                self.filelist = fnmatch.filter(rawfilelist,self.options.pattern)
+                self.filelist = filelister.getMatchingFiles(self.options.pattern)                
                 
         return(self.filelist)
 
@@ -432,7 +432,11 @@ def RunMain():
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     parser.add_option("-g", "--log", dest="log", default=False, action="store_true",
                       help="Enable logging. Log file generated in the current directory as cdd.log")
+    parser.add_option("-l", "--lang", dest="lang", default=None,
+                      help="programming language. Pattern will be ignored if language is defined")
+    
     (options, args) = parser.parse_args()
+
     
     if options.report != None:
         options.format = 'html'

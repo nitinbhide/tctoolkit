@@ -16,6 +16,27 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.filter import simplefilter
 from pygments.token import Token
 
+class SourceToken(object):
+    '''
+    present one source code token. Use __slots__ to reduce the size of each object instance
+    '''
+    __slots__ = ['rawvalue', 'ttype', 'charpos']
+    def __init__(self, ttype, value, charpos=None):
+        self.ttype = ttype
+        self.rawvalue = value
+        self.charpos = charpos
+    
+    def is_type(self, oftype):
+        return self.ttype in oftype
+    
+    @property
+    def value(self):
+        return self.rawvalue.strip()
+
+    @property
+    def num_lines(self):
+        return self.rawvalue.count('\n')
+
 class SourceCodeTokenizer(object):
     '''
     tokenizing the source files
@@ -42,21 +63,34 @@ class SourceCodeTokenizer(object):
         pyglexer = self.get_lexer()
          
         if pyglexer != None:
+            prevtoken = None
             with open(self.srcfile, "r") as code:
                 for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):
-                    #NOTE : do not call 'strip' on the 'value variable hear.
+                    #NOTE : do not call 'strip' on the 'value' variable.
                     #if derived class wants to calculate line numbers, the 'strip' call will screw up
-                    #the line number computation.
-                    yield charpos, ttype, value
-        
+                    #the line number computation.          
+                    srctoken = SourceToken(ttype, value,charpos)
+                    self.update_type(srctoken, prevtoken)
+                    yield srctoken
+                    if srctoken.value != '':
+                        prevtoken = srctoken
+       
+    def ignore_type(self, srctoken):
+        return False
+
+    def update_type(self, srctoken, prevtoken):
+        '''
+        place holder do nothing
+        '''
+        pass
+
     def get_tokens(self):
         '''
         iteratore over the tokens
         '''
-        for charpos,ttype,value in self._parse_tokens():
-            value = value.strip()            
-            if( self.ignore_type(ttype,value)==False):
-                    yield ttype,value
+        for srctoken in self._parse_tokens():
+            if( self.ignore_type(srctoken)==False):
+                    yield srctoken
                 
     def get_lexer(self):
         '''

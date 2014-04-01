@@ -15,8 +15,10 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 import string
 import sys
 import itertools
+import operator
 import fnmatch
 import json
+import math
 
 from optparse import OptionParser
 
@@ -26,7 +28,13 @@ from thirdparty.templet import stringfunction
 
 from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import GetDirFileList,FileOrStdout
+from tctoolkitutil import DirFileLister,FileOrStdout
+
+try:
+    #check if the NetworkX is available
+    import networkx as nx
+except:
+    nx = None
 
 class HtmlCCOMWriter(object):
     '''
@@ -104,9 +112,9 @@ class HtmlCCOMWriter(object):
               // Precompute the orders.
               var orders = {
                 name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
-                count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
+                count: d3.range(n).sort(function(a, b) { return nodes[a].count - nodes[b].count; }),
                 group:d3.range(n).sort(function(a, b) { 
-                    var cmp = nodes[b].group - nodes[a].group; 
+                    var cmp = nodes[a].group - nodes[b].group; 
                     if (cmp == 0) {
                         cmp = nodes[b].count - nodes[a].count
                     }
@@ -189,8 +197,8 @@ class HtmlCCOMWriter(object):
               function setTooltipText(d) {                    
                     var node1 = nodes[d.x];
                     var node2 = nodes[d.y];
-                    var tooltiphtml = "<ul><li>Class 1: "+node1.name+"</li>"+
-                        "<li>Class 2: "+node2.name + "</li>"+
+                    var tooltiphtml = "<ul><li>Column : "+node1.name+"</li>"+
+                        "<li>Row : "+node2.name + "</li>"+
                         "<li>Count:"+d.z+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
@@ -230,11 +238,12 @@ class HtmlCCOMWriter(object):
                 t.selectAll(".column")
                     .delay(function(d, i) { return x(i) * 4; })
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+                
+                t = rowtitles.transition().duration(2500);
+                t.attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; });
 
-                t.selectAll(".rowtitle")
-                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
-                t.selectAll(".columntitle")
-                    .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
+                t = columntitles.transition().duration(2500);                
+                t.attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
               
               order("group");
@@ -309,11 +318,11 @@ class NameTokenizer(SourceCodeTokenizer):
     def __init__(self, srcfile):
         super(NameTokenizer, self).__init__(srcfile)
         
-    def ignore_type(self, ttype,value):
+    def ignore_type(self, srctoken):
         ignore = False
-        if(ttype in Token.Comment ):
+        if(srctoken.is_type(Token.Comment) ):
             ignore=True
-        if( ttype not in  Token.Name):
+        elif( not srctoken.is_type(Token.Name)):
             ignore = True        
         return(ignore)
 
@@ -322,18 +331,23 @@ class ClassCoOccurMatrix(object):
     '''
     Generate Class Co-occurance matrix in HTML format
     '''    
-    def __init__(self, dirname, pattern, mincoocurrance):
+    def __init__(self, dirname, mincoocurrance, lang=None, pattern = '*.c'):
         '''
         mincoocurrance : minimum number of co-cocurrances to consider this in display
         '''
         self.dirname = dirname
         self.pattern = pattern
+        self.lang = lang
         self.mincoocurrance = int(mincoocurrance)
         self.ccom = dict()
         self.file_tokens = dict()
         self.class_tokens = set()
         self.create()
-
+        self.detectGroups = self.detectGroupsSimple
+        if nx:
+            #NetworkX is available, use it for detecting groups
+            self.detectGroups = self.detectGroupsNX            
+            
     def getCooccuranceData(self):
         '''
         create a co-occurance data in nodes and links list format. Something that can be
@@ -363,10 +377,59 @@ class ClassCoOccurMatrix(object):
             addLink(co_pair[0], co_pair[1])
 
         groups = self.detectGroups(nodes, links)
+        self._updateGroupIndexInNode(nodes, groups)
 
         return nodes, links
     
-    def detectGroups(self, nodes, links):
+    def detectGroupsNX(self, nodes, links):
+        '''
+        detect groups using the NetworkX library. It uses a simple algorithm of
+        remove "highest between_ness centrality nodes" and then detecting the graph
+        split.
+        '''
+        def make_nx_graph(nodes, links):
+            G=nx.Graph()
+            G.add_nodes_from(nodes)
+            link_tupples = [(node_tupple[0], node_tupple[1], val['count']) for node_tupple, val in links.iteritems()]
+            G.add_weighted_edges_from(link_tupples)
+            return G
+
+        def calc_betweenness(graph):
+            centrality = nx.edge_betweenness_centrality(graph, False)
+            centrality = sorted(centrality.iteritems(), key = operator.itemgetter(1), reverse=True)
+            return centrality
+            
+        def calc_average(iter):
+            averge = sum(iter) * 1.0 / len(centrality)
+            return averge 
+
+        def centrality_stddev(centrality):
+            #find the standard deviation of centrality
+            count = len(centrality)
+            total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
+            average = total/count
+            variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
+            std_dev = math.sqrt(variance_sum/count)
+            return average, std_dev
+
+
+        graph = make_nx_graph(nodes, links)
+        groups = nx.connected_components(graph)
+        
+        print "number of groups detected %d" % len(groups)
+        centrality = calc_betweenness(graph)
+        average, censtddev = centrality_stddev(centrality)
+        #remove all the edges with centrality > (average+stddev)
+        centrality_maxval = average+(censtddev*1.96)
+        edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
+        graph.remove_edges_from(edges)
+        print "edges removed %d" % len(edges)
+        #now extract the groups (or connected components) from the graph.
+        groups = nx.connected_components(graph)
+        print "number of groups detected %d" % len(groups)
+        return groups
+
+    def detectGroupsSimple(self, nodes, links):
         '''
         simple group/cluster detection algorithm.
         1. start with node with highest number of links
@@ -376,12 +439,9 @@ class ClassCoOccurMatrix(object):
         '''
         #first create a node set for search
         nodeset = set(nodes.iterkeys())
-        
-        def keyfunc(x):
-            return nodes[x]['count']
-
+                
         def findMaxCountNode(nodeset):
-            maxnode = max(nodeset, key= keyfunc)
+            maxnode = max(nodeset, key= lambda n: nodes[n]['count'])
             return maxnode
 
         def findConnectedNode(nodeset, node):
@@ -408,20 +468,23 @@ class ClassCoOccurMatrix(object):
                 nodeset.remove(connode)
                 curgroup.append(connode)
                 connode = findConnectedNode(nodeset, maxnode)
+        return groups
+        
+    def _updateGroupIndexInNode(self, nodes, groups):
         #update the group index in the nodes dictionary
         groupkey = 'group'
         for grpidx, group in enumerate(groups):
             for node in group:
                 nodes[node][groupkey] = grpidx
 
-        return groups
-                            
+        
     def create(self):
-        flist = GetDirFileList(self.dirname)    
-        #first add all names into the set
-        for fname in flist:
-            if fnmatch.fnmatch(fname,self.pattern):
-                self.__addFile(fname)
+        filelister = DirFileLister(self.dirname)
+
+        #first add all names into the set               
+        for fname in filelister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
+            self.__addFile(fname)
+        
         #now detect class names and create co occurance matrix
         for srcfile, names in self.file_tokens.iteritems():
             names = names & self.class_tokens
@@ -450,10 +513,10 @@ class ClassCoOccurMatrix(object):
 
         tokenizer = NameTokenizer(srcfile)
         
-        for ttype, value in tokenizer:
-            value =value.strip()
+        for srctoken in tokenizer:
+            value =srctoken.value.strip()
             names.add(value)
-            if ttype in Token.Name.Class:
+            if srctoken.is_type(Token.Name.Class):
                 self.class_tokens.add(value)
             
         self.file_tokens[srcfile] = names
@@ -494,6 +557,8 @@ def RunMain():
                       help="outfile name. Output to stdout if not specified")
     parser.add_option("-m", "--minimum", dest="mincoocurrance", default=2,type = 'int',
                       help="minimum coocurrance count required")
+    parser.add_option("-l", "--lang", dest="lang", default=None,
+                      help="programming language. Pattern will be ignored if language is defined")
     
     (options, args) = parser.parse_args()
     
@@ -502,7 +567,7 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        ccom = ClassCoOccurMatrix(dirname, options.pattern, options.mincoocurrance)
+        ccom = ClassCoOccurMatrix(dirname, options.mincoocurrance, pattern =options.pattern, lang= options.lang)
         writer = HtmlCCOMWriter(ccom)
         writer.write(options.outfile)
         

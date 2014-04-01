@@ -16,7 +16,7 @@ import string
 
 from pygments.token import Token
 
-from tctoolkitutil.common import *
+from tctoolkitutil import DirFileLister
 from tctoolkitutil import TagCloud
 from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
@@ -29,48 +29,56 @@ class TagCloudTokenizer(SourceCodeTokenizer):
         super(TagCloudTokenizer, self).__init__(srcfile)
         self.ignore_comments = ignore_comments
 
-    def ignore_type(self, ttype,value):
+    def ignore_type(self, srctoken):
         ignore = False
-        if(self.ignore_comments==True and ttype in Token.Comment ):
+        if(self.ignore_comments==True and srctoken.is_type(Token.Comment)):
             ignore=True
-        if( ttype in Token.Operator or ttype in Token.Punctuation):
+        elif( srctoken.is_type(Token.Operator) or srctoken.is_type(Token.Punctuation)):
             ignore = True
-        if( ignore==False and value ==''):
+        elif( srctoken.value ==''):
             ignore=True
-        if( ignore==False and ttype in Token.Name and len(value) < 2):
-            ignore=True
-        if( ignore == False and ttype in Token.Literal and len(value) < 2):
-            ignore = True
+        elif( (srctoken.is_type(Token.Name) or srctoken.is_type(Token.Literal)) and len(srctoken.value) < 2):
+            ignore=True        
         return(ignore)
+
+    def update_type(self, srctoken, prevtoken):
+        '''
+        update the token type based on the previous token value. 
+        Useful for detecting class names in languages like c++ or java, c#. Typically for strings
+        like 'new A()' , A is detected as 'function' as determined by pygments.
+        '''
+        if prevtoken != None and prevtoken.ttype in Token.Keyword and prevtoken.value == 'new' and srctoken.is_type(Token.Name):
+            srctoken.ttype = Token.Name.Class
 
 
 class SourceCodeTagCloud(object):
     '''
     wrapper class for generating the data for source code tag cloud
     '''
-    def __init__(self, dirname, pattern):
+    def __init__(self, dirname, pattern='*.c', lang=None):
         self.dirname = dirname
         self.pattern = pattern
+        self.lang = lang
         self.tagcloud = None #Stores frequency of tag cloud.
         self.fileTagCount = dict() #Store information about how many files that tag was found
         self.createTagCloud()
         
         
     def createTagCloud(self):
-        flist = GetDirFileList(self.dirname)    
         self.tagcloud = TagCloud()
     
-        for fname in flist:
-            if fnmatch.fnmatch(fname,self.pattern):
-                self.__addFile(fname)        
+        dirlister= DirFileLister(self.dirname)    
+        for fname in dirlister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
+            self.__addFile(fname)
         
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
         print "Adding tags information of file: %s" % srcfile
         tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
-        for ttype, value in tokenizer:
-            self.tagcloud.addWord(value,ttype)
+        for srctoken in tokenizer:
+            value = srctoken.value
+            self.tagcloud.addWord(value,srctoken.ttype)
             if value not in fileTokenset:
                 self.fileTagCount[value] = self.fileTagCount.get(value, 0)+1
                 fileTokenset.add(value)

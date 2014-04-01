@@ -18,7 +18,7 @@ from optparse import OptionParser
 
 from thirdparty.templet import stringfunction
 from tokentagcloud.tokentagcloud import *
-from tctoolkitutil import readJsText,getJsDirPath
+from tctoolkitutil import readJsText,getJsDirPath,FileOrStdout
 
 @stringfunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
@@ -35,8 +35,20 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         $d3cloud_text
     </script>
     <style type="text/css">    
-    .tagcloud { display:inline-block;}
-    .colorscale { display:inline-block;vertical-align:top;}
+        .tagcloud { display:inline-block;}
+        .colorscale { display:inline-block;vertical-align:top;}
+        .tooltip {
+            position:absolute;
+            z-index: 10;
+            background-color:#FFFFF0;
+            padding:3px;
+            border:2px solid #808080;
+        }
+        .tooltip ul {
+            list-style-type:none;
+            padding:3px;
+            margin:0px;
+        }
     </style>
     </head>
     <body>
@@ -49,23 +61,25 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
     </div>
     <hr/>
     <div>
-        <h2 align="center">Names (classname, variable names) Tag Cloud</h2>
-        <div>
-            <div class="colorscale"></div>
-            <div id="names" class="tagcloud"></div>
-        </div>
-    </div>
-    <hr/>
-    <div>
-        <h2 align="center">Class Name/Function Name Tag Cloud</h2>
+        <h2 align="center">Class Names Tag Cloud</h2>
         <div>
             <div class="colorscale"></div>
             <div id="classnames" class="tagcloud"></div>
         </div>
     </div>
     <hr/>
+    <div>
+        <h2 align="center">Function Name Tag Cloud</h2>
+        <div>
+            <div class="colorscale"></div>
+            <div id="functionnames" class="tagcloud"></div>
+        </div>
+    </div>
+    <hr/>
     <div id="colorscale">
-    </div>    
+    </div>
+    <div class="tooltip" style=""visibility:hidden">
+    </div>          
     <script>
         var minColor = 0, maxColor=0;
         // color scale is reversed ColorBrewer RdYlBu
@@ -80,15 +94,15 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         {
             //console.log("selector is " + selector);
             // Font size is calculated based on word frequency
-            var minFreq = d3.min(wordsAndFreq, function(d) { return d.size});
-            var maxFreq = d3.max(wordsAndFreq, function(d) { return d.size});
+            var minFreq = d3.min(wordsAndFreq, function(d) { return d.count});
+            var maxFreq = d3.max(wordsAndFreq, function(d) { return d.count});
             
             var fontSize = d3.scale.log();
             fontSize.domain([minFreq, maxFreq]);
-            fontSize.range([10,100])
+            fontSize.range([5,100])
             // color is calculated based on how many files the word is found
-            minColor = d3.min(wordsAndFreq, function(d) { return d.color});
-            maxColor = d3.max(wordsAndFreq, function(d) { return d.color});
+            minColor = d3.min(wordsAndFreq, function(d) { return d.filecount});
+            maxColor = d3.max(wordsAndFreq, function(d) { return d.filecount});
             var step = (Math.log(maxColor+1)-Math.log(minColor))/colors.length;            
             fill.domain(d3.range(Math.log(minColor), Math.log(maxColor+1), step));
           
@@ -97,7 +111,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                 .padding(5)            
                 .font("Impact")
                 .rotate(function() { return 0})
-                .fontSize(function(d) { return fontSize(+d.size); })
+                .fontSize(function(d) { return fontSize(+d.count); })
                 .on("end", draw)
                 .start();
           
@@ -111,16 +125,38 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                 .selectAll("text")
                   .data(words)
                 .enter().append("text")
-                  .style("font-size", function(d) { return d.size + "px"; })
+                  .style("font-size", function(d) { return fontSize(+d.count)+ "px"; })
                   .style("font-family", "Impact")
                   .style("fill", function(d, i) {
-                    return fill(Math.log(d.color)); })
+                    return fill(Math.log(d.filecount)); })
                   .attr("text-anchor", "middle")
                   .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                    })
-                  .text(function(d) { return d.text;});
+                  .text(function(d) { return d.text;})
+                  .on("mouseover", mouseover)
+                  .on("mouseout", mouseout)                    
+                  .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");});
             }
+
+            // Prepare the tooltip
+            var tooltip = d3.select(".tooltip");
+              function setTooltipText(d) {                    
+                    var tooltiphtml = "<ul><li>"+d.count+" occurrences</li>"+
+                        "<li>in "+ d.filecount +" files.</li></ul>";
+
+                    tooltip.html(tooltiphtml);
+                    tooltip.style("visibility", "visible");
+              }
+                              
+              function mouseover(p) {                
+                setTooltipText(p);
+              }
+
+              function mouseout() {
+                tooltip.style("visibility", "hidden");
+              }
+
         }
         
         function drawColorScale(clrscaleDivs, fill)
@@ -140,12 +176,12 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         // Show the tag cloud for keywords
         var keywordsAndFreq = ${ tagcld.getJSON(filterFunc=KeywordFilter)};        
         drawTagCloud(keywordsAndFreq, "#keyword",width, height);
-        // Show the tag cloud for names (class names, function names and variable names)
-        var namesAndFreq = ${ tagcld.getJSON(filterFunc=NameFilter) }    ;        
-        drawTagCloud(namesAndFreq, "#names",width, height);
-        // Show the tag cloud for class names and function names only
-        var classNamesAndFreq = ${ tagcld.getJSON(filterFunc=ClassFuncNameFilter) };        
-        drawTagCloud(classNamesAndFreq, "#classnames",width, height);
+        // Show the tag cloud for class names 
+        var classnamesAndFreq = ${ tagcld.getJSON(filterFunc=ClassNameFilter) }    ;        
+        drawTagCloud(classnamesAndFreq, "#classnames",width, height);
+        // Show the tag cloud for function names only
+        var funcNamesAndFreq = ${ tagcld.getJSON(filterFunc=FuncNameFilter) };        
+        drawTagCloud(funcNamesAndFreq, "#functionnames",width, height);
         
         var clrScaleDivs = d3.select('body').selectAll('.colorscale');
         drawColorScale(clrScaleDivs, fill);
@@ -160,12 +196,9 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
 class D3SourceTagCloud(SourceCodeTagCloud):
     '''
     Generate source code tag cloud in HTML format
-    '''
-    MINFONTSIZE = -2
-    MAXFONTSIZE = 8
-
-    def __init__(self, dirname, pattern):
-        super(D3SourceTagCloud, self).__init__(dirname, pattern)
+    '''    
+    def __init__(self, dirname, pattern='*.c', lang=None):
+        super(D3SourceTagCloud, self).__init__(dirname, pattern, lang)
                 
     def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
@@ -174,7 +207,7 @@ class D3SourceTagCloud(SourceCodeTagCloud):
                 
         if( len(tagWordList) > 0):                                    
             #change the font size between "-2" to "+8" relative to current font size
-            tagJsonStr = ','.join(["{text:'%s',size:%d, color:%d}" % (w, freq, self.getFileCount(w)) for w, freq in tagWordList])
+            tagJsonStr = ','.join(["{text:'%s',count:%d, filecount:%d}" % (w, freq, self.getFileCount(w)) for w, freq in tagWordList])
         tagJsonStr = "[%s]" % tagJsonStr
         
         return(tagJsonStr)
@@ -197,6 +230,8 @@ def RunMain():
                       help="create tag cloud of files matching the pattern. Default is '*.c' ")
     parser.add_option("-o", "--outfile", dest="outfile", default=None,
                       help="outfile name. Output to stdout if not specified")
+    parser.add_option("-l", "--lang", dest="lang", default=None,
+                      help="programming language. Pattern will be ignored if language is defined")
     
     (options, args) = parser.parse_args()
     
@@ -205,7 +240,7 @@ def RunMain():
     else:        
         dirname = args[0]
             
-        tagcld = D3SourceTagCloud(dirname, options.pattern)
+        tagcld = D3SourceTagCloud(dirname, pattern=options.pattern, lang=options.lang)
         jsdir = getJsDirPath()
         
         with FileOrStdout(options.outfile) as outf:
