@@ -390,7 +390,8 @@ class ClassCoOccurMatrix(object):
         def make_nx_graph(nodes, links):
             G=nx.Graph()
             G.add_nodes_from(nodes)
-            G.add_edges_from(links)
+            link_tupples = [(node_tupple[0], node_tupple[1], val['count']) for node_tupple, val in links.iteritems()]
+            G.add_weighted_edges_from(link_tupples)
             return G
 
         def calc_betweenness(graph):
@@ -408,17 +409,21 @@ class ClassCoOccurMatrix(object):
             total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
             average = total/count
             variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
-            std_dev = math.sqrt(variance_sum/average)
+            std_dev = math.sqrt(variance_sum/count)
             return average, std_dev
 
 
         graph = make_nx_graph(nodes, links)
+        groups = nx.connected_components(graph)
+        
+        print "number of groups detected %d" % len(groups)
         centrality = calc_betweenness(graph)
         average, censtddev = centrality_stddev(centrality)
         #remove all the edges with centrality > (average+stddev)
         centrality_maxval = average+(censtddev*1.96)
         edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
         graph.remove_edges_from(edges)
+        print "edges removed %d" % len(edges)
         #now extract the groups (or connected components) from the graph.
         groups = nx.connected_components(graph)
         print "number of groups detected %d" % len(groups)
