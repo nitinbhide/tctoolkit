@@ -15,8 +15,10 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 import string
 import sys
 import itertools
+import operator
 import fnmatch
 import json
+import math
 
 from optparse import OptionParser
 
@@ -27,6 +29,12 @@ from thirdparty.templet import stringfunction
 from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import DirFileLister,FileOrStdout
+
+try:
+    #check if the NetworkX is available
+    import networkx as nx
+except:
+    nx = None
 
 class HtmlCCOMWriter(object):
     '''
@@ -335,7 +343,11 @@ class ClassCoOccurMatrix(object):
         self.file_tokens = dict()
         self.class_tokens = set()
         self.create()
-
+        self.detectGroups = self.detectGroupsSimple
+        if nx:
+            #NetworkX is available, use it for detecting groups
+            self.detectGroups = self.detectGroupsNX            
+            
     def getCooccuranceData(self):
         '''
         create a co-occurance data in nodes and links list format. Something that can be
@@ -365,10 +377,54 @@ class ClassCoOccurMatrix(object):
             addLink(co_pair[0], co_pair[1])
 
         groups = self.detectGroups(nodes, links)
+        self._updateGroupIndexInNode(nodes, groups)
 
         return nodes, links
     
-    def detectGroups(self, nodes, links):
+    def detectGroupsNX(self, nodes, links):
+        '''
+        detect groups using the NetworkX library. It uses a simple algorithm of
+        remove "highest between_ness centrality nodes" and then detecting the graph
+        split.
+        '''
+        def make_nx_graph(nodes, links):
+            G=nx.Graph()
+            G.add_nodes_from(nodes)
+            G.add_edges_from(links)
+            return G
+
+        def calc_betweenness(graph):
+            centrality = nx.edge_betweenness_centrality(graph, False)
+            centrality = sorted(centrality.iteritems(), key = operator.itemgetter(1), reverse=True)
+            return centrality
+            
+        def calc_average(iter):
+            averge = sum(iter) * 1.0 / len(centrality)
+            return averge 
+
+        def centrality_stddev(centrality):
+            #find the standard deviation of centrality
+            count = len(centrality)
+            total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
+            average = total/count
+            variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
+            std_dev = math.sqrt(variance_sum/average)
+            return average, std_dev
+
+
+        graph = make_nx_graph(nodes, links)
+        centrality = calc_betweenness(graph)
+        average, censtddev = centrality_stddev(centrality)
+        #remove all the edges with centrality > (average+stddev)
+        centrality_maxval = average+censtddev
+        edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
+        graph.remove_edges_from(edges)
+        #now extract the groups (or connected components) from the graph.
+        groups = nx.connected_components(graph)
+        print "number of groups detected %d" % len(groups)
+        return groups
+
+    def detectGroupsSimple(self, nodes, links):
         '''
         simple group/cluster detection algorithm.
         1. start with node with highest number of links
@@ -407,14 +463,16 @@ class ClassCoOccurMatrix(object):
                 nodeset.remove(connode)
                 curgroup.append(connode)
                 connode = findConnectedNode(nodeset, maxnode)
+        return groups
+        
+    def _updateGroupIndexInNode(self, nodes, groups):
         #update the group index in the nodes dictionary
         groupkey = 'group'
         for grpidx, group in enumerate(groups):
             for node in group:
                 nodes[node][groupkey] = grpidx
 
-        return groups
-                            
+        
     def create(self):
         filelister = DirFileLister(self.dirname)
 
