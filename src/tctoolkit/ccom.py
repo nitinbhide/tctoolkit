@@ -426,6 +426,7 @@ class ClassCoOccurMatrix(object):
         print "edges removed %d" % len(edges)
         #now extract the groups (or connected components) from the graph.
         groups = nx.connected_components(graph)
+        groups = sorted(groups, key=lambda g:len(g), reverse=True)
         print "number of groups detected %d" % len(groups)
         return groups
 
