@@ -416,7 +416,7 @@ class ClassCoOccurMatrix(object):
         centrality = calc_betweenness(graph)
         average, censtddev = centrality_stddev(centrality)
         #remove all the edges with centrality > (average+stddev)
-        centrality_maxval = average+censtddev
+        centrality_maxval = average+(censtddev*1.96)
         edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
         graph.remove_edges_from(edges)
         #now extract the groups (or connected components) from the graph.
