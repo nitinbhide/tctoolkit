@@ -11,7 +11,7 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 
 '''
-
+import logging
 import string
 import sys
 import itertools
@@ -344,7 +344,19 @@ class NameTokenizer(SourceCodeTokenizer):
         elif( not srctoken.is_type(Token.Name)):
             ignore = True       
         return(ignore)
-       
+    
+    def update_type(self, srctoken, prevtoken):
+        '''
+        class name detection only for classes which are declared in the module project.
+        For example 'class A: B' -- detect only A as class name and not B. This will ensure
+        that system classes (e.g. .Net framework classes) are ignored (most of the time)
+        '''
+        if srctoken.ttype == Token.Name.Class:
+            if not (prevtoken and prevtoken.ttype in Token.Keyword and prevtoken.value == 'class'):
+                logging.debug("%s : type reset to name" % srctoken.value)
+                srctoken.ttype = Token.Name
+            
+
 class ClassCoOccurMatrix(object):
     '''
     Generate Class Co-occurance matrix in HTML format
