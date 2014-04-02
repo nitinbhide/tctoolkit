@@ -12,7 +12,7 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 '''
 import os.path
 
-from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import get_lexer_for_filename,get_lexer_by_name
 from pygments.filter import simplefilter
 from pygments.token import Token
 
@@ -43,9 +43,10 @@ class SourceCodeTokenizer(object):
     '''
     __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
     
-    def __init__(self, srcfile):
+    def __init__(self, srcfile, lang=None):
         self.srcfile = srcfile
         self.tokenlist=None        
+        self.lang = lang # programming language.
         
     def __iter__(self):
         self.update_token_list()
@@ -94,12 +95,36 @@ class SourceCodeTokenizer(object):
                 
     def get_lexer(self):
         '''
+        if language is specified, then use it for 'getting lexer'. If the language is not
+        specified then use the file for detecting the lexer.
         return lexer for self.srcfile
-        '''
-        return SourceCodeTokenizer.get_lexer_for(self.srcfile)
+        '''        
+        if self.lang :
+            lexer = SourceCodeTokenizer.get_lexer_for_lang(self.lang)                        
+            assert(lexer != None)
+        else:
+            lexer = SourceCodeTokenizer.get_lexer_for_file(self.srcfile)
+        return lexer
 
     @classmethod
-    def get_lexer_for(selfcls, filename):
+    def get_lexer_for_lang(selfcls, lang):
+        '''
+        get the lexer for the given language.
+        '''
+        pyglexer = SourceCodeTokenizer.__LEXERS_CACHE.get(lang, None)
+
+        if(lang not in SourceCodeTokenizer.__LEXERS_CACHE):
+            try:
+                pyglexer = get_lexer_by_name(lang)
+                SourceCodeTokenizer.__LEXERS_CACHE[lang] = pyglexer
+            except:
+                #ignore the lexer not found exceptions
+                assert(pyglexer == None)                
+
+        return pyglexer
+
+    @classmethod
+    def get_lexer_for_file(selfcls, filename):
         '''
         search lexer in the lexers list first based on the file extension.
         if it not there then call the get_lexer_for_filename
