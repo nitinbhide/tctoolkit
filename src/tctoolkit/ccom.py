@@ -19,6 +19,7 @@ import operator
 import fnmatch
 import json
 import math
+import pdb
 
 from optparse import OptionParser
 
@@ -323,9 +324,19 @@ class NameTokenizer(SourceCodeTokenizer):
         if(srctoken.is_type(Token.Comment) ):
             ignore=True
         elif( not srctoken.is_type(Token.Name)):
-            ignore = True        
+            ignore = True       
         return(ignore)
 
+    def update_type(self, srctoken, prevtoken):
+        
+        '''NOTE : patch for c++ lexer
+        in some cases, 'class' keyword is detected as Token.Name instead of Token.Keyword. Hence the subsequent classname
+        detection goes wrong. This patch fixes it.
+        '''
+
+        if srctoken.ttype in Token.Name and prevtoken and prevtoken.ttype in Token.Name and prevtoken.value == 'class':
+            #print "type updated"
+            srctoken.ttype = Token.Name.Class
 
 class ClassCoOccurMatrix(object):
     '''
@@ -406,10 +417,13 @@ class ClassCoOccurMatrix(object):
         def centrality_stddev(centrality):
             #find the standard deviation of centrality
             count = len(centrality)
-            total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
-            average = total/count
-            variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
-            std_dev = math.sqrt(variance_sum/count)
+            average = 0.0
+            std_dev = 0.0
+            if count > 0:
+                total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
+                average = total/count
+                variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
+                std_dev = math.sqrt(variance_sum/count)
             return average, std_dev
 
 
@@ -424,6 +438,9 @@ class ClassCoOccurMatrix(object):
         edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
         graph.remove_edges_from(edges)
         print "edges removed %d" % len(edges)
+        for node1, node2 in edges:
+            print "\t%s : %s" % (node1, node2)
+
         #now extract the groups (or connected components) from the graph.
         groups = nx.connected_components(graph)
         groups = sorted(groups, key=lambda g:len(g), reverse=True)
@@ -521,7 +538,7 @@ class ClassCoOccurMatrix(object):
                 self.class_tokens.add(value)
             
         self.file_tokens[srcfile] = names
-
+        
     def getJSON(self):
         '''
         create a co-occurance data in JSON format.
