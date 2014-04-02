@@ -316,8 +316,8 @@ class NameTokenizer(SourceCodeTokenizer):
     '''
     tokenize to return only the class names from the source file
     '''
-    def __init__(self, srcfile):
-        super(NameTokenizer, self).__init__(srcfile)
+    def __init__(self, srcfile, lang):
+        super(NameTokenizer, self).__init__(srcfile,lang=lang)
         
     def ignore_type(self, srctoken):
         ignore = False
@@ -326,18 +326,7 @@ class NameTokenizer(SourceCodeTokenizer):
         elif( not srctoken.is_type(Token.Name)):
             ignore = True       
         return(ignore)
-
-    def update_type(self, srctoken, prevtoken):
-        
-        '''NOTE : patch for c++ lexer
-        in some cases, 'class' keyword is detected as Token.Name instead of Token.Keyword. Hence the subsequent classname
-        detection goes wrong. This patch fixes it.
-        '''
-
-        if srctoken.ttype in Token.Name and prevtoken and prevtoken.ttype in Token.Name and prevtoken.value == 'class':
-            #print "type updated"
-            srctoken.ttype = Token.Name.Class
-
+       
 class ClassCoOccurMatrix(object):
     '''
     Generate Class Co-occurance matrix in HTML format
@@ -529,14 +518,14 @@ class ClassCoOccurMatrix(object):
         #create a list of classnames and keep it in classnames set
         names = set()
 
-        tokenizer = NameTokenizer(srcfile)
+        tokenizer = NameTokenizer(srcfile, self.lang)
         
         for srctoken in tokenizer:
             value =srctoken.value.strip()
             names.add(value)
             if srctoken.is_type(Token.Name.Class):
                 self.class_tokens.add(value)
-            
+          
         self.file_tokens[srcfile] = names
         
     def getJSON(self):
