@@ -19,7 +19,6 @@ import operator
 import fnmatch
 import json
 import math
-import pdb
 
 from optparse import OptionParser
 
@@ -250,9 +249,21 @@ class HtmlCCOMWriter(object):
               order("group");
             };
 
-            //duplication co-occurance data
+            function updateEdgesToRemoveList(edgesToRemove) {
+                // append the list of edges to remove
+                var edgeList = d3.select('#edgesToRemove').append('ol');
+
+                    edgeList.selectAll('li')
+                        .data(edgesToRemove)
+                        .enter().append("li")
+                            .text(function(d, i) { return d[0] + " : " + d[1]; });
+            }
+
+            //class co-occurance data
             var ccomData = ${self.getCoocurrenceData()};
             drawCooccurrence(ccomData);            
+            updateEdgesToRemoveList(ccomData.edgesToRemove);
+
         '''
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
@@ -278,6 +289,9 @@ class HtmlCCOMWriter(object):
                 #co_ocm text.active {
                     fill: red;
                 }
+                #edgesToRemove ol {
+                    margin-left: 2em;
+                }
                  .tooltip {
                     position:absolute;
                     z-index: 10;
@@ -290,6 +304,7 @@ class HtmlCCOMWriter(object):
                     padding:3px;
                     margin:0px;
                 }
+
         </style>
         <script>
             // Embedd the text of d3.js
@@ -299,6 +314,8 @@ class HtmlCCOMWriter(object):
         <body>
             <div><h1>Class Co occurance Matrix</h1></div>
             <div id="co_ocm"></div>
+            <div><h1>Suggestions for Dependency Removal</h1></div>
+            <div id="edgesToRemove"></div>
         </body>
         <script>
             ${self.outputCComScript()}
@@ -312,6 +329,7 @@ class HtmlCCOMWriter(object):
         '''
         return self.ccom.getJSON()
 
+    
 class NameTokenizer(SourceCodeTokenizer):
     '''
     tokenize to return only the class names from the source file
@@ -342,6 +360,7 @@ class ClassCoOccurMatrix(object):
         self.ccom = dict()
         self.file_tokens = dict()
         self.class_tokens = set()
+        self.edgesToRemove = list()
         self.create()
         self.detectGroups = self.detectGroupsSimple
         if nx:
@@ -425,11 +444,10 @@ class ClassCoOccurMatrix(object):
         #remove all the edges with centrality > (average+stddev)
         centrality_maxval = average+(censtddev*1.96)
         edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
+        self.edgesToRemove = edges # Store the information about suggested edges to remove
         graph.remove_edges_from(edges)
         print "edges removed %d" % len(edges)
-        for node1, node2 in edges:
-            print "\t%s : %s" % (node1, node2)
-
+        
         #now extract the groups (or connected components) from the graph.
         groups = nx.connected_components(graph)
         groups = sorted(groups, key=lambda g:len(g), reverse=True)
@@ -483,8 +501,7 @@ class ClassCoOccurMatrix(object):
         for grpidx, group in enumerate(groups):
             for node in group:
                 nodes[node][groupkey] = grpidx
-
-        
+    
     def create(self):
         filelister = DirFileLister(self.dirname)
 
@@ -546,7 +563,7 @@ class ClassCoOccurMatrix(object):
             target = link[1]
             linklist.append({ 'source':nodes[source]['index'], 'target':nodes[target]['index'], 'value':value})
 
-        return json.dumps({'nodes':nodelist, 'links' : linklist})
+        return json.dumps({'nodes':nodelist, 'links' : linklist, 'edgesToRemove': self.edgesToRemove})
 
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
