@@ -12,6 +12,8 @@ TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
 import fnmatch
 import re
 import os
+import string
+import logging
 
 __all__ = ['DirFileLister', 'FindFileInPathList']
 
@@ -41,8 +43,13 @@ class DirFileLister(object):
         '''
         rawfilelist = []
         #prepare list of all files ignore the directories defined in 'ignoredirs' list.
-        for root, dirs, files in os.walk(self.dirname):
+        def errfunc(err):
+            logging.warn(err.message)
+            print err
+
+        for root, dirs, files in os.walk(self.dirname,topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
+            logging.info("searching directory %s" % root)
             for fname in files:
                 rawfilelist.append(os.path.join(root, fname))
         return(rawfilelist)
@@ -97,10 +104,15 @@ class DirFileLister(object):
         try:
             lexer = get_lexer_by_name(lang)
             filepats = lexer.filenames
-        except:
+            #create an copy of filepatterns with 'all upper case' and 'all lowercase' pattern as well
+            filepats = filepats + map(string.lower, filepats) + map(string.upper, filepats)
+            #remove the duplicates
+            filepats = list(set(filepats))
+        except Exception, exp:
             #lexer not found for the language. Return an 'empty' list
+            logging.warn(exp.message)
             filepats = []
-
+        
         return filepats
 
     def getFilesForLang(self, lang):
