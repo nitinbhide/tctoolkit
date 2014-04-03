@@ -76,22 +76,6 @@ class RabinKarp(object):
 ##            thash = int_mod(thash + ord(ch), TOKEN_MOD)
 ##        #print "token : %s hash:%d" % (token,thash)
         return(thash)
-
-    #def getTokenHash(self, token):
-    #    '''
-    #    check if the token exists in the token_hash dictionary. If yes, return
-    #    the value. If not, then add a new integer as token hash.
-    #    NOTE : for some reason this hash value misses some of the duplicates.
-    #    I am not sure why.
-    #    '''
-    #    if(len(token) == 1):
-    #        thash = ord(token[0])
-    #    if token in self.token_hash:
-    #        thash = self.token_hash[token]            
-    #    else:
-    #        thash = len(self.token_hash) + 1 + 256;
-    #        self.token_hash[token] = thash
-    #    return thash 
         
     def addAllTokens(self,srcfile):
         curhash =0
