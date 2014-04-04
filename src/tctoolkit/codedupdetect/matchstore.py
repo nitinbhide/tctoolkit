@@ -17,6 +17,7 @@ class MatchData:
     '''
     store the match/duplication data of one instance
     '''
+    __slots__ = ['matchlen', 'starttoken', 'endtoken']
     def __init__(self,matchlen,starttoken,endtoken):
         self.matchlen = matchlen
         assert(starttoken[0] ==endtoken[0]) #make sure filenames are same
@@ -24,8 +25,6 @@ class MatchData:
         assert(starttoken[2]<= endtoken[2]) #file position of starttoken has to be earlier than end token
         self.starttoken = starttoken
         self.endtoken = endtoken
-##        print "Start : ",starttoken
-##        print "End : ",endtoken
 
     def __cmp__(self,other):
         val = 1
@@ -93,7 +92,7 @@ class MatchSet:
         '''
         get lexer for firstMatch of this matcheset
         '''
-        return tokenizer.Tokenizer.get_lexer_for(self.firstMatch.srcfile())
+        return tokenizer.Tokenizer.get_lexer_for_file(self.firstMatch.srcfile())
 
 class MatchStore:
     def __init__(self,minmatch):
