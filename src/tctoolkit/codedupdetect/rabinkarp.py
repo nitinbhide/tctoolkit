@@ -38,11 +38,15 @@ def FNV8_hash(str):
     '''
     8 bit FNV hash created by XOR folding the FNV32 hash of the string
     '''
+    #fhash = FNV_OFFSET_BASIS
+    #for ch in str:
+    #    fhash = fhash ^ ord(ch)
+    #    fhash = fhash * FNV_PRIME
+    #    fhash = fhash & 0xFFFFFFFF #ensure that hash remains 32 bit.
     fhash = FNV_OFFSET_BASIS
     for ch in str:
-        fhash = fhash ^ ord(ch)
-        fhash = fhash * FNV_PRIME
-        fhash = fhash & 0xFFFFFFFF #ensure that hash remains 32 bit.
+        fhash = ((fhash ^ ord(ch))*FNV_PRIME)& 0xFFFFFFFF
+        
     #now fold it with XOR folding
     #print "token hash ", hash
     fhash = (fhash >> 16) ^ (fhash & 0xFFFF)
