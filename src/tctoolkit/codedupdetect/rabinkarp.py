@@ -64,32 +64,7 @@ class RabinKarp(object):
         for i in xrange(0, patternsize-1):
             self.__rollhashbase = (self.__rollhashbase*HASH_BASE) % HASH_MOD;
 
-    def getTokenHash(self,token):
-        #if token size is only one charater (i.e. tokens like '{', '+' etc)
-        #then don't call FNV hash. Just use the single character.
-        if( len(token) > 1):
-            thash =FNV8_hash(token)
-        else:
-            thash = ord(token[0])
-##        for ch in token:
-##            thash = int_mod(thash * TOKEN_HASHBASE, TOKEN_MOD)
-##            thash = int_mod(thash + ord(ch), TOKEN_MOD)
-##        #print "token : %s hash:%d" % (token,thash)
-        return(thash)
-        
-    def addAllTokens(self,srcfile):
-        curhash =0
-        matchlen=0
-        #empty the tokenqueue since we are starting a new file
-        self.tokenqueue.clear()
-        self.curfilematches=0
-        tknzr = self.getTokanizer(srcfile)
-        for token in tknzr:
-            curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
-            curhash = self.addToken(curhash,token)
-            if self.curfilematches > MAX_SINGLE_FILEMATCHES:
-                break
-
+    
     def rollCurHash(self,tknzr,curhash,pastmatchlen):
         matchlen=pastmatchlen
         if(len(self.tokenqueue) >= self.patternsize):
@@ -107,7 +82,30 @@ class RabinKarp(object):
             self.matchstore.addHash(curhash, firsttoken)
             curhash = int_mod(curhash - int_mod(thash* self.__rollhashbase, HASH_MOD), HASH_MOD)
         return(curhash,matchlen)    
+    
+    def getTokenHash(self,token):
+        #if token size is only one charater (i.e. tokens like '{', '+' etc)
+        #then don't call FNV hash. Just use the single character.
+        if( len(token) > 1):
+            thash =FNV8_hash(token)
+        else:
+            thash = ord(token[0])
+        return(thash)
         
+    
+    def addAllTokens(self,srcfile):
+        curhash =0
+        matchlen=0
+        #empty the tokenqueue since we are starting a new file
+        self.tokenqueue.clear()
+        self.curfilematches=0
+        tknzr = self.getTokanizer(srcfile)
+        for token in tknzr:
+            curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
+            curhash = self.addToken(curhash,token)
+            if self.curfilematches > MAX_SINGLE_FILEMATCHES:
+                break
+    
     def addToken(self, curhash, tokendata):
         thash = self.getTokenHash(tokendata[3])
         curhash = int_mod(curhash * HASH_BASE, HASH_MOD)
