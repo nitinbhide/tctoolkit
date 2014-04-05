@@ -16,7 +16,6 @@ import string
 import sys
 import itertools
 import operator
-import fnmatch
 import json
 import math
 
@@ -28,7 +27,8 @@ from thirdparty.templet import stringfunction
 
 from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import DirFileLister,FileOrStdout
+from tctoolkitutil import FileOrStdout
+from tctoolkitutil import TCApp
 
 try:
     #check if the NetworkX is available
@@ -357,18 +357,19 @@ class NameTokenizer(SourceCodeTokenizer):
                 srctoken.ttype = Token.Name
             
 
-class ClassCoOccurMatrix(object):
+class ClassCoOccurMatrix(TCApp):
     '''
     Generate Class Co-occurance matrix in HTML format
     '''    
-    def __init__(self, dirname, mincoocurrance, lang=None, pattern = '*.c'):
+    def __init__(self, optparser, min_num_args):
         '''
         mincoocurrance : minimum number of co-cocurrances to consider this in display
         '''
-        self.dirname = dirname
-        self.pattern = pattern
-        self.lang = lang
-        self.mincoocurrance = int(mincoocurrance)
+        super(ClassCoOccurMatrix, self).__init__(optparser, min_num_args)
+
+        self.parse_args()
+
+        self.mincoocurrance = int(self.options.mincoocurrance)
         self.ccom = dict()
         self.file_tokens = dict()
         self.class_tokens = set()
@@ -514,20 +515,7 @@ class ClassCoOccurMatrix(object):
             for node in group:
                 nodes[node][groupkey] = grpidx
     
-    def create(self):
-        filelister = DirFileLister(self.dirname)
-
-        #first add all names into the set               
-        for fname in filelister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
-            self.__addFile(fname)
         
-        #now detect class names and create co occurance matrix
-        for srcfile, names in self.file_tokens.iteritems():
-            names = names & self.class_tokens
-
-            for cname1, cname2 in itertools.permutations(names, 2):
-                self.addPair(cname1, cname2)
-
     def addPair(self, classname1, classname2):
         '''
         add the co-occuring pair.
@@ -577,6 +565,25 @@ class ClassCoOccurMatrix(object):
 
         return json.dumps({'nodes':nodelist, 'links' : linklist, 'edgesToRemove': self.edgesToRemove})
 
+    def create(self):
+        self.dirname = self.args[0]
+        #first add all names into the set               
+        for fname in self.getFileList(self.dirname):
+            self.__addFile(fname)
+        
+        #now detect class names and create co occurance matrix
+        for srcfile, names in self.file_tokens.iteritems():
+            names = names & self.class_tokens
+
+            for cname1, cname2 in itertools.permutations(names, 2):
+                self.addPair(cname1, cname2)
+
+    def _run(self):
+        self.create()
+        writer = HtmlCCOMWriter(self)
+        writer.write(self.outfile)
+    
+
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
     description = '''Class Co Ocurrence Matrix (CCOM) (C) Nitin Bhide
@@ -586,26 +593,11 @@ def RunMain():
     Only the statically typed languages are supported (C#, C++, C, etc)
     '''
     parser = OptionParser(usage,description=description)
-
-    parser.add_option("-p", "--pattern", dest="pattern", default='*.c',
-                      help="create tag cloud of files matching the pattern. Default is '*.c' ")
-    parser.add_option("-o", "--outfile", dest="outfile", default=None,
-                      help="outfile name. Output to stdout if not specified")
     parser.add_option("-m", "--minimum", dest="mincoocurrance", default=2,type = 'int',
                       help="minimum coocurrance count required")
-    parser.add_option("-l", "--lang", dest="lang", default=None,
-                      help="programming language. Pattern will be ignored if language is defined")
     
-    (options, args) = parser.parse_args()
-    
-    if( len(args) < 1):
-        parser.error( "Invalid number of arguments. Use ccom.py --help to see the details.")
-    else:        
-        dirname = args[0]
-            
-        ccom = ClassCoOccurMatrix(dirname, options.mincoocurrance, pattern =options.pattern, lang= options.lang)
-        writer = HtmlCCOMWriter(ccom)
-        writer.write(options.outfile)
+    ccom = ClassCoOccurMatrix(parser, min_num_args=1)
+    ccom.run()   
         
 if(__name__ == "__main__"):
     RunMain()
