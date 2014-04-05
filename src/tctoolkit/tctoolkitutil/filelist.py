@@ -123,13 +123,15 @@ class DirFileLister(object):
         return self.getMatchingFiles(extensions)
 
         
-    def getFilesForPatternOrLang(self, pattern, lang=None):
+    def getFilesForPatternOrLang(self, pattern=None, lang=None):
         '''
         get list of files for given pattern or language. if the language is given, then
         pattern is ignored.
         '''
-        if lang != None:
+        if( lang != None):
             filelist = self.getFilesForLang(lang)
+        elif( pattern =='' or pattern ==None):
+            filelist = self.getPygmentsFiles()
         else:
             filelist = self.getMatchingFiles(pattern)
         return filelist
