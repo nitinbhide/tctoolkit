@@ -11,6 +11,7 @@ from .common import *
 from .filelist import *
 from .tagcloud import TagCloud
 from .treemapdata import TreemapNode
-from sourcetokenizer import SourceCodeTokenizer
-from sourcetokenizer import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+from .tcapp import TCApp
+from .sourcetokenizer import SourceCodeTokenizer
+from .sourcetokenizer import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
 
