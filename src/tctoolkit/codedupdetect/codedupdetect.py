@@ -80,8 +80,8 @@ class CodeDupDetect(object):
                     for i in range(match.getLineCount()):
                         line = srcfile.readline()
                         tmp_source.write(line)
-                        with open('/tmp/%i.dup'%begin_no, 'a') as dup:
-                            dup.write(line)
+                        #with open('/tmp/%i.dup'%begin_no, 'a') as dup:
+                        #    dup.write(line)
                     comment = '//!DUPLICATE END %i\n'%begin_no
                     tmp_source.write(comment)
                     line = srcfile.readline()
