@@ -361,11 +361,11 @@ class ClassCoOccurMatrix(TCApp):
     '''
     Generate Class Co-occurance matrix in HTML format
     '''    
-    def __init__(self, optparser, min_num_args):
+    def __init__(self, optparser):
         '''
         mincoocurrance : minimum number of co-cocurrances to consider this in display
         '''
-        super(ClassCoOccurMatrix, self).__init__(optparser, min_num_args)
+        super(ClassCoOccurMatrix, self).__init__(optparser, min_num_args=1)
 
         self.parse_args()
 
@@ -596,7 +596,7 @@ def RunMain():
     parser.add_option("-m", "--minimum", dest="mincoocurrance", default=2,type = 'int',
                       help="minimum coocurrance count required")
     
-    ccom = ClassCoOccurMatrix(parser, min_num_args=1)
+    ccom = ClassCoOccurMatrix(parser)
     ccom.run()   
         
 if(__name__ == "__main__"):

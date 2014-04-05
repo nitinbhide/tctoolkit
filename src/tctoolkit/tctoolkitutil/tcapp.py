@@ -11,7 +11,7 @@ This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released u
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
-
+import logging
 from .filelist import DirFileLister
 
 class TCApp(object):
@@ -26,8 +26,12 @@ class TCApp(object):
         self.min_num_args = min_num_args
         self.options = []
         self.args = []
+        self.filelist = None
         self.addDefaultOptions()
-        
+    
+    def prog_name(self):
+        return self.optparser.get_prog_name().replace('.py', '')
+
     def addDefaultOptions(self):
         self.optparser.add_option("-p", "--pattern", dest="pattern", default='*.c',
                       help="select matching the pattern. Default is '*.c' ")
@@ -35,17 +39,22 @@ class TCApp(object):
                       help="outfile name. Output to stdout if not specified")
         self.optparser.add_option("-l", "--lang", dest="lang", default=None,
                       help="programming language. Pattern will be ignored if language is defined")
-    
+        self.optparser.add_option("-g", "--log", dest="log", default=False, action="store_true",
+                      help="Enable logging. Log file generated in the current directory as %s.log" % self.prog_name())
+
     def parse_args(self):
         self.options, self.args = self.optparser.parse_args()
         success=True
         if( len(self.args) < self.min_num_args):
-            self.optparser.error( "Invalid number of arguments. Use %s --help to see the details." % self.optparser.get_prog_name())
+            self.optparser.error( "Invalid number of arguments. Use %s.py --help to see the details." % self.prog_name())
             success = False
         else:
             self.lang = self.options.lang
             self.pattern = self.options.pattern
             self.outfile = self.options.outfile
+            if self.options.log == True:
+                logging.basicConfig(filename='%s.log' % self.prog_name(),level=logging.INFO)
+        
             return True
         return success
 
@@ -53,11 +62,14 @@ class TCApp(object):
         '''
         iterator over the file list based on the options parameters
         '''
-        filelister = DirFileLister(dirname)
+        if self.filelist == None or self.dirname != dirname:
+            self.dirname = dirname
+            filelister = DirFileLister(self.dirname)
 
-        #first add all names into the set               
-        for fname in filelister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
-            yield fname
+            #first add all names into the set               
+            self.filelist = filelister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang)
+
+        return self.filelist
 
     def _run(self):
         '''
