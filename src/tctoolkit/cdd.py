@@ -348,38 +348,40 @@ class HtmlWriter(object):
         jsdir = getJsDirPath()
         return readJsText(jsdir, ["d3js", "d3.min.js"]);
 
-class CDDApp(object):
-    def __init__(self, dirname, options):
-        self.dirname=dirname
-        self.options = options
-        self.filelist = None
+class CDDApp(TCApp):
+    def __init__(self, optparser):
+        super(CDDApp, self).__init__(optparser,min_num_args=1)
         self.matches = None
         self.dupsInFile = None
 
-    def getFileList(self):
-        if( self.filelist == None):
-            filelister = DirFileLister(self.dirname)
-            if( self.options.lang != None):
-                self.filelist = filelister.getFilesForLang(self.options.lang)
-            elif( self.options.pattern ==''):
-                self.filelist = filelister.getPygmentsFiles()
-            else:
-                self.filelist = filelister.getMatchingFiles(self.options.pattern)                
+    def parse_args(self):
+        success = super(CDDApp,self).parse_args()
+        if success:    
+            if self.options.report != None:
+                self.options.format = 'html'
+                self.outfile = self.options.report
                 
-        return(self.filelist)
+            if self.options.format == None:
+                #auto detect the format based on the out file extension.
+                self.options.format = 'txt'
+                if self.outfile:
+                    name, ext = os.path.splitext(self.outfile)
+                    if ext in set(['.html', '.htm', '.xhtml']):
+                        self.options.format = 'html'
+        return success
 
-    def run(self):
-        filelist = self.getFileList()        
+    def _run(self):
+        filelist = self.getFileList(self.args[0])        
         self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy, min_lines=self.options.min_lines)
         
         if self.options.format.lower() == 'html':
             #self.cdd.html_output(self.options.filename)
             htmlwriter = HtmlWriter(self)            
-            htmlwriter.write(self.options.filename)
+            htmlwriter.write(self.outfile)
 
         else:
             #assume that format is 'txt'.
-            self.printDuplicates(self.options.filename)
+            self.printDuplicates(self.outfile)
             
         if self.options.comments:
             self.cdd.insert_comments(self.dirname)        
@@ -405,7 +407,7 @@ class CDDApp(object):
     def getCooccuranceData(self):
         return self.cdd.getCooccuranceData(self.dirname)
 
-                                  
+                                      
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
     description = """Code Duplication Detector. (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
@@ -414,14 +416,10 @@ def RunMain():
     """
     parser = OptionParser(usage,description=description)
 
-    parser.add_option("-p", "--pattern", dest="pattern", default='',
-                      help="find duplications with files matching the pattern")
     parser.add_option("-c", "--comments", action="store_true", dest="comments", default=False,
                       help="Mark duplicate patterns in-source with c-style comment.")
     parser.add_option("-r", "--report", dest="report", default=None,
                       help="Output html to given filename.This is essentially combination '-f html -o <filename>")
-    parser.add_option("-o", "--out", dest="filename", default=None,
-                      help="output file name. This is simple text file")
     parser.add_option("-f", "--fmt", dest="format", default=None,
                       help="output file format. If not specified, determined from outputfile extension. Supported : txt, html")
     parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
@@ -430,37 +428,12 @@ def RunMain():
                       help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
-    parser.add_option("-g", "--log", dest="log", default=False, action="store_true",
-                      help="Enable logging. Log file generated in the current directory as cdd.log")
-    parser.add_option("-l", "--lang", dest="lang", default=None,
-                      help="programming language. Pattern will be ignored if language is defined")
     
-    (options, args) = parser.parse_args()
-
+    app = CDDApp(parser)
     
-    if options.report != None:
-        options.format = 'html'
-        options.filename = options.report
-
-    if options.format == None:
-        #auto detect the format based on the out file extension.
-        options.format = 'txt'
-        if options.filename:
-            name, ext = os.path.splitext(options.filename)
-            if ext in set(['.html', '.htm', '.xhtml']):
-                options.format = 'html'
-
-    if( len(args) < 1):
-        print "Invalid number of arguments. Use cdd.py --help to see the details."
-    else:
-        if options.log == True:
-            logging.basicConfig(filename='cdd.log',level=logging.INFO)
-            
-        dirname = args[0]
-        app = CDDApp(dirname, options)
-        with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
-            app.run()
-            
+    with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
+        app.run()
+                    
 if(__name__ == "__main__"):    
     RunMain()
     
