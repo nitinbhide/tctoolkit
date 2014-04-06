@@ -14,7 +14,9 @@ import itertools
 import operator
 import json
 import math
+import os.path
 from cStringIO import StringIO
+from itertools import groupby
 
 from optparse import OptionParser
 
@@ -57,24 +59,49 @@ class WCSignatureSurvey(TCApp):
     '''
     def __init__(self, optparser):
         super(WCSignatureSurvey, self).__init__(optparser, 1)
+        self.signatures= dict()
+
+    def create_signatures(self):
+        #first calculate all signatures
+        for fname in self.getFileList(self.args[0]):
+            print "Analyzing file %s" % fname
+     
+            tokenizer = SignatureTokenizer(fname, self.lang)
+            signature= StringIO()
+
+            for srctoken in tokenizer:
+                value =srctoken.value.strip()
+                if len(value) > 1 and srctoken.is_type(Token.Literal.String):
+                    value = truncate_string(value,5)
+                    
+                signature.write(value)
+            self.signatures[fname] =signature.getvalue() 
+            signature.close()
+
+    def group_filenames(self):
+        groups = dict()
+        dirnames = list()
+        filelist = sorted(self.filelist,key=lambda fname:os.path.dirname(fname))
+        for dname, files in groupby(filelist, lambda fname:os.path.dirname(fname)):
+            groups[dname] = list(files)      # Store group iterator as a list
+            dirnames.append(dname)
+        print dirnames
+        return dirnames, groups
 
     def _run(self):
-        with open(self.outfile, "wb") as outfile:
-            for fname in self.getFileList(self.args[0]):
-                print "Analyzing file %s" % fname
-                outfile.write("%s : "% fname)
-               
-                tokenizer = SignatureTokenizer(fname, self.lang)
-                signature= StringIO()
+        self.create_signatures()    
+        #now group the filenames with directory names
+        dirnames, filegroups = self.group_filenames()
 
-                for srctoken in tokenizer:
-                    value =srctoken.value.strip()
-                    if len(value) > 1 and srctoken.is_type(Token.Literal.String):
-                        value = truncate_string(value,5)
-                        print value
-                    signature.write(value)
-                outfile.write("%s\n" % signature.getvalue())
-                signature.close()
+        with open(self.outfile, "wb") as outfile:
+            print "Writing the signature to %s" % self.outfile
+            for dname in dirnames:
+                outfile.write("%s\n" % dname)
+                for fname in filegroups[dname]:
+                    signature = self.signatures[fname]
+                    fname = os.path.basename(fname)
+                    outfile.write("\t%s : %s\n" % (fname,signature))
+                outfile.write("\n")
         
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
