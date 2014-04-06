@@ -15,7 +15,7 @@ import logging
 
 from tctoolkitutil import SourceCodeTokenizer
 
-from pygments.token import Token, is_token_subtype
+from pygments.token import Token
 
 
 class Tokenizer(SourceCodeTokenizer):    
@@ -48,7 +48,7 @@ class Tokenizer(SourceCodeTokenizer):
                 value='#variable#'
             else:
                 value = srctoken.value
-                if( value !='' and srctoken.ttype not in Token.Comment):
+                if( value !='' and not srctoken.is_type(Token.Comment)):
                     yield self.srcfile, linenum,srctoken.charpos,value
 
             linenum=linenum + srctoken.num_lines
