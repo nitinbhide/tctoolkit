@@ -43,10 +43,15 @@ class SourceCodeTokenizer(object):
     '''
     __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
     
-    def __init__(self, srcfile, lang=None):
+    def __init__(self, srcfile, lang=None, token_class=SourceToken):
+        '''
+        override the token_class if you want to use a drived class of 'SourceToken' class.
+        '''
         self.srcfile = srcfile
         self.tokenlist=None        
         self.lang = lang # programming language.
+        assert issubclass(token_class,SourceToken)==True, "token_class has to be subclass/derived class of SourceToken"
+        self.TOKEN_CLASS = token_class
         
     def __iter__(self):
         self.update_token_list()
@@ -70,12 +75,12 @@ class SourceCodeTokenizer(object):
                     #NOTE : do not call 'strip' on the 'value' variable.
                     #if derived class wants to calculate line numbers, the 'strip' call will screw up
                     #the line number computation.          
-                    srctoken = SourceToken(ttype, value,charpos)
+                    srctoken = self.TOKEN_CLASS(ttype, value,charpos)
                     self.update_type(srctoken, prevtoken)
                     yield srctoken
                     if srctoken.value != '':
                         prevtoken = srctoken
-       
+    
     def ignore_token(self, srctoken):
         return False
 
