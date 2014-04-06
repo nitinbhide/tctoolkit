@@ -337,7 +337,7 @@ class NameTokenizer(SourceCodeTokenizer):
     def __init__(self, srcfile, lang):
         super(NameTokenizer, self).__init__(srcfile,lang=lang)
         
-    def ignore_type(self, srctoken):
+    def ignore_token(self, srctoken):
         ignore = False
         if(srctoken.is_type(Token.Comment) ):
             ignore=True
