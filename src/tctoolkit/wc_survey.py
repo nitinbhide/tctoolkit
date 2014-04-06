@@ -85,7 +85,6 @@ class WCSignatureSurvey(TCApp):
         for dname, files in groupby(filelist, lambda fname:os.path.dirname(fname)):
             groups[dname] = list(files)      # Store group iterator as a list
             dirnames.append(dname)
-        print dirnames
         return dirnames, groups
 
     def _run(self):
