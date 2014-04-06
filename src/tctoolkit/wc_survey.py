@@ -42,7 +42,15 @@ class SignatureTokenizer(SourceCodeTokenizer):
             ignore = False
         return(ignore)
 
-
+def truncate_string(str, maxchar):
+    '''
+    if str is larger than 5 characters truncate it to 5 characters
+    '''
+    str = str.strip().strip("\"'")
+    if len(str) > maxchar:
+        str = str[:maxchar] + '...'
+    return '"%s"' % str
+    
 class WCSignatureSurvey(TCApp):
     '''
     Ward Cunningham's signature survey generation. Based on http://c2.com/doc/SignatureSurvey/
@@ -61,6 +69,9 @@ class WCSignatureSurvey(TCApp):
 
                 for srctoken in tokenizer:
                     value =srctoken.value.strip()
+                    if len(value) > 1 and srctoken.is_type(Token.Literal.String):
+                        value = truncate_string(value,5)
+                        print value
                     signature.write(value)
                 outfile.write("%s\n" % signature.getvalue())
                 signature.close()
