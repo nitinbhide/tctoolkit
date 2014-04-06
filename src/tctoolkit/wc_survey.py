@@ -34,7 +34,7 @@ class SignatureTokenizer(SourceCodeTokenizer):
         super(SignatureTokenizer, self).__init__(srcfile,lang=lang)
         self.acceptable_values = set(["{", "}", ";" ,"'", '"'])
         
-    def ignore_type(self, srctoken):
+    def ignore_token(self, srctoken):        
         ignore = True
         if(srctoken.is_type(Token.Comment) ):
             ignore=True

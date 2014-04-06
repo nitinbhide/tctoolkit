@@ -29,7 +29,8 @@ class TagCloudTokenizer(SourceCodeTokenizer):
         super(TagCloudTokenizer, self).__init__(srcfile)
         self.ignore_comments = ignore_comments
 
-    def ignore_type(self, srctoken):
+    def ignore_token(self, srctoken):
+        
         ignore = False
         if(self.ignore_comments==True and srctoken.is_type(Token.Comment)):
             ignore=True

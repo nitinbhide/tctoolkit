@@ -76,7 +76,7 @@ class SourceCodeTokenizer(object):
                     if srctoken.value != '':
                         prevtoken = srctoken
        
-    def ignore_type(self, srctoken):
+    def ignore_token(self, srctoken):
         return False
 
     def update_type(self, srctoken, prevtoken):
@@ -90,7 +90,7 @@ class SourceCodeTokenizer(object):
         iteratore over the tokens
         '''
         for srctoken in self._parse_tokens():
-            if( self.ignore_type(srctoken)==False):
+            if( self.ignore_token(srctoken)==False):
                     yield srctoken
                 
     def get_lexer(self):
