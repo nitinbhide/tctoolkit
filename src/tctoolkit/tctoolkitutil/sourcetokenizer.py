@@ -8,11 +8,11 @@ Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsm
 
 This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released under the
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
-TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 import os.path
 
-from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import get_lexer_for_filename,get_lexer_by_name
 from pygments.filter import simplefilter
 from pygments.token import Token
 
@@ -43,9 +43,15 @@ class SourceCodeTokenizer(object):
     '''
     __LEXERS_CACHE = dict() #dictionary of lexers keyed by file extensions
     
-    def __init__(self, srcfile):
+    def __init__(self, srcfile, lang=None, token_class=SourceToken):
+        '''
+        override the token_class if you want to use a drived class of 'SourceToken' class.
+        '''
         self.srcfile = srcfile
         self.tokenlist=None        
+        self.lang = lang # programming language.
+        assert issubclass(token_class,SourceToken)==True, "token_class has to be subclass/derived class of SourceToken"
+        self.TOKEN_CLASS = token_class
         
     def __iter__(self):
         self.update_token_list()
@@ -69,13 +75,13 @@ class SourceCodeTokenizer(object):
                     #NOTE : do not call 'strip' on the 'value' variable.
                     #if derived class wants to calculate line numbers, the 'strip' call will screw up
                     #the line number computation.          
-                    srctoken = SourceToken(ttype, value,charpos)
+                    srctoken = self.TOKEN_CLASS(ttype, value,charpos)
                     self.update_type(srctoken, prevtoken)
                     yield srctoken
                     if srctoken.value != '':
                         prevtoken = srctoken
-       
-    def ignore_type(self, srctoken):
+    
+    def ignore_token(self, srctoken):
         return False
 
     def update_type(self, srctoken, prevtoken):
@@ -89,17 +95,41 @@ class SourceCodeTokenizer(object):
         iteratore over the tokens
         '''
         for srctoken in self._parse_tokens():
-            if( self.ignore_type(srctoken)==False):
+            if( self.ignore_token(srctoken)==False):
                     yield srctoken
                 
     def get_lexer(self):
         '''
+        if language is specified, then use it for 'getting lexer'. If the language is not
+        specified then use the file for detecting the lexer.
         return lexer for self.srcfile
-        '''
-        return SourceCodeTokenizer.get_lexer_for(self.srcfile)
+        '''        
+        if self.lang :
+            lexer = SourceCodeTokenizer.get_lexer_for_lang(self.lang)                        
+            assert(lexer != None)
+        else:
+            lexer = SourceCodeTokenizer.get_lexer_for_file(self.srcfile)
+        return lexer
 
     @classmethod
-    def get_lexer_for(selfcls, filename):
+    def get_lexer_for_lang(selfcls, lang):
+        '''
+        get the lexer for the given language.
+        '''
+        pyglexer = SourceCodeTokenizer.__LEXERS_CACHE.get(lang, None)
+
+        if(lang not in SourceCodeTokenizer.__LEXERS_CACHE):
+            try:
+                pyglexer = get_lexer_by_name(lang)
+                SourceCodeTokenizer.__LEXERS_CACHE[lang] = pyglexer
+            except:
+                #ignore the lexer not found exceptions
+                assert(pyglexer == None)                
+
+        return pyglexer
+
+    @classmethod
+    def get_lexer_for_file(selfcls, filename):
         '''
         search lexer in the lexers list first based on the file extension.
         if it not there then call the get_lexer_for_filename

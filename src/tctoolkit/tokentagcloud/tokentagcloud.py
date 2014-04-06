@@ -7,7 +7,7 @@ Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsm
 
 This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released under the
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
-TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 
 import operator
@@ -29,7 +29,8 @@ class TagCloudTokenizer(SourceCodeTokenizer):
         super(TagCloudTokenizer, self).__init__(srcfile)
         self.ignore_comments = ignore_comments
 
-    def ignore_type(self, srctoken):
+    def ignore_token(self, srctoken):
+        
         ignore = False
         if(self.ignore_comments==True and srctoken.is_type(Token.Comment)):
             ignore=True

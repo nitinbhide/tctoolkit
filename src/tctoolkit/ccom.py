@@ -8,15 +8,14 @@ Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsm
 
 This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released under the
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
-TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
-
+import logging
 import string
 import sys
 import itertools
 import operator
-import fnmatch
 import json
 import math
 
@@ -28,7 +27,8 @@ from thirdparty.templet import stringfunction
 
 from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import DirFileLister,FileOrStdout
+from tctoolkitutil import FileOrStdout
+from tctoolkitutil import TCApp
 
 try:
     #check if the NetworkX is available
@@ -249,9 +249,21 @@ class HtmlCCOMWriter(object):
               order("group");
             };
 
-            //duplication co-occurance data
+            function updateEdgesToRemoveList(edgesToRemove) {
+                // append the list of edges to remove
+                var edgeList = d3.select('#edgesToRemove').append('ol');
+
+                    edgeList.selectAll('li')
+                        .data(edgesToRemove)
+                        .enter().append("li")
+                            .text(function(d, i) { return d[0] + " : " + d[1]; });
+            }
+
+            //class co-occurance data
             var ccomData = ${self.getCoocurrenceData()};
             drawCooccurrence(ccomData);            
+            updateEdgesToRemoveList(ccomData.edgesToRemove);
+
         '''
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
@@ -277,6 +289,9 @@ class HtmlCCOMWriter(object):
                 #co_ocm text.active {
                     fill: red;
                 }
+                #edgesToRemove ol {
+                    margin-left: 2em;
+                }
                  .tooltip {
                     position:absolute;
                     z-index: 10;
@@ -289,6 +304,7 @@ class HtmlCCOMWriter(object):
                     padding:3px;
                     margin:0px;
                 }
+
         </style>
         <script>
             // Embedd the text of d3.js
@@ -298,6 +314,8 @@ class HtmlCCOMWriter(object):
         <body>
             <div><h1>Class Co occurance Matrix</h1></div>
             <div id="co_ocm"></div>
+            <div><h1>Suggestions for Dependency Removal</h1></div>
+            <div id="edgesToRemove"></div>
         </body>
         <script>
             ${self.outputCComScript()}
@@ -311,37 +329,51 @@ class HtmlCCOMWriter(object):
         '''
         return self.ccom.getJSON()
 
+    
 class NameTokenizer(SourceCodeTokenizer):
     '''
     tokenize to return only the class names from the source file
     '''
-    def __init__(self, srcfile):
-        super(NameTokenizer, self).__init__(srcfile)
+    def __init__(self, srcfile, lang):
+        super(NameTokenizer, self).__init__(srcfile,lang=lang)
         
-    def ignore_type(self, srctoken):
+    def ignore_token(self, srctoken):
         ignore = False
         if(srctoken.is_type(Token.Comment) ):
             ignore=True
         elif( not srctoken.is_type(Token.Name)):
-            ignore = True        
+            ignore = True       
         return(ignore)
+    
+    def update_type(self, srctoken, prevtoken):
+        '''
+        class name detection only for classes which are declared in the module project.
+        For example 'class A: B' -- detect only A as class name and not B. This will ensure
+        that system classes (e.g. .Net framework classes) are ignored (most of the time)
+        '''
+        if srctoken.ttype == Token.Name.Class:
+            if not (prevtoken and prevtoken.ttype in Token.Keyword and prevtoken.value == 'class'):
+                logging.debug("%s : type reset to name" % srctoken.value)
+                srctoken.ttype = Token.Name
+            
 
-
-class ClassCoOccurMatrix(object):
+class ClassCoOccurMatrix(TCApp):
     '''
     Generate Class Co-occurance matrix in HTML format
     '''    
-    def __init__(self, dirname, mincoocurrance, lang=None, pattern = '*.c'):
+    def __init__(self, optparser):
         '''
         mincoocurrance : minimum number of co-cocurrances to consider this in display
         '''
-        self.dirname = dirname
-        self.pattern = pattern
-        self.lang = lang
-        self.mincoocurrance = int(mincoocurrance)
+        super(ClassCoOccurMatrix, self).__init__(optparser, min_num_args=1)
+
+        self.parse_args()
+
+        self.mincoocurrance = int(self.options.mincoocurrance)
         self.ccom = dict()
         self.file_tokens = dict()
         self.class_tokens = set()
+        self.edgesToRemove = list()
         self.create()
         self.detectGroups = self.detectGroupsSimple
         if nx:
@@ -406,10 +438,13 @@ class ClassCoOccurMatrix(object):
         def centrality_stddev(centrality):
             #find the standard deviation of centrality
             count = len(centrality)
-            total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
-            average = total/count
-            variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
-            std_dev = math.sqrt(variance_sum/count)
+            average = 0.0
+            std_dev = 0.0
+            if count > 0:
+                total = sum(itertools.imap(operator.itemgetter(1), centrality)) * 1.0;
+                average = total/count
+                variance_sum = sum(map(lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
+                std_dev = math.sqrt(variance_sum/count)
             return average, std_dev
 
 
@@ -422,10 +457,13 @@ class ClassCoOccurMatrix(object):
         #remove all the edges with centrality > (average+stddev)
         centrality_maxval = average+(censtddev*1.96)
         edges = [edge_info[0] for edge_info in centrality if edge_info[1] >= centrality_maxval]
+        self.edgesToRemove = edges # Store the information about suggested edges to remove
         graph.remove_edges_from(edges)
         print "edges removed %d" % len(edges)
+        
         #now extract the groups (or connected components) from the graph.
         groups = nx.connected_components(graph)
+        groups = sorted(groups, key=lambda g:len(g), reverse=True)
         print "number of groups detected %d" % len(groups)
         return groups
 
@@ -476,22 +514,8 @@ class ClassCoOccurMatrix(object):
         for grpidx, group in enumerate(groups):
             for node in group:
                 nodes[node][groupkey] = grpidx
-
+    
         
-    def create(self):
-        filelister = DirFileLister(self.dirname)
-
-        #first add all names into the set               
-        for fname in filelister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
-            self.__addFile(fname)
-        
-        #now detect class names and create co occurance matrix
-        for srcfile, names in self.file_tokens.iteritems():
-            names = names & self.class_tokens
-
-            for cname1, cname2 in itertools.permutations(names, 2):
-                self.addPair(cname1, cname2)
-
     def addPair(self, classname1, classname2):
         '''
         add the co-occuring pair.
@@ -511,16 +535,16 @@ class ClassCoOccurMatrix(object):
         #create a list of classnames and keep it in classnames set
         names = set()
 
-        tokenizer = NameTokenizer(srcfile)
+        tokenizer = NameTokenizer(srcfile, self.lang)
         
         for srctoken in tokenizer:
             value =srctoken.value.strip()
             names.add(value)
             if srctoken.is_type(Token.Name.Class):
                 self.class_tokens.add(value)
-            
+          
         self.file_tokens[srcfile] = names
-
+        
     def getJSON(self):
         '''
         create a co-occurance data in JSON format.
@@ -539,7 +563,26 @@ class ClassCoOccurMatrix(object):
             target = link[1]
             linklist.append({ 'source':nodes[source]['index'], 'target':nodes[target]['index'], 'value':value})
 
-        return json.dumps({'nodes':nodelist, 'links' : linklist})
+        return json.dumps({'nodes':nodelist, 'links' : linklist, 'edgesToRemove': self.edgesToRemove})
+
+    def create(self):
+        self.dirname = self.args[0]
+        #first add all names into the set               
+        for fname in self.getFileList(self.dirname):
+            self.__addFile(fname)
+        
+        #now detect class names and create co occurance matrix
+        for srcfile, names in self.file_tokens.iteritems():
+            names = names & self.class_tokens
+
+            for cname1, cname2 in itertools.permutations(names, 2):
+                self.addPair(cname1, cname2)
+
+    def _run(self):
+        self.create()
+        writer = HtmlCCOMWriter(self)
+        writer.write(self.outfile)
+    
 
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
@@ -550,26 +593,11 @@ def RunMain():
     Only the statically typed languages are supported (C#, C++, C, etc)
     '''
     parser = OptionParser(usage,description=description)
-
-    parser.add_option("-p", "--pattern", dest="pattern", default='*.c',
-                      help="create tag cloud of files matching the pattern. Default is '*.c' ")
-    parser.add_option("-o", "--outfile", dest="outfile", default=None,
-                      help="outfile name. Output to stdout if not specified")
     parser.add_option("-m", "--minimum", dest="mincoocurrance", default=2,type = 'int',
                       help="minimum coocurrance count required")
-    parser.add_option("-l", "--lang", dest="lang", default=None,
-                      help="programming language. Pattern will be ignored if language is defined")
     
-    (options, args) = parser.parse_args()
-    
-    if( len(args) < 1):
-        parser.error( "Invalid number of arguments. Use ccom.py --help to see the details.")
-    else:        
-        dirname = args[0]
-            
-        ccom = ClassCoOccurMatrix(dirname, options.mincoocurrance, pattern =options.pattern, lang= options.lang)
-        writer = HtmlCCOMWriter(ccom)
-        writer.write(options.outfile)
+    ccom = ClassCoOccurMatrix(parser)
+    ccom.run()   
         
 if(__name__ == "__main__"):
     RunMain()

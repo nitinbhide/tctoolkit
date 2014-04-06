@@ -8,7 +8,7 @@ Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsm
 
 This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released under the
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
-TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
 import logging
@@ -38,11 +38,15 @@ def FNV8_hash(str):
     '''
     8 bit FNV hash created by XOR folding the FNV32 hash of the string
     '''
+    #fhash = FNV_OFFSET_BASIS
+    #for ch in str:
+    #    fhash = fhash ^ ord(ch)
+    #    fhash = fhash * FNV_PRIME
+    #    fhash = fhash & 0xFFFFFFFF #ensure that hash remains 32 bit.
     fhash = FNV_OFFSET_BASIS
     for ch in str:
-        fhash = fhash ^ ord(ch)
-        fhash = fhash * FNV_PRIME
-        fhash = fhash & 0xFFFFFFFF #ensure that hash remains 32 bit.
+        fhash = ((fhash ^ ord(ch))*FNV_PRIME)& 0xFFFFFFFF
+        
     #now fold it with XOR folding
     #print "token hash ", hash
     fhash = (fhash >> 16) ^ (fhash & 0xFFFF)
@@ -64,48 +68,7 @@ class RabinKarp(object):
         for i in xrange(0, patternsize-1):
             self.__rollhashbase = (self.__rollhashbase*HASH_BASE) % HASH_MOD;
 
-    def getTokenHash(self,token):
-        #if token size is only one charater (i.e. tokens like '{', '+' etc)
-        #then don't call FNV hash. Just use the single character.
-        if( len(token) > 1):
-            thash =FNV8_hash(token)
-        else:
-            thash = ord(token[0])
-##        for ch in token:
-##            thash = int_mod(thash * TOKEN_HASHBASE, TOKEN_MOD)
-##            thash = int_mod(thash + ord(ch), TOKEN_MOD)
-##        #print "token : %s hash:%d" % (token,thash)
-        return(thash)
-
-    #def getTokenHash(self, token):
-    #    '''
-    #    check if the token exists in the token_hash dictionary. If yes, return
-    #    the value. If not, then add a new integer as token hash.
-    #    NOTE : for some reason this hash value misses some of the duplicates.
-    #    I am not sure why.
-    #    '''
-    #    if(len(token) == 1):
-    #        thash = ord(token[0])
-    #    if token in self.token_hash:
-    #        thash = self.token_hash[token]            
-    #    else:
-    #        thash = len(self.token_hash) + 1 + 256;
-    #        self.token_hash[token] = thash
-    #    return thash 
-        
-    def addAllTokens(self,srcfile):
-        curhash =0
-        matchlen=0
-        #empty the tokenqueue since we are starting a new file
-        self.tokenqueue.clear()
-        self.curfilematches=0
-        tknzr = self.getTokanizer(srcfile)
-        for token in tknzr:
-            curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
-            curhash = self.addToken(curhash,token)
-            if self.curfilematches > MAX_SINGLE_FILEMATCHES:
-                break
-
+    
     def rollCurHash(self,tknzr,curhash,pastmatchlen):
         matchlen=pastmatchlen
         if(len(self.tokenqueue) >= self.patternsize):
@@ -123,7 +86,30 @@ class RabinKarp(object):
             self.matchstore.addHash(curhash, firsttoken)
             curhash = int_mod(curhash - int_mod(thash* self.__rollhashbase, HASH_MOD), HASH_MOD)
         return(curhash,matchlen)    
+    
+    def getTokenHash(self,token):
+        #if token size is only one charater (i.e. tokens like '{', '+' etc)
+        #then don't call FNV hash. Just use the single character.
+        if( len(token) > 1):
+            thash =FNV8_hash(token)
+        else:
+            thash = ord(token[0])
+        return(thash)
         
+    
+    def addAllTokens(self,srcfile):
+        curhash =0
+        matchlen=0
+        #empty the tokenqueue since we are starting a new file
+        self.tokenqueue.clear()
+        self.curfilematches=0
+        tknzr = self.getTokanizer(srcfile)
+        for token in tknzr:
+            curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
+            curhash = self.addToken(curhash,token)
+            if self.curfilematches > MAX_SINGLE_FILEMATCHES:
+                break
+    
     def addToken(self, curhash, tokendata):
         thash = self.getTokenHash(tokendata[3])
         curhash = int_mod(curhash * HASH_BASE, HASH_MOD)

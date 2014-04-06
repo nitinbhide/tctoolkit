@@ -7,7 +7,7 @@ Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsm
 
 This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released under the
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
-TC Toolkit is hosted at http://code.google.com/p/tctoolkit/
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
 
@@ -19,6 +19,7 @@ from optparse import OptionParser
 from thirdparty.templet import stringfunction
 from tokentagcloud.tokentagcloud import *
 from tctoolkitutil import readJsText,getJsDirPath,FileOrStdout
+from tctoolkitutil import TCApp
 
 @stringfunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
@@ -213,7 +214,21 @@ class D3SourceTagCloud(SourceCodeTagCloud):
         return(tagJsonStr)
     
     
-
+class TTCApp(TCApp):
+    def __init__(self, optparser):
+        super(TTCApp, self).__init__(optparser,min_num_args=1)
+    
+    def _run(self):
+        self.dirname = self.args[0]
+        tagcld = D3SourceTagCloud(self.dirname, pattern=self.pattern, lang=self.lang)
+        jsdir = getJsDirPath()
+        
+        with FileOrStdout(self.outfile) as outf:
+            #read the text of d3js file
+            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
+            d3cloud_text = readJsText(jsdir, ["d3js", "d3.layout.cloud.js"]);
+            outf.write(OutputTagCloud(tagcld,d3jstext, d3cloud_text))
+        
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
     description = '''Token Tag Cloud (C) Nitin Bhide
@@ -226,29 +241,8 @@ def RunMain():
     '''
     parser = OptionParser(usage,description=description)
 
-    parser.add_option("-p", "--pattern", dest="pattern", default='*.c',
-                      help="create tag cloud of files matching the pattern. Default is '*.c' ")
-    parser.add_option("-o", "--outfile", dest="outfile", default=None,
-                      help="outfile name. Output to stdout if not specified")
-    parser.add_option("-l", "--lang", dest="lang", default=None,
-                      help="programming language. Pattern will be ignored if language is defined")
-    
-    (options, args) = parser.parse_args()
-    
-    if( len(args) < 1):
-        parser.error( "Invalid number of arguments. Use ttc.py --help to see the details.")
-    else:        
-        dirname = args[0]
-            
-        tagcld = D3SourceTagCloud(dirname, pattern=options.pattern, lang=options.lang)
-        jsdir = getJsDirPath()
-        
-        with FileOrStdout(options.outfile) as outf:
-            #read the text of d3js file
-            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
-            d3cloud_text = readJsText(jsdir, ["d3js", "d3.layout.cloud.js"]);
-            outf.write(OutputTagCloud(tagcld,d3jstext, d3cloud_text))
-                
+    app = TTCApp(parser)
+    app.run()
         
 if(__name__ == "__main__"):
     RunMain()
