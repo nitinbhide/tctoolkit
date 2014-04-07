@@ -13,5 +13,7 @@ from .tagcloud import TagCloud
 from .treemapdata import TreemapNode
 from .tcapp import TCApp
 from .sourcetokenizer import SourceCodeTokenizer
-from .sourcetokenizer import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+from .sourcetokenizer import TagTypeFilter, KeywordFilter, NameFilter
+from .sourcetokenizer import ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+from .sourcetokenizer import LiteralFilter
 
