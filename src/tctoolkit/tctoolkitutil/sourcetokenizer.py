@@ -176,3 +176,6 @@ def ClassFuncNameFilter(word, ttype, freq):
     if( validtag == None):
         validtag = FuncNameFilter(word, ttype, freq)
     return(validtag)
+
+def LiteralFilter(word, ttype, freq):
+    return TagTypeFilter(word, ttype, freq, Token.Literal)
