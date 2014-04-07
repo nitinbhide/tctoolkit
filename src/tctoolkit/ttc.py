@@ -13,6 +13,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 import string
 import sys
+import json
 
 from optparse import OptionParser
 
@@ -75,7 +76,15 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
             <div class="colorscale"></div>
             <div id="functionnames" class="tagcloud"></div>
         </div>
-    </div>
+    </div>    
+    <hr/>
+    <div>
+        <h2 align="center">Strings and Literals</h2>
+        <div>
+            <div class="colorscale"></div>
+            <div id="literals" class="tagcloud"></div>
+        </div>
+    </div>    
     <hr/>
     <div id="colorscale">
     </div>
@@ -184,6 +193,9 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         var funcNamesAndFreq = ${ tagcld.getJSON(filterFunc=FuncNameFilter) };        
         drawTagCloud(funcNamesAndFreq, "#functionnames",width, height);
         
+        var literalsAndFreq = ${ tagcld.getJSON(filterFunc=LiteralFilter) };        
+        drawTagCloud(literalsAndFreq, "#literals",width, height);
+
         var clrScaleDivs = d3.select('body').selectAll('.colorscale');
         drawColorScale(clrScaleDivs, fill);
         
@@ -205,11 +217,13 @@ class D3SourceTagCloud(SourceCodeTagCloud):
         tagJsonStr = ''
 
         tagWordList = self.getTags(numWords, filterFunc)
-                
+        #create list of dictionaries them dump list using json.dumps
+        tagList = []
+
         if( len(tagWordList) > 0):                                    
             #change the font size between "-2" to "+8" relative to current font size
-            tagJsonStr = ','.join(["{text:'%s',count:%d, filecount:%d}" % (w, freq, self.getFileCount(w)) for w, freq in tagWordList])
-        tagJsonStr = "[%s]" % tagJsonStr
+            tagList = [{ 'text': w, 'count':freq, 'filecount':self.getFileCount(w)} for w, freq in tagWordList]            
+        tagJsonStr = json.dumps(tagList)
         
         return(tagJsonStr)
     

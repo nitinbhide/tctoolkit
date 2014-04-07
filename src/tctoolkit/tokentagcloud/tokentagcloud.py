@@ -19,7 +19,8 @@ from pygments.token import Token
 from tctoolkitutil import DirFileLister
 from tctoolkitutil import TagCloud
 from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import TagTypeFilter, KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+from tctoolkitutil import KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+from tctoolkitutil import LiteralFilter
 
 class TagCloudTokenizer(SourceCodeTokenizer):
     '''
