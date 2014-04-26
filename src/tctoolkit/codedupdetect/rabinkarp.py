@@ -55,11 +55,12 @@ def FNV8_hash(str):
     return(fhash)
     
 class RabinKarp(object):
-    def __init__(self, patternsize, min_lines, matchstore, fuzzy=False):
+    def __init__(self, patternsize, min_lines, matchstore, fuzzy=False, blameflag=False):
         self.patternsize = patternsize #minimum number of tokens to match
         self.min_lines = min_lines #minimum number of lines to match.
         self.matchstore = matchstore
         self.fuzzy=fuzzy
+        self.blameflag = blameflag
         self.tokenqueue = deque()
         self.tokenizers = dict()
         self.token_hash = dict()
