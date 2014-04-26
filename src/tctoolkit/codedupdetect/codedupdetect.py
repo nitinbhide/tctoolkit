@@ -21,8 +21,8 @@ from rabinkarp import RabinKarp
 from tokenizer import Tokenizer
 
 class CodeDupDetect(object):
-    def __init__(self,filelist, minmatch=100, fuzzy=False,min_lines=3):
-        self.matchstore = matchstore.MatchStore(minmatch)
+    def __init__(self,filelist, minmatch=100, fuzzy=False,min_lines=3,blameflag=False):
+        self.matchstore = matchstore.MatchStore(minmatch, blameflag)
         self.minmatch = minmatch #minimum number of tokens to be matched.
         self.min_lines = min_lines # minimum number of lines to match
         self.filelist = filelist
