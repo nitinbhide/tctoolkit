@@ -22,6 +22,7 @@ from pygments.formatters import HtmlFormatter
 from tctoolkitutil import *
 from thirdparty.templet import *
 from codedupdetect import CodeDupDetect
+from exceptions import ImportError
 
 class HtmlWriter(object):
     '''
@@ -37,7 +38,8 @@ class HtmlWriter(object):
     def getMatches(self):
         return self.cddapp.getMatches()
 
-    def write(self, fname):
+    def write(self, fname, blameflag=False):
+        self.blameflag = blameflag
         with open(fname, "w") as outf:
             outf.write(self.output())
 
@@ -322,7 +324,7 @@ class HtmlWriter(object):
     @stringfunction
     def getMatchLink(self, i, matchset):
         '''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
-
+        
     @stringfunction
     def getMatchHtml(self, i, matchset):
         '''<div id="match_$i">
@@ -339,8 +341,18 @@ class HtmlWriter(object):
 
     @stringfunction
     def getMatchInfo(self, match):
+        '''${self.getMatchInfoBlameTemplate(match)}'''
+        
+    @stringfunction
+    def getMatchInfoTemplate(self, match):
         '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}</li>'''
 
+    @stringfunction
+    def getMatchInfoBlameTemplate(self, match):
+        '''
+            <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}:${match.getAuthorName()}:${match.getRevisionNumber()}</li>
+        '''
+        
     def getSyntaxHighlightedSource(self, matchset):                
         return  highlight(''.join(matchset.getMatchSource()),matchset.getSourceLexer(), self.formatter, outfile=None)
     
@@ -371,13 +383,22 @@ class CDDApp(TCApp):
         return success
 
     def _run(self):
+        if (self.options.blame):
+            try:
+                import pysvn
+            except ImportError:
+                raise ImportError("Install pysvn module before proceeding")
+
+        print("pysvn module mandatory from 'Blame' is available")
+                        
         filelist = self.getFileList(self.args[0])        
-        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy, min_lines=self.options.min_lines)
+        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
+                                 min_lines=self.options.min_lines, blameflag=self.options.blame)
         
         if self.options.format.lower() == 'html':
             #self.cdd.html_output(self.options.filename)
             htmlwriter = HtmlWriter(self)            
-            htmlwriter.write(self.outfile)
+            htmlwriter.write(self.outfile, self.options.blame)
 
         else:
             #assume that format is 'txt'.
@@ -428,6 +449,9 @@ def RunMain():
                       help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
+    parser.add_option("-b", "--blame", dest="blame", default=False, action="store_true",
+                      help="Enable svn blame information output in reports.")
+
     
     app = CDDApp(parser)
     
