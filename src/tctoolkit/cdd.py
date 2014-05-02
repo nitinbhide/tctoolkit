@@ -389,7 +389,7 @@ class CDDApp(TCApp):
             except ImportError:
                 raise ImportError("Install pysvn module before proceeding")
 
-        print("pysvn module mandatory from 'Blame' is available")
+        #print("pysvn module mandatory for 'Blame' is available")
                         
         filelist = self.getFileList(self.args[0])        
         self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
