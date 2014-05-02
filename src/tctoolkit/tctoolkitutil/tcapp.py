@@ -13,6 +13,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 import logging
 from .filelist import DirFileLister
+from .sourcetokenizer import SourceCodeTokenizer
 
 class TCApp(object):
     '''
@@ -32,16 +33,18 @@ class TCApp(object):
     def prog_name(self):
         return self.optparser.get_prog_name().replace('.py', '')
 
+    
     def addDefaultOptions(self):
+        self.optparser.add_option("-g", "--log", dest="log", default=False, action="store_true",
+                      help="Enable logging. Log file generated in the current directory as %s.log" % self.prog_name())
         self.optparser.add_option("-p", "--pattern", dest="pattern", default='*.c',
                       help="select matching the pattern. Default is '*.c' ")
         self.optparser.add_option("-o", "--outfile", dest="outfile", default=None,
                       help="outfile name. Output to stdout if not specified")
         self.optparser.add_option("-l", "--lang", dest="lang", default=None,
-                      help="programming language. Pattern will be ignored if language is defined")
-        self.optparser.add_option("-g", "--log", dest="log", default=False, action="store_true",
-                      help="Enable logging. Log file generated in the current directory as %s.log" % self.prog_name())
+               help="programming language. Pattern will be ignored if language is defined.")
 
+        
     def parse_args(self):
         self.options, self.args = self.optparser.parse_args()
         success=True
@@ -54,7 +57,11 @@ class TCApp(object):
             self.outfile = self.options.outfile
             if self.options.log == True:
                 logging.basicConfig(filename='%s.log' % self.prog_name(),level=logging.INFO)
-        
+            
+            supported_lang = SourceCodeTokenizer.language_list()
+            if self.lang not in supported_lang:
+                msg = "Language %s is not supported.\n\nSupported languages are %s" % (self.lang,', '.join(supported_lang))
+                self.optparser.error(msg)                
             return True
         return success
 

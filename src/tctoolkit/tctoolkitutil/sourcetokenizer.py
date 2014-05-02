@@ -12,7 +12,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 import os.path
 
-from pygments.lexers import get_lexer_for_filename,get_lexer_by_name
+from pygments.lexers import get_lexer_for_filename,get_lexer_by_name,get_all_lexers
 from pygments.filter import simplefilter
 from pygments.token import Token
 
@@ -147,7 +147,15 @@ class SourceCodeTokenizer(object):
                 pass
 
         return pyglexer
-                
+
+    @classmethod
+    def language_list(selfcls):
+        '''
+        get the support languages short name list from the pygments.
+        '''    
+        langlist = [lexer[0] for lexer in get_all_lexers()]       
+        langlist = sorted(langlist)
+        return langlist
 
 '''
 Filter Functions to get tokens of specific type only
