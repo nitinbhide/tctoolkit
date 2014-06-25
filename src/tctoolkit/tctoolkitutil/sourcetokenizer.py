@@ -149,11 +149,21 @@ class SourceCodeTokenizer(object):
         return pyglexer
 
     @classmethod
+    def is_lang_supported(selfcls, lang):
+        '''
+        check 'lang' is there in the short name of supported lexers
+        '''
+        for lexer in get_all_lexers():
+            if lang in lexer[1]:
+                return True
+        return False
+
+    @classmethod
     def language_list(selfcls):
         '''
         get the support languages short name list from the pygments.
         '''    
-        langlist = [lexer[0] for lexer in get_all_lexers()]       
+        langlist = ['%s (Names : %s)' % (lexer[0], ','.join(lexer[1])) for lexer in get_all_lexers()]       
         langlist = sorted(langlist)
         return langlist
 
