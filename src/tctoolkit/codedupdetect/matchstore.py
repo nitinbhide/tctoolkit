@@ -12,7 +12,14 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 
 import tokenizer
-from svn_blame import *
+import logging
+
+try:
+    from svn_blame import *
+    BLAME_SUPPORT = True
+except:
+    print "svn_blame not found : SVN blame detection for duplicate files is not supported"
+    BLAME_SUPPORT = True
 
 class MatchData:
     '''
@@ -62,6 +69,8 @@ class MatchSet:
     def __init__(self, blameflag):
         self.matchset=set()
         self.blameflag = blameflag
+        if BLAME_SUPPORT == False:
+            self.blameflag = False
         self.matchedlines = None
         self.firstMatch = None
 
