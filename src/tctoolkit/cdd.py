@@ -338,10 +338,12 @@ class HtmlWriter(object):
                </div>
            </div>
         '''
-
-    @stringfunction
+    
     def getMatchInfo(self, match):
-        '''${self.getMatchInfoBlameTemplate(match)}'''
+        if self.blameflag:
+            return self.getMatchInfoBlameTemplate(match)
+        else:
+            return self.getMatchInfoTemplate(match)
         
     @stringfunction
     def getMatchInfoTemplate(self, match):
