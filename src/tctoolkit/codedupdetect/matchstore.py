@@ -12,19 +12,28 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 
 import tokenizer
+import logging
+
+try:
+    from svn_blame import *
+    BLAME_SUPPORT = True
+except:
+    print "svn_blame not found : SVN blame detection for duplicate files is not supported"
+    BLAME_SUPPORT = True
 
 class MatchData:
     '''
     store the match/duplication data of one instance
     '''
     __slots__ = ['matchlen', 'starttoken', 'endtoken']
-    def __init__(self,matchlen,starttoken,endtoken):
+    def __init__(self,matchlen,starttoken,endtoken,revisioninfo):
         self.matchlen = matchlen
         assert(starttoken[0] ==endtoken[0]) #make sure filenames are same
         assert(starttoken[1]<= endtoken[1]) #line number of starttoken has to be earlier than end token
         assert(starttoken[2]<= endtoken[2]) #file position of starttoken has to be earlier than end token
         self.starttoken = starttoken
         self.endtoken = endtoken
+        self.revisioninfo = revisioninfo
 
     def __cmp__(self,other):
         val = 1
@@ -50,9 +59,18 @@ class MatchData:
     def getStartLine(self):
         return(self.starttoken[1])
 
+    def getRevisionNumber(self):
+        return(self.revisioninfo[0])
+
+    def getAuthorName(self):
+        return(self.revisioninfo[1])
+
 class MatchSet:
-    def __init__(self):
+    def __init__(self, blameflag):
         self.matchset=set()
+        self.blameflag = blameflag
+        if BLAME_SUPPORT == False:
+            self.blameflag = False
         self.matchedlines = None
         self.firstMatch = None
 
@@ -60,7 +78,15 @@ class MatchSet:
         '''
         add the match information in the match data set
         '''
-        matchdata = MatchData(matchlen, matchstart,matchend)
+        revisioninfo = ['','']
+        if (self.blameflag):
+            svn_blame_client = SvnBlameClient()
+            startlinenum = matchstart[1]
+            endlinenum = startlinenum + matchend[1]
+            dupFileName = str(matchstart[0])
+            revisioninfo = svn_blame_client.runAnnotateCommand(dupFileName, startlinenum, endlinenum)
+
+        matchdata = MatchData(matchlen, matchstart, matchend, revisioninfo)
         self.matchset.add(matchdata)
         if self.firstMatch == None:
             self.firstMatch = matchdata
@@ -95,8 +121,9 @@ class MatchSet:
         return tokenizer.Tokenizer.get_lexer_for_file(self.firstMatch.srcfile())
 
 class MatchStore:
-    def __init__(self,minmatch):
+    def __init__(self,minmatch, blameflag):
         self.minmatch = minmatch
+        self.blameflag = blameflag
         self.hashset = dict()
         self.matchlist = dict()
         
@@ -122,7 +149,7 @@ class MatchStore:
                 
         matchset = self.matchlist.get(sha1_hash)
         if(matchset == None):
-            matchset = MatchSet()
+            matchset = MatchSet(self.blameflag)
         matchset.addMatch(matchlen,matchstart1,matchend1)
         matchset.addMatch(matchlen,matchstart2,matchend2)
         
