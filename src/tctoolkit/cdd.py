@@ -347,7 +347,7 @@ class HtmlWriter(object):
         
     @stringfunction
     def getMatchInfoTemplate(self, match):
-        '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}</li>'''
+        '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
 
     @stringfunction
     def getMatchInfoBlameTemplate(self, match):
