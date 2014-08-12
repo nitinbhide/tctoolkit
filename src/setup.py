@@ -11,7 +11,7 @@ Setup file for installing Thinking Craftsman Toolkit
 
 from distutils.core import setup
 
-setup(name='TCToolkit', version ='0.6.4',
+setup(name='TCToolkit', version ='0.6.5',
       description='python module to analyze source code in various ways',
       author='Nitin Bhide',
       author_email='nitinbhide@gmail.com',
