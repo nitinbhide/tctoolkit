@@ -363,6 +363,9 @@ class HtmlWriter(object):
         return readJsText(jsdir, ["d3js", "d3.min.js"]);
 
 class CDDApp(TCApp):
+    '''
+    Application for 'code duplication detector'. 
+    '''
     def __init__(self, optparser):
         super(CDDApp, self).__init__(optparser,min_num_args=1)
         self.matches = None
