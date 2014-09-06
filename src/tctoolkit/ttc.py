@@ -229,6 +229,13 @@ class D3SourceTagCloud(SourceCodeTagCloud):
     
     
 class TTCApp(TCApp):
+    '''
+    Token Tag Cloud application.
+    Generate 'tag' cloud of tokens (function names, class names, language keywords etc) from
+    various source code files.
+    size of token : defines the number of times the token occurs.
+    colour of token : defines the number of files the token occurs.
+    '''
     def __init__(self, optparser):
         super(TTCApp, self).__init__(optparser,min_num_args=1)
     
@@ -250,7 +257,7 @@ def RunMain():
     (1) Tag cloud of keyword
     (2) Tag cloud of class names and variable names
     (3) Tag cloud of class names and function names    
-    The size of word is based on number of occurances of that 'token' in the various source code files
+    The size of word is based on total number of occurances of that 'token' in the various source code files
     The color of word is based on number of files that 'token' is found.
     '''
     parser = OptionParser(usage,description=description)
