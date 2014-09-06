@@ -359,7 +359,9 @@ class NameTokenizer(SourceCodeTokenizer):
 
 class ClassCoOccurMatrix(TCApp):
     '''
-    Generate Class Co-occurance matrix in HTML format
+    Generate Class Co-occurance matrix in HTML format.
+    Class Co-occurence Matrix : if two classes occur together in any file, are treated as 'classes that
+    are coocurring.'
     '''    
     def __init__(self, optparser):
         '''
