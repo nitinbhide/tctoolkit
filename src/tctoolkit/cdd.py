@@ -352,7 +352,7 @@ class HtmlWriter(object):
     @stringfunction
     def getMatchInfoBlameTemplate(self, match):
         '''
-            <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}:${match.getAuthorName()}:${match.getRevisionNumber()}</li>
+            <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}: In Revision ${match.getRevisionNumber()} by ${match.getAuthorName()}:</li>
         '''
         
     def getSyntaxHighlightedSource(self, matchset):                

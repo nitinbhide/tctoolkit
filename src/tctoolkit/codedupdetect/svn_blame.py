@@ -12,12 +12,14 @@
 -------------------------------------------------------------------------------
 '''
 
-import pysvn
 import getpass
 import sys
 import re
 import urllib, urlparse
 from collections import OrderedDict
+import operator
+
+import pysvn
 
 class SvnBlameClient:
     def __init__(self, username=None, password=None):
@@ -25,6 +27,7 @@ class SvnBlameClient:
         self.svnclient.exception_style = 1
         self.svnclient.callback_get_login = self.get_login
         self.set_user_password(username, password)
+        self.blame_cache = dict() #file name against blame output dictionary
 
     def set_user_password(self, username, password):
         if(username != None):
@@ -47,25 +50,49 @@ class SvnBlameClient:
             retcode = True
         return retcode, self.username, self.password, may_save
 
-    def runAnnotateCommand(self, filepath, startLineNumber=1, endLineNumber=1):
-        blameDict = {}
-        blameRevList = []
-        print(filepath)
-        output = self.svnclient.annotate(filepath)
-        largestKey = 0
-        for item in output:
-            if(item['number'] >= startLineNumber and item['number'] <= endLineNumber):
-                match = re.search('\d+>', str(item['revision']))
-                blameDict[int(match.group()[:-1])] = str(item['author'])
-                if largestKey < int(match.group()[:-1]):
-                    largestKey = int(match.group()[:-1])
-        return largestKey,  blameDict[largestKey]
+    def findAuthorForFragment(self, filepath, startLineNumber=1, endLineNumber=1):
+        '''
+        find who is the main author of startLine/endLine code fragment
+        '''                                                         
+        blame = self.getBlame(filepath)
+        auhtorCounts = dict()
+        
+        startLineNumber = min(startLineNumber, len(blame))
+        endLineNumber = min(endLineNumber, len(blame))
+        #create a statistics of author and revisiona and how many lines are modified in that
+        #(auth,revision) combination
+        for lineinfo in blame[startLineNumber: endLineNumber]:
+            lineauthor = lineinfo['author']
+            linerevision = lineinfo['revision']
+            auhtorCounts[(lineauthor,linerevision)] = auhtorCounts.get((lineauthor,linerevision), 0)+1
+
+        #now findout which author modified maximum number of lines
+        maxauthor = sorted(auhtorCounts.iteritems(), key = operator.itemgetter(1))
+        maxauthor = maxauthor[0]
+        #findout who make highest number of changes. This is tupple of the form ((author, revision), changedlinecount)
+        #we just need 'author and revision'.
+        return maxauthor[0]
+        
+    def getBlame(self, filepath):
+        '''
+        run the blame command on file. Read the blame for SVN or from cache.
+        '''
+        if filepath not in self.blame_cache:
+            output = self.svnclient.annotate(filepath)
+            blameout = list()
+            for blamedict in output:
+                blameinfo = dict()
+                blameinfo['revision'] = blamedict['revision'].number
+                blameinfo['author']= blamedict['author']
+                blameout.append(blameinfo)
+            self.blame_cache[filepath] = blameout
+
+        return self.blame_cache[filepath]
 
 def main():
-##    svnclient = SvnBlameClient("file:///C:/SoftwareCOE/TechnicalAudit/Honda_Check/repo/documents/ApplicationDevelopment/Code/Code/MainTrunk")
-##    filepath = "file:///C:/SoftwareCOE/TechnicalAudit/Honda_Check/repo/documents/ApplicationDevelopment/Code/Code/MainTrunk/Spinner/Business/SourceFiles/verfJPMasterVerficiationSearchSummary_mxJPO.java"
-##    svnclient.runAnnotateCommand(filepath)
-    pass
+    svnclient = SvnBlameClient()
+    path = "file:///F:/repos/svnrepos/dokanrepo/trunk/dokan/cleanup.c"
+    author = svnclient.findAuthorForFragment(path, 10,20)
 
 if __name__ == '__main__':
     main()
