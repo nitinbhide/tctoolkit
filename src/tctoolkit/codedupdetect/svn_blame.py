@@ -11,7 +11,7 @@
 # TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 -------------------------------------------------------------------------------
 '''
-
+import logging
 import getpass
 import sys
 import re
@@ -78,7 +78,9 @@ class SvnBlameClient:
         run the blame command on file. Read the blame for SVN or from cache.
         '''
         if filepath not in self.blame_cache:
+            logging.debug('trying to extract annotations for %s' % filepath)
             output = self.svnclient.annotate(filepath)
+            logging.debug('extracted annotations for %s' % filepath)
             blameout = list()
             for blamedict in output:
                 blameinfo = dict()
