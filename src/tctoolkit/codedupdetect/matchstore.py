@@ -19,7 +19,7 @@ try:
     BLAME_SUPPORT = True
 except:
     print "svn_blame not found : SVN blame detection for duplicate files is not supported"
-    BLAME_SUPPORT = True
+    BLAME_SUPPORT = False
 
 class MatchData:
     '''
@@ -60,31 +60,32 @@ class MatchData:
         return(self.starttoken[1])
 
     def getRevisionNumber(self):
-        return(self.revisioninfo[0])
+        return(self.revisioninfo[1])
 
     def getAuthorName(self):
-        return(self.revisioninfo[1])
+        return(self.revisioninfo[0])
 
 class MatchSet:
     def __init__(self, blameflag):
         self.matchset=set()
-        self.blameflag = blameflag
-        if BLAME_SUPPORT == False:
-            self.blameflag = False
         self.matchedlines = None
         self.firstMatch = None
+        self.svn_blame_client = None
 
+        if (BLAME_SUPPORT and blameflag ):
+            self.svn_blame_client = SvnBlameClient()
+            
     def addMatch(self, matchlen, matchstart, matchend):
         '''
         add the match information in the match data set
         '''
-        revisioninfo = ['','']
-        if (self.blameflag):
-            svn_blame_client = SvnBlameClient()
+        revisioninfo = (None,None)
+        
+        if self.svn_blame_client:
             startlinenum = matchstart[1]
             endlinenum = startlinenum + matchend[1]
             dupFileName = str(matchstart[0])
-            revisioninfo = svn_blame_client.runAnnotateCommand(dupFileName, startlinenum, endlinenum)
+            revisioninfo = self.svn_blame_client.findAuthorForFragment(dupFileName, startlinenum, endlinenum)
 
         matchdata = MatchData(matchlen, matchstart, matchend, revisioninfo)
         self.matchset.add(matchdata)
