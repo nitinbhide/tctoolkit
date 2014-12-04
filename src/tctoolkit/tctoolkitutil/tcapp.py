@@ -11,7 +11,9 @@ This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released u
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
+
 import logging
+
 from .filelist import DirFileLister
 from .sourcetokenizer import SourceCodeTokenizer
 
@@ -19,7 +21,7 @@ class TCApp(object):
     '''
     Base class for typical comamndline TCToolkit applications. Provides
         1. iteration of files in directory based on language or pattern
-        2. storing default option parameters
+        2. storing default option parameters using optparse (or its derived classes)
     '''
 
     def __init__(self, optparser, min_num_args):
@@ -35,6 +37,10 @@ class TCApp(object):
 
     
     def addDefaultOptions(self):
+        '''
+        add the default options like 'logging' , 'file pattern' or 'langugage selection' to all
+        applications.
+        '''
         self.optparser.add_option("-g", "--log", dest="log", default=False, action="store_true",
                       help="Enable logging. Log file generated in the current directory as %s.log" % self.prog_name())
         self.optparser.add_option("-p", "--pattern", dest="pattern", default='*.c',
@@ -58,12 +64,12 @@ class TCApp(object):
             if self.options.log == True:
                 logging.basicConfig(filename='%s.log' % self.prog_name(),level=logging.INFO)
             
-            
             if not SourceCodeTokenizer.is_lang_supported(self.lang):
                 supported_lang = SourceCodeTokenizer.language_list()
                 msg = "Language %s is not supported.\n\nSupported languages are %s" % (self.lang,'\n'.join(supported_lang))
                 self.optparser.error(msg)                
             return True
+        
         return success
 
     def getFileList(self, dirname=None):
@@ -86,6 +92,10 @@ class TCApp(object):
         raise NotImplementedError()
 
     def run(self):
+        '''
+        parse the arguments using options parser and then call '_run' function for actually running
+        the application.
+        '''
         if self.parse_args():
             self._run()
                     
