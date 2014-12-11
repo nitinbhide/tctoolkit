@@ -120,7 +120,7 @@ class SourceCodeTokenizer(object):
 
         if(lang not in SourceCodeTokenizer.__LEXERS_CACHE):
             try:
-                pyglexer = get_lexer_by_name(lang)
+                pyglexer = get_lexer_by_name(lang, encoding='utf-8')
                 SourceCodeTokenizer.__LEXERS_CACHE[lang] = pyglexer
             except:
                 #ignore the lexer not found exceptions
@@ -139,7 +139,7 @@ class SourceCodeTokenizer(object):
 
         if(extension not in SourceCodeTokenizer.__LEXERS_CACHE):
             try:
-                pyglexer = get_lexer_for_filename(filename,stripall=True)
+                pyglexer = get_lexer_for_filename(filename,stripall=True,encoding='utf-8')
                 SourceCodeTokenizer.__LEXERS_CACHE[extension] = pyglexer
             except:
                 #ignore the lexer not found exceptions
