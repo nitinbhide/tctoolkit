@@ -11,6 +11,7 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 import os.path
+import codecs
 
 from pygments.lexers import get_lexer_for_filename,get_lexer_by_name,get_all_lexers
 from pygments.filter import simplefilter
@@ -70,7 +71,7 @@ class SourceCodeTokenizer(object):
          
         if pyglexer != None:
             prevtoken = None
-            with open(self.srcfile, "r") as code:
+            with codecs.open(self.srcfile, "r", encoding='utf-8', errors= 'ignore') as code:
                 for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):
                     #NOTE : do not call 'strip' on the 'value' variable.
                     #if derived class wants to calculate line numbers, the 'strip' call will screw up
