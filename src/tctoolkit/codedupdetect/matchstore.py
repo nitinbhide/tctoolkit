@@ -11,8 +11,9 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
 
-import tokenizer
 import logging
+import codecs
+import tokenizer
 
 try:
     from svn_blame import *
@@ -110,7 +111,7 @@ class MatchSet:
         extract the source code from the first file in matchset.
         '''
         match = self.firstMatch
-        with open(match.srcfile(), 'rb') as src:
+        with codecs.open(match.srcfile, "rb", encoding='utf-8', errors= 'ignore') as src:
             for i in range(match.getStartLine()):
                 src.readline()
             return [src.readline() for i in range(match.getLineCount())]
