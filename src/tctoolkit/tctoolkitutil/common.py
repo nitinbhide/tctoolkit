@@ -14,6 +14,7 @@ import string
 import sys
 import time
 import re
+import codecs
 from contextlib import contextmanager
     
 
@@ -26,7 +27,7 @@ def FileOrStdout(filename):
     output = sys.stdout
     if( filename != None):        
         try:
-            output = open(filename, "w")
+            output = codecs.open(filename, "wb", encoding='utf-8', errors= 'ignore')
         except:
             pass
     yield(output)

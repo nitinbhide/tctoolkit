@@ -71,7 +71,7 @@ class SourceCodeTokenizer(object):
          
         if pyglexer != None:
             prevtoken = None
-            with codecs.open(self.srcfile, "r", encoding='utf-8', errors= 'ignore') as code:
+            with codecs.open(self.srcfile, "rb", encoding='utf-8', errors= 'ignore') as code:
                 for charpos,ttype,value in pyglexer.get_tokens_unprocessed(code.read()):
                     #NOTE : do not call 'strip' on the 'value' variable.
                     #if derived class wants to calculate line numbers, the 'strip' call will screw up
