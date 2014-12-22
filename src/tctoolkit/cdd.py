@@ -40,7 +40,7 @@ class HtmlWriter(object):
 
     def write(self, fname, blameflag=False):
         self.blameflag = blameflag
-        with open(fname, "w") as outf:
+        with codecs.open(fname, "wb", encoding='utf-8', errors= 'ignore') as code:
             outf.write(self.output())
 
     def getCooccuranceData(self):
