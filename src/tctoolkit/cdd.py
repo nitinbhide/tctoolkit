@@ -66,7 +66,7 @@ class HtmlWriter(object):
             target = link[1]
             linklist.append({ 'source':nodes[source], 'target':nodes[target], 'value':value})
 
-        return json.dumps({ 'groups': grouplist, 'nodes':nodelist, 'links' : linklist})
+        return json.dumps({ 'groups': grouplist, 'nodes':nodelist, 'links' : linklist}, ensure_ascii=False, encoding='utf-8')
 
     @stringfunction
     def outputCooccurenceMatrix(self):
