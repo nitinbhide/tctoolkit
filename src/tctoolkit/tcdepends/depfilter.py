@@ -9,7 +9,8 @@ from pygments.filter import simplefilter,Filter
 from pygments.lexers import JavaLexer, CppLexer, CLexer,CSharpLexer
 from pygments.token import Token
 
-from tctoolkitutil.common import FindFileInPathList, StripAtStart
+from tctoolkitutil.filelist import FindFileInPathList
+from tctoolkitutil.common import StripAtStart
 
 def get_import_filter(lexer, srcdir, depsearchpath):
     '''
