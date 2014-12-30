@@ -65,8 +65,8 @@ class TCApp(object):
             if self.options.log == True:
                 logging.basicConfig(filename='%s.log' % self.prog_name(),level=logging.INFO)
             
-            if self.lang:
-                if SourceCodeTokenizer.is_lang_supported(self.lang):
+            if self.lang:                
+                if not SourceCodeTokenizer.is_lang_supported(self.lang):
                     supported_lang = SourceCodeTokenizer.language_list()
                     msg = "Language %s is not supported.\n\nSupported languages are %s" % (self.lang,'\n'.join(supported_lang))
                     self.optparser.error(msg)                
