@@ -4,38 +4,34 @@ Defines utility class for extracting dependencies for various types of source fi
 '''
 
 import os,sys
-import fnmatch
-from pygments.lexers import get_lexer_for_filename
+import codecs
 
-from tctoolkitutil.common import GetDirFileList, StripAtStart
+from pygments.lexers import get_lexer_by_name
+
+from tctoolkitutil.filelist import DirFileLister
+from tctoolkitutil.common import StripAtStart
+
 from tcdepends.depfilter import get_import_filter
     
-
-class Dependency:
-    langSrcFileExten = { 'cpp':['c','cpp', 'cxx', 'hpp', 'h', 'hxx'],
-                         'java': ['java'],
-                         'c#':['cs']
-                         }
-    
+class Dependency(object):
     def __init__(self, language, dependspath=[]):
         self.dependencypath = dependspath
         self.language = language
         self.srcdir = None
-
-    def getFileDependencies(self, srcfile):
-        lexer = get_lexer_for_filename(srcfile,stripall=True)
-        filter = get_import_filter(lexer, self.srcdir, self.dependencypath)
-        dependList = set()
-
-        if( filter != None):
-            lexer.add_filter(filter)
+        self.lexer = get_lexer_by_name(language)
+        self.filter = get_import_filter(self.lexer, self.srcdir, self.dependencypath)
+        assert(self.filter != None)
         
-            with open(srcfile,"r") as code:
-                for ttype, value in lexer.get_tokens(code.read()):
-                    dependson = filter.findFile(value)
-                    dependList.add(dependson)
-        else:
-            print >> sys.stderr, "dependency filter not found for %s" % lexer.name
+        self.lexer.add_filter(self.filter)
+
+    def getFileDependencies(self, srcfile):                        
+        dependList = set()
+        assert(self.filter != None)
+                    
+        with codecs.open(srcfile, "rb", encoding='utf-8', errors= 'ignore') as code:
+            for ttype, value in self.lexer.get_tokens(code.read()):
+                dependson = self.filter.findFile(value)
+                dependList.add(dependson)
         
         return(dependList)
 
@@ -84,8 +80,8 @@ class Dependency:
         self.srcdir = srcdir
         if( self.srcdir.endswith(os.sep) == False):
             self.srcdir  += os.sep
-        filelist = GetDirFileList(self.srcdir )
-        filelist = self.__filterFileList(filelist)
+        filelister = DirFileLister(self.srcdir)
+        filelist = filelister.getFilesForLang(self.language)
         dependDict = self.__getDependency(filelist)
         return(dependDict)
         
@@ -93,20 +89,4 @@ class Dependency:
         dependDict = self.getDependency(srcdir)
         self.__printDependency(dependDict)
         
-    def __filterFileList(self, rawfilelist):
-        '''
-        get fnmatch file pattern for given language. Currently supported language are
-        'cpp' (for both 'c' and 'c++'), 'java' (for java)
-        '''
-        language = self.language.lower()
-        filelist = []
-        
-        extnList = Dependency.langSrcFileExten.get(language, None)
-        if( extnList != None):
-            for extn in extnList:
-                extn = '*.' + extn
-                filelist += fnmatch.filter(rawfilelist,extn)
-                
-        return(filelist)
-    
     
