@@ -26,7 +26,7 @@ class MatchData:
     '''
     store the match/duplication data of one instance
     '''
-    __slots__ = ['matchlen', 'starttoken', 'endtoken']
+    __slots__ = ['matchlen', 'starttoken', 'endtoken', 'revisioninfo']
     def __init__(self,matchlen,starttoken,endtoken,revisioninfo):
         self.matchlen = matchlen
         assert(starttoken[0] ==endtoken[0]) #make sure filenames are same
