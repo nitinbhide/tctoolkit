@@ -17,12 +17,12 @@ import json
 
 from optparse import OptionParser
 
-from thirdparty.templet import stringfunction
+from thirdparty.templet import unicodefunction
 from tokentagcloud.tokentagcloud import *
 from tctoolkitutil import readJsText,getJsDirPath,FileOrStdout
 from tctoolkitutil import TCApp
 
-@stringfunction
+@unicodefunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
     '''<!DOCTYPE html>
     <html>        
