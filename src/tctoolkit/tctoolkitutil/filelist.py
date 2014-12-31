@@ -14,6 +14,7 @@ import re
 import os
 import string
 import logging
+import sys
 
 __all__ = ['DirFileLister', 'FindFileInPathList']
 
@@ -23,11 +24,14 @@ class DirFileLister(object):
     creates list of files for given directory. Matching file pattern or all files handled by pygments
     or files specific to a language etc
     '''
-    IGNOREDIRS = set(['.svn','.cvs', '.hg', '.git'])
+    IGNOREDIRS = set([u'.svn',u'.cvs', u'.hg', u'.git'])
 
-    def __init__(self, dirname):
+    def __init__(self, dirname):                
         self.dirname = dirname
-
+        #dirname is not unicode then convert it to unicode using the filesystem encoding
+        if isinstance(self.dirname, str):
+            self.dirname = self.dirname.decode(sys.getfilesystemencoding())
+        
     def RemoveIgnoreDirs(self, dirs):
         '''
         remove directories in the IGNOREDIRS list from the 'dirs'. Update
