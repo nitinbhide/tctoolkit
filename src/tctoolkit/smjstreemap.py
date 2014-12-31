@@ -17,7 +17,7 @@ from thirdparty.templet import *
 from sourcemon import *
 from tctoolkitutil.common import readJsText,getJsDirPath
 
-@stringfunction
+@unicodefunction
 def TreemapHtml(treemap,d3jstext):
     '''<!DOCTYPE html>
     <html>

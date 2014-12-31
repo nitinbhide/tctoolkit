@@ -23,7 +23,7 @@ from optparse import OptionParser
 
 from pygments.token import Token
 
-from thirdparty.templet import stringfunction
+from thirdparty.templet import unicodefunction
 
 from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import FileOrStdout
