@@ -23,7 +23,7 @@ from optparse import OptionParser
 
 from pygments.token import Token
 
-from thirdparty.templet import stringfunction
+from thirdparty.templet import unicodefunction
 
 from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
@@ -53,7 +53,7 @@ class HtmlCCOMWriter(object):
             d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
             outf.write(self.outputHtml(d3jstext))
 
-    @stringfunction
+    @unicodefunction
     def outputCComScript(self):
         '''
         // Co-occurance matrix
@@ -271,7 +271,7 @@ class HtmlCCOMWriter(object):
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
 
-    @stringfunction
+    @unicodefunction
     def outputHtml(self, d3js_text):
         '''<!DOCTYPE html>
         <html>        
