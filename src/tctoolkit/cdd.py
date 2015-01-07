@@ -40,7 +40,7 @@ class HtmlWriter(object):
 
     def write(self, fname, blameflag=False):
         self.blameflag = blameflag
-        with open(fname, "w") as outf:
+        with codecs.open(fname, "wb", encoding='utf-8', errors= 'ignore') as outf:
             outf.write(self.output())
 
     def getCooccuranceData(self):
@@ -66,9 +66,9 @@ class HtmlWriter(object):
             target = link[1]
             linklist.append({ 'source':nodes[source], 'target':nodes[target], 'value':value})
 
-        return json.dumps({ 'groups': grouplist, 'nodes':nodelist, 'links' : linklist})
+        return json.dumps({ 'groups': grouplist, 'nodes':nodelist, 'links' : linklist}, ensure_ascii=False, encoding='utf-8')
 
-    @stringfunction
+    @unicodefunction
     def outputCooccurenceMatrix(self):
         '''
         // Co-occurance matrix
@@ -262,7 +262,7 @@ class HtmlWriter(object):
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
 
-    @stringfunction
+    @unicodefunction
     def output(self):
         '''<!DOCTYPE html>
         <html>
@@ -321,11 +321,11 @@ class HtmlWriter(object):
         </html>
         '''
     
-    @stringfunction
+    @unicodefunction
     def getMatchLink(self, i, matchset):
         '''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
         
-    @stringfunction
+    @unicodefunction
     def getMatchHtml(self, i, matchset):
         '''<div id="match_$i">
                 <h1>MATCH ${i+1}</h1>
@@ -345,11 +345,11 @@ class HtmlWriter(object):
         else:
             return self.getMatchInfoTemplate(match)
         
-    @stringfunction
+    @unicodefunction
     def getMatchInfoTemplate(self, match):
         '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
 
-    @stringfunction
+    @unicodefunction
     def getMatchInfoBlameTemplate(self, match):
         '''
             <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}: In Revision ${match.getRevisionNumber()} by ${match.getAuthorName()}:</li>

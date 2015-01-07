@@ -23,7 +23,7 @@ from optparse import OptionParser
 
 from pygments.token import Token
 
-from thirdparty.templet import stringfunction
+from thirdparty.templet import unicodefunction
 
 from tctoolkitutil import readJsText,getJsDirPath
 from tctoolkitutil import SourceCodeTokenizer
@@ -53,7 +53,7 @@ class HtmlCCOMWriter(object):
             d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
             outf.write(self.outputHtml(d3jstext))
 
-    @stringfunction
+    @unicodefunction
     def outputCComScript(self):
         '''
         // Co-occurance matrix
@@ -199,7 +199,8 @@ class HtmlCCOMWriter(object):
                     var node2 = nodes[d.y];
                     var tooltiphtml = "<ul><li>Column : "+node1.name+"</li>"+
                         "<li>Row : "+node2.name + "</li>"+
-                        "<li>Count:"+d.z+"</li></ul>";
+                        "<li>Count:"+d.z+"</li>"+
+                        "<li>Groups:"+node1.group+","+node2.group+"</li></ul>";
 
                     tooltip.html(tooltiphtml);
                     tooltip.style("visibility", "visible");
@@ -223,6 +224,8 @@ class HtmlCCOMWriter(object):
                 order(this.value);
               });
 
+              /* sort/order the rows columns based on parameter 'value'. So if the 'value' is 'group'
+                then the rows/columns will be sorted on 'group' index*/
               function order(value) {
                 x.domain(orders[value]);
 
@@ -268,7 +271,7 @@ class HtmlCCOMWriter(object):
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
 
-    @stringfunction
+    @unicodefunction
     def outputHtml(self, d3js_text):
         '''<!DOCTYPE html>
         <html>        
@@ -412,8 +415,15 @@ class ClassCoOccurMatrix(TCApp):
 
         groups = self.detectGroups(nodes, links)
         self._updateGroupIndexInNode(nodes, groups)
+        #Now filter the links where the nodes are in different groups and keep
+        #only the links where both the nodes are in same group.
+        grouplinks = dict() #key (classname1, classname2), value = number of ocurrances
 
-        return nodes, links
+        for node1, node2 in links.iterkeys():
+            if nodes[node1]['group'] == nodes[node2]['group']:
+                grouplinks[(node1,node2)] = links[(node1, node2)]
+
+        return nodes, grouplinks
     
     def detectGroupsNX(self, nodes, links):
         '''
