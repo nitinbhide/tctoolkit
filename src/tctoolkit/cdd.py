@@ -436,7 +436,7 @@ class CDDApp(TCApp):
 
 def RunMain():
     parser = createOptionParser()
-    app = getApp(parser)
+    app = CDDApp(parser)
     with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
         app.run()
 
@@ -464,8 +464,6 @@ def createOptionParser():
                       help="Enable svn blame information output in reports.")
     return parser
 
-def getApp(parser):
-    return CDDApp(parser)
 
 
 if(__name__ == "__main__"):
