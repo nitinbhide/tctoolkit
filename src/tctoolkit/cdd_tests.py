@@ -1,5 +1,4 @@
 '''
-Copyright:   (c) Geometric 2015
 Purpose: Tests for cdd
 '''
 import unittest
