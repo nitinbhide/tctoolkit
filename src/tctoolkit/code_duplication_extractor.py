@@ -13,11 +13,13 @@ import optparse
 
 def extract_duplicates():
     cdd.getApp = lambda parser : DuplicatesExtractor(parser)
-    parser = cdd.createOptionParser()
+    parser = get_option_parser()
     app = cdd.getApp(parser)
     app.run()
-    print app.extract_duplicates()
+    return app.extract_duplicates()
 
+def get_option_parser():
+    return cdd.createOptionParser()
 
 class DuplicatesExtractor(cdd.CDDApp):
     def _run(self):
@@ -54,4 +56,4 @@ class DuplicatesDetector(CodeDupDetect):
 
 
 if __name__=='__main__':
-    extract_duplicates()
+    print extract_duplicates()
