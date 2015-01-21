@@ -3,18 +3,12 @@ Copyright:   (c) Geometric 2015
 Purpose: Runs CDD & Extracts code duplicate into a dictionary which can be consumed by another program
 '''
 
-import os
-import sys
-
-
 from codedupdetect import CodeDupDetect
 import cdd
-import optparse
 
 def extract_duplicates():
-    cdd.getApp = lambda parser : DuplicatesExtractor(parser)
     parser = get_option_parser()
-    app = cdd.getApp(parser)
+    app = DuplicatesExtractor(parser)
     app.run()
     return app.extract_duplicates()
 
@@ -54,6 +48,6 @@ class DuplicatesDetector(CodeDupDetect):
 
         return dups
 
-
+#----------------------------------------------------------------
 if __name__=='__main__':
     print extract_duplicates()
