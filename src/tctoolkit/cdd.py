@@ -435,6 +435,12 @@ class CDDApp(TCApp):
 
 
 def RunMain():
+    parser = createOptionParser()
+    app = getApp(parser)
+    with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
+        app.run()
+
+def createOptionParser():
     usage = "usage: %prog [options] <directory name>"
     description = """Code Duplication Detector. (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
     Uses RabinKarp algorithm for finding exact duplicates. Fuzzy duplication detection support is
@@ -456,13 +462,7 @@ def RunMain():
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     parser.add_option("-b", "--blame", dest="blame", default=False, action="store_true",
                       help="Enable svn blame information output in reports.")
-
-
-    app = getApp(parser)
-
-    with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
-        app.run()
-
+    return parser
 
 def getApp(parser):
     return CDDApp(parser)
