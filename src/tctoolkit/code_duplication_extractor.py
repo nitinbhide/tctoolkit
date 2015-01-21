@@ -7,21 +7,50 @@ import os
 import sys
 
 
-from tctoolkit.codedupdetect import CodeDupDetect
-from tctoolkit import cdd
+from codedupdetect import CodeDupDetect
+import cdd
+import optparse
 
 def extract_duplicates():
     cdd.getApp = lambda parser : DuplicatesExtractor(parser)
-    cdd.RunMain()
+    parser = cdd.createOptionParser()
+    app = cdd.getApp(parser)
+    app.run()
+    print app.extract_duplicates()
 
 
 class DuplicatesExtractor(cdd.CDDApp):
-     def _run(self):
+    def _run(self):
         filelist = self.getFileList(self.args[0])
-        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
+        self.cdd = DuplicatesDetector(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
                                  min_lines=self.options.min_lines, blameflag=self.options.blame)
 
         self.printDuplicates(self.outfile)
+
+    def extract_duplicates(self):
+        return self.cdd.extract_matches()
+
+
+class DuplicatesDetector(CodeDupDetect):
+    def extract_matches(self):
+        exactmatches = self.findcopies()
+        #now sort the matches based on the matched line count (in reverse)
+        exactmatches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
+        matchcount=0
+
+        dups = {}
+        for matches in exactmatches:
+            matchcount=matchcount+1
+            fcount = len(matches)
+            dups[matchcount] = {}
+            dups[matchcount].update({'fcount':fcount})
+            first = True
+            for match in matches:
+                if( first):
+                    dups[matchcount].update({'linecount':match.getLineCount()})
+                    first = False
+
+        return dups
 
 
 if __name__=='__main__':
