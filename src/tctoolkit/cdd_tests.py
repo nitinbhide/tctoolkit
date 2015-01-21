@@ -16,14 +16,12 @@ class Options:
         self.fuzzy = False
         self.min_lines = 3
         self.blame = False
+        self.outfile = ''
 
 
 def inject_parse_args():
     options = Options()
-    options.format = 'txt'
     options.lang = 'py'
-    options.outfile = './testdata/outfile'
-
     args = ['./testdata']
     return options,args
 

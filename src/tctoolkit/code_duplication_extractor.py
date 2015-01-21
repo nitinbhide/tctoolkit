@@ -15,13 +15,12 @@ def extract_duplicates():
 def get_option_parser():
     return cdd.createOptionParser()
 
+
 class DuplicatesExtractor(cdd.CDDApp):
     def _run(self):
         filelist = self.getFileList(self.args[0])
         self.cdd = DuplicatesDetector(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
                                  min_lines=self.options.min_lines, blameflag=self.options.blame)
-
-        self.printDuplicates(self.outfile)
 
     def extract_duplicates(self):
         return self.cdd.extract_matches()
