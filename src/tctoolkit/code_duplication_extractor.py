@@ -1,5 +1,4 @@
 '''
-Copyright:   (c) Geometric 2015
 Purpose: Runs CDD & Extracts code duplicate into a dictionary which can be consumed by another program
 '''
 
