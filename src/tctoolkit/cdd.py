@@ -388,6 +388,10 @@ class CDDApp(TCApp):
         return success
 
     def _run(self):
+        if (self.options.runtests == True):
+            runtests()
+            return
+
         if (self.options.blame):
             try:
                 import pysvn
@@ -462,8 +466,14 @@ def createOptionParser():
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     parser.add_option("-b", "--blame", dest="blame", default=False, action="store_true",
                       help="Enable svn blame information output in reports.")
+    parser.add_option('--test', action="store_true", dest='runtests',
+                      help='ignores further arguments & runs tests for this program')
     return parser
 
+def runtests():
+    import unittest
+    alltests = unittest.defaultTestLoader.discover(start_dir=os.path.dirname(__file__), pattern="*tests.py")
+    unittest.TextTestRunner(verbosity=2).run(alltests)
 
 
 if(__name__ == "__main__"):
