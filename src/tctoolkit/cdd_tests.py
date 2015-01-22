@@ -41,7 +41,7 @@ class TestFixture(unittest.TestCase):
         self.assertEqual(dups_expected,dups)
 
         analytics_expected = {'num_dups': 4, 'num_dups_across_files':4,
-                              'dups_loc': (37+30+20+18)}
+                              'dups_loc': (37+30+20+(18*2))}
         self.assertEqual(analytics_expected,analytics['analytics'])
 
 
