@@ -5,14 +5,37 @@ Purpose: Runs CDD & Extracts code duplicate into a dictionary which can be consu
 from codedupdetect import CodeDupDetect
 import cdd
 
-def extract_duplicates():
-    parser = get_option_parser()
+import os
+
+def extract_duplicates(lang='py',srclocation='.\\testdata'):
+    parser = get_option_parser(lang,os.path.abspath(srclocation))
     app = DuplicatesExtractor(parser)
     app.run()
     return app.extract_duplicates()
 
-def get_option_parser():
-    return cdd.createOptionParser()
+def get_option_parser(lang,srclocation):
+    class Options:
+        def __init__(self):
+            self.format = 'txt'
+            self.pattern = ""
+            self.log = False
+            self.report = None
+            self.minimum = 100
+            self.fuzzy = False
+            self.min_lines = 3
+            self.blame = False
+            self.outfile = ''
+
+    def inject_parse_args():
+        options = Options()
+        assert os.path.exists(srclocation), 'target src path is invalid'
+        options.lang = lang
+        args = [srclocation]
+        return options,args
+
+    parser = cdd.createOptionParser()
+    parser.parse_args = inject_parse_args
+    return parser
 
 
 class DuplicatesExtractor(cdd.CDDApp):
@@ -78,4 +101,4 @@ class DuplicatesDetector(CodeDupDetect):
 
 #----------------------------------------------------------------
 if __name__=='__main__':
-    print extract_duplicates()
+    print extract_duplicates(lang='py',srclocation='.\\testdata')

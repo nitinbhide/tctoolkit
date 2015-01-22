@@ -5,35 +5,12 @@ import unittest
 import code_duplication_extractor as dups_extractor
 import optparse
 
-class Options:
-    def __init__(self):
-        self.format = 'txt'
-        self.pattern = ""
-        self.log = False
-        self.report = None
-        self.minimum = 100
-        self.fuzzy = False
-        self.min_lines = 3
-        self.blame = False
-        self.outfile = ''
-
-
-def inject_parse_args():
-    options = Options()
-    options.lang = 'py'
-    args = ['./testdata']
-    return options,args
-
 
 class TestFixture(unittest.TestCase):
 #[manojp: 22/01/2015]: test for duplicates across files needs to be corrected.
-    def setUp(self):
-        mock_parser = optparse.OptionParser()
-        mock_parser.parse_args = inject_parse_args
-        dups_extractor.get_option_parser = lambda : mock_parser
-
     def test_on_cooked_up_python_files_containing_duplicates(self):
-        dups = dups_extractor.extract_duplicates()
+        dups = dups_extractor.extract_duplicates(lang='py',srclocation='.\\testdata')
+
         analytics_data = dups.pop('analytics')
         analytics = {'analytics': analytics_data}
 
