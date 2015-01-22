@@ -41,8 +41,12 @@ class DuplicatesExtractor(cdd.CDDApp):
 
     def find_dups_loc(self,dups):
         def add_loc(a,b):
-            loc = a[1]['linecount'] + b[1]['linecount']
-            return ('don\'tcare',{'linecount':loc,'fcount':0})
+            loc_item = b[1]['linecount']
+            fcount_item = b[1]['fcount']
+            accumulated_loc = a[1]['linecount']
+            accumulated_loc = accumulated_loc + (loc_item * (fcount_item-1))
+            return ('don\'tcare',{'linecount':accumulated_loc,'fcount':0})
+
         loc = reduce(add_loc,dups.iteritems(),('don\'tcare',{'linecount': 0, 'fcount': 0}))
         return loc[1]['linecount']
 
