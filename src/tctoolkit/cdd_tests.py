@@ -26,6 +26,7 @@ def inject_parse_args():
 
 
 class TestFixture(unittest.TestCase):
+#[manojp: 22/01/2015]: test for duplicates across files needs to be corrected.
     def setUp(self):
         mock_parser = optparse.OptionParser()
         mock_parser.parse_args = inject_parse_args
@@ -44,6 +45,14 @@ class TestFixture(unittest.TestCase):
                               'dups_loc': (37+30+20+(18*2))}
         self.assertEqual(analytics_expected,analytics['analytics'])
 
+
+    def test_that_higher_level_analytics_data_is_computed_correctly(self):
+        dups = {1: {'linecount': 20, 'fcount': 2}, 2: {'linecount': 30, 'fcount': 5}}
+
+        dups_analytics = dups_extractor.extract_dups_analytics(dups)
+        expected = {'num_dups': 2, 'num_dups_across_files':2,
+                              'dups_loc': (20+(30*4))}
+        self.assertEqual(expected,dups_analytics['analytics'])
 
 
 

@@ -23,32 +23,36 @@ class DuplicatesExtractor(cdd.CDDApp):
 
     def extract_duplicates(self):
         dups = self.cdd.extract_matches()
-        analytics = self.extract_dups_analytics(dups)
+        analytics = extract_dups_analytics(dups)
         dups.update(analytics)
         return dups
 
-    def extract_dups_analytics(self,dups):
-        data = {}
-        data.update({'num_dups': len(dups.keys())})
-        data.update({'num_dups_across_files': self.find_dups_across_files(dups)})
-        data.update({'dups_loc': self.find_dups_loc(dups)})
-        analytics = {'analytics':data}
-        return analytics
+#-------------------------------------------------------------
+def extract_dups_analytics(dups):
+    data = {}
+    data.update({'num_dups': len(dups.keys())})
+    data.update({'num_dups_across_files': find_dups_across_files(dups)})
+    data.update({'dups_loc': find_dups_loc(dups)})
+    analytics = {'analytics':data}
+    return analytics
 
-    def find_dups_across_files(self,dups):
-        dups_across_files = dict((k, v) for (k, v) in dups.iteritems() if v['fcount']>1)
-        return len(dups_across_files.keys())
+def find_dups_across_files(dups):
+    dups_across_files = dict((k, v) for (k, v) in dups.iteritems() if v['fcount']>1)
+    return len(dups_across_files.keys())
 
-    def find_dups_loc(self,dups):
-        def add_loc(a,b):
-            loc_item = b[1]['linecount']
-            fcount_item = b[1]['fcount']
-            accumulated_loc = a[1]['linecount']
-            accumulated_loc = accumulated_loc + (loc_item * (fcount_item-1))
-            return ('don\'tcare',{'linecount':accumulated_loc,'fcount':0})
+def find_dups_loc(dups):
+    def add_loc(a,b):
+        loc_item = b[1]['linecount']
+        fcount_item = b[1]['fcount']
+        accumulated_loc = a[1]['linecount']
 
-        loc = reduce(add_loc,dups.iteritems(),('don\'tcare',{'linecount': 0, 'fcount': 0}))
-        return loc[1]['linecount']
+        assert fcount_item > 1, '''Assumption based on existing behavior: Even if the duplicates are inside same file,
+                the same file is repeated multiple times'''
+        accumulated_loc = accumulated_loc + (loc_item * (fcount_item-1))
+        return ('don\'tcare',{'linecount':accumulated_loc,'fcount':0})
+
+    loc = reduce(add_loc,dups.iteritems(),('don\'tcare',{'linecount': 0, 'fcount': 0}))
+    return loc[1]['linecount']
 
 
 class DuplicatesDetector(CodeDupDetect):
