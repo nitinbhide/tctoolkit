@@ -33,9 +33,19 @@ class TestFixture(unittest.TestCase):
 
     def test_on_cooked_up_python_files_containing_duplicates(self):
         dups = dups_extractor.extract_duplicates()
-        expected = {1: {'linecount': 37, 'fcount': 2}, 2: {'linecount': 30, 'fcount': 2},
+        analytics_data = dups.pop('analytics')
+        analytics = {'analytics': analytics_data}
+
+        dups_expected = {1: {'linecount': 37, 'fcount': 2}, 2: {'linecount': 30, 'fcount': 2},
                     3: {'fcount': 2,'linecount': 20}, 4: {'linecount': 18, 'fcount': 3}}
-        self.assertEqual(expected,dups)
+        self.assertEqual(dups_expected,dups)
+
+        analytics_expected = {'num_dups': 4, 'num_dups_across_files':4,
+                              'dups_loc': (37+30+20+18)}
+        self.assertEqual(analytics_expected,analytics['analytics'])
+
+
+
 
 if __name__=='__main__':
     unittest.main()

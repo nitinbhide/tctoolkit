@@ -22,7 +22,29 @@ class DuplicatesExtractor(cdd.CDDApp):
                                  min_lines=self.options.min_lines, blameflag=self.options.blame)
 
     def extract_duplicates(self):
-        return self.cdd.extract_matches()
+        dups = self.cdd.extract_matches()
+        analytics = self.extract_dups_analytics(dups)
+        dups.update(analytics)
+        return dups
+
+    def extract_dups_analytics(self,dups):
+        data = {}
+        data.update({'num_dups': len(dups.keys())})
+        data.update({'num_dups_across_files': self.find_dups_across_files(dups)})
+        data.update({'dups_loc': self.find_dups_loc(dups)})
+        analytics = {'analytics':data}
+        return analytics
+
+    def find_dups_across_files(self,dups):
+        dups_across_files = dict((k, v) for (k, v) in dups.iteritems() if v['fcount']>1)
+        return len(dups_across_files.keys())
+
+    def find_dups_loc(self,dups):
+        def add_loc(a,b):
+            loc = a[1]['linecount'] + b[1]['linecount']
+            return ('don\'tcare',{'linecount':loc,'fcount':0})
+        loc = reduce(add_loc,dups.iteritems(),('don\'tcare',{'linecount': 0, 'fcount': 0}))
+        return loc[1]['linecount']
 
 
 class DuplicatesDetector(CodeDupDetect):
