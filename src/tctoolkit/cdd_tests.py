@@ -3,7 +3,6 @@ Purpose: Tests for cdd
 '''
 import unittest
 import code_duplication_extractor as dups_extractor
-import optparse
 
 
 class TestFixture(unittest.TestCase):
