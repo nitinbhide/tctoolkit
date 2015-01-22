@@ -1,10 +1,10 @@
 '''
 Purpose: Runs CDD & Extracts code duplicate into a dictionary which can be consumed by another program
+Reading Convention: view the code top to bottom. Callers are at the top, followed by callees.
 '''
 
 from codedupdetect import CodeDupDetect
 import cdd
-
 import os
 
 def extract_duplicates(lang='py',srclocation='.\\testdata'):
@@ -37,7 +37,7 @@ def get_option_parser(lang,srclocation):
     parser.parse_args = inject_parse_args
     return parser
 
-
+#-------------------------------------------------------------
 class DuplicatesExtractor(cdd.CDDApp):
     def _run(self):
         filelist = self.getFileList(self.args[0])
@@ -51,6 +51,28 @@ class DuplicatesExtractor(cdd.CDDApp):
         return dups
 
 #-------------------------------------------------------------
+class DuplicatesDetector(CodeDupDetect):
+    def extract_matches(self):
+        exactmatches = self.findcopies()
+        #now sort the matches based on the matched line count (in reverse)
+        exactmatches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
+        matchcount=0
+
+        dups = {}
+        for matches in exactmatches:
+            matchcount=matchcount+1
+            fcount = len(matches)
+            dups[matchcount] = {}
+            dups[matchcount].update({'fcount':fcount})
+            first = True
+            for match in matches:
+                if( first):
+                    dups[matchcount].update({'linecount':match.getLineCount()})
+                    first = False
+
+        return dups
+#-------------------------------------------------------------
+
 def extract_dups_analytics(dups):
     data = {}
     data.update({'num_dups': len(dups.keys())})
@@ -76,28 +98,6 @@ def find_dups_loc(dups):
 
     loc = reduce(add_loc,dups.iteritems(),('don\'tcare',{'linecount': 0, 'fcount': 0}))
     return loc[1]['linecount']
-
-
-class DuplicatesDetector(CodeDupDetect):
-    def extract_matches(self):
-        exactmatches = self.findcopies()
-        #now sort the matches based on the matched line count (in reverse)
-        exactmatches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
-        matchcount=0
-
-        dups = {}
-        for matches in exactmatches:
-            matchcount=matchcount+1
-            fcount = len(matches)
-            dups[matchcount] = {}
-            dups[matchcount].update({'fcount':fcount})
-            first = True
-            for match in matches:
-                if( first):
-                    dups[matchcount].update({'linecount':match.getLineCount()})
-                    first = False
-
-        return dups
 
 #----------------------------------------------------------------
 if __name__=='__main__':
