@@ -7,14 +7,11 @@ from codedupdetect import CodeDupDetect
 import cdd
 import os
 
-def extract_duplicates(lang='py',srclocation='.\\testdata'):
-    parser = get_option_parser(lang,os.path.abspath(srclocation))
+def extract_duplicates(optionparser=None):
+    parser = cdd.createOptionParser() if (optionparser == None) else optionparser
     app = DuplicatesExtractor(parser)
     app.run()
     return app.extract_duplicates()
-
-def get_option_parser(lang,srclocation):
-    return cdd.createOptionParser()
 
 #-------------------------------------------------------------
 class DuplicatesExtractor(cdd.CDDApp):
@@ -80,4 +77,4 @@ def find_dups_loc(dups):
 
 #----------------------------------------------------------------
 if __name__=='__main__':
-    print extract_duplicates(lang='py',srclocation='.\\testdata')
+    print extract_duplicates()
