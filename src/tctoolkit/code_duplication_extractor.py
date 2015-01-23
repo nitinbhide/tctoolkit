@@ -14,34 +14,13 @@ def extract_duplicates(lang='py',srclocation='.\\testdata'):
     return app.extract_duplicates()
 
 def get_option_parser(lang,srclocation):
-    class Options:
-        def __init__(self):
-            self.format = 'txt'
-            self.pattern = ""
-            self.log = False
-            self.report = None
-            self.minimum = 100
-            self.fuzzy = False
-            self.min_lines = 3
-            self.blame = False
-            self.outfile = ''
-
-    def inject_parse_args():
-        options = Options()
-        assert os.path.exists(srclocation), 'target src path is invalid'
-        options.lang = lang
-        args = [srclocation]
-        return options,args
-
-    parser = cdd.createOptionParser()
-    parser.parse_args = inject_parse_args
-    return parser
+    return cdd.createOptionParser()
 
 #-------------------------------------------------------------
 class DuplicatesExtractor(cdd.CDDApp):
-    def _run(self):
+    def getCDDInstance(self):
         filelist = self.getFileList(self.args[0])
-        self.cdd = DuplicatesDetector(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
+        return DuplicatesDetector(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
                                  min_lines=self.options.min_lines, blameflag=self.options.blame)
 
     def extract_duplicates(self):

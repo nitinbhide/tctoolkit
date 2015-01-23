@@ -400,9 +400,7 @@ class CDDApp(TCApp):
 
         #print("pysvn module mandatory for 'Blame' is available")
 
-        filelist = self.getFileList(self.args[0])
-        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
-                                 min_lines=self.options.min_lines, blameflag=self.options.blame)
+        self.cdd = self.getCDDInstance()
 
         if self.options.format.lower() == 'html':
             #self.cdd.html_output(self.options.filename)
@@ -437,6 +435,10 @@ class CDDApp(TCApp):
     def getCooccuranceData(self):
         return self.cdd.getCooccuranceData(self.dirname)
 
+    def getCDDInstance(self):
+        filelist = self.getFileList(self.args[0])
+        return CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
+                                 min_lines=self.options.min_lines, blameflag=self.options.blame)
 
 def RunMain():
     parser = createOptionParser()
