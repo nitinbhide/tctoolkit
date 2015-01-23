@@ -6,39 +6,37 @@ import os
 import cdd
 import code_duplication_extractor as dups_extractor
 
+class Options:
+    def __init__(self):
+        self.format = 'txt'
+        self.pattern = ""
+        self.log = False
+        self.report = None
+        self.minimum = 100
+        self.fuzzy = False
+        self.min_lines = 3
+        self.blame = False
+        self.outfile = '.\\testdata\out.txt'
+        self.runtests = False
+        self.comments = False
+
 def get_option_parser(lang,srclocation):
-    class Options:
-        def __init__(self):
-            self.format = 'txt'
-            self.pattern = ""
-            self.log = False
-            self.report = None
-            self.minimum = 100
-            self.fuzzy = False
-            self.min_lines = 3
-            self.blame = False
-            self.outfile = '.\\testdata\out.txt'
-            self.runtests = False
-            self.comments = False
+        parser = cdd.createOptionParser()
+        def inject_parse_args():
+            options = Options()
+            assert os.path.exists(srclocation), 'target src path is invalid'
+            options.lang = lang
+            args = [srclocation]
+            return options,args
 
-    parser = cdd.createOptionParser()
-    def inject_parse_args():
-        options = Options()
-        assert os.path.exists(srclocation), 'target src path is invalid'
-        options.lang = lang
-        args = [srclocation]
-        return options,args
-
-    parser.parse_args = inject_parse_args
-    return parser
+        parser.parse_args = inject_parse_args
+        return parser
 
 class TestFixture(unittest.TestCase):
 #[manojp: 22/01/2015]: test for duplicates across files needs to be corrected.
-    def  setUp(self):
-        dups_extractor.get_option_parser = get_option_parser
 
     def test_on_cooked_up_python_files_containing_duplicates(self):
-        dups = dups_extractor.extract_duplicates(lang='py',srclocation='.\\testdata')
+        dups = dups_extractor.extract_duplicates(optionparser = get_option_parser(lang='py',srclocation='.\\testdata'))
 
         analytics_data = dups.pop('analytics')
         analytics = {'analytics': analytics_data}
