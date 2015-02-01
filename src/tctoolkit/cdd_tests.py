@@ -1,4 +1,8 @@
 '''
+This module is part of Thinking Craftsman Toolkit (TC Toolkit).
+and is released under the New BSD License: http://www.opensource.org/licenses/bsd-license.php
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
+
 Purpose: Tests for cdd
 '''
 import unittest
@@ -44,12 +48,12 @@ class TestFixture(unittest.TestCase):
         analytics_data = dups.pop('analytics')
         analytics = {'analytics': analytics_data}
 
-        dups_expected = {1: {'linecount': 37, 'fcount': 2}, 2: {'linecount': 30, 'fcount': 2},
+        dups_expected = {1: {'linecount': 46, 'fcount': 2}, 2: {'linecount': 30, 'fcount': 2},
                     3: {'fcount': 2,'linecount': 20}, 4: {'linecount': 18, 'fcount': 3}}
         self.assertEqual(dups_expected,dups)
 
         analytics_expected = {'num_dups': 4, 'num_dups_across_files':4,
-                              'dups_loc': (37+30+20+(18*2))}
+                              'dups_loc': (46+30+20+(18*2))}
         self.assertEqual(analytics_expected,analytics['analytics'])
 
 
