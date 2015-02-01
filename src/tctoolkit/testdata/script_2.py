@@ -1,3 +1,11 @@
+'''
+This module is part of Thinking Craftsman Toolkit (TC Toolkit).
+and is released under the New BSD License: http://www.opensource.org/licenses/bsd-license.php
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
+
+Purpose: This file is not the code for tctoolkit. It simply acts as a test data.
+'''
+
 #!/usr/bin/env python
 import cookielib
 import difflib
@@ -58,7 +66,7 @@ def commit_file(filename):
         logger = get_logger()
         logger.error("%s is not part of working copy",filename)
         del logger
-		
+
 def commit_file(filename):
     try:
         client = pysvn.Client()
