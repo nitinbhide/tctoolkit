@@ -1,9 +1,5 @@
 '''
-This module is part of Thinking Craftsman Toolkit (TC Toolkit).
-and is released under the New BSD License: http://www.opensource.org/licenses/bsd-license.php
-TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
-
-Purpose: Runs CDD & Extracts duplicate code into a dictionary which can be consumed by another program
+Purpose: Runs CDD & Extracts code duplicate into a dictionary which can be consumed by another program
 Reading Convention: view the code top to bottom. Callers are at the top, followed by callees.
 '''
 
