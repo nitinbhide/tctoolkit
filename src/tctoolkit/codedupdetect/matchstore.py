@@ -22,7 +22,7 @@ except:
     print "svn_blame not found : SVN blame detection for duplicate files is not supported"
     BLAME_SUPPORT = False
 
-class MatchData:
+class MatchData(object):
     '''
     store the match/duplication data of one instance
     '''
@@ -66,7 +66,7 @@ class MatchData:
     def getAuthorName(self):
         return(self.revisioninfo[0])
 
-class MatchSet:
+class MatchSet(object):
     def __init__(self, blameflag):
         self.matchset=set()
         self.matchedlines = None
@@ -122,7 +122,7 @@ class MatchSet:
         '''
         return tokenizer.Tokenizer.get_lexer_for_file(self.firstMatch.srcfile())
 
-class MatchStore:
+class MatchStore(object):
     def __init__(self,minmatch, blameflag):
         self.minmatch = minmatch
         self.blameflag = blameflag
