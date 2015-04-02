@@ -18,6 +18,9 @@ import operator
 import pysvn
 
 class SvnBlameClient(object):
+    '''
+    Subversion client to query the 'blame' information for a file.
+    '''
     def __init__(self, username=None, password=None):
         self.svnclient = pysvn.Client()
         self.svnclient.exception_style = 1
