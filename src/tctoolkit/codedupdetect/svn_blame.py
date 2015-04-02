@@ -13,9 +13,6 @@
 '''
 import logging
 import getpass
-import sys
-import re
-import urllib, urlparse
 from collections import OrderedDict
 import operator
 
