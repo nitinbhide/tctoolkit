@@ -13,7 +13,6 @@
 '''
 import logging
 import getpass
-from collections import OrderedDict
 import operator
 
 import pysvn
@@ -27,21 +26,21 @@ class SvnBlameClient(object):
         self.blame_cache = dict() #file name against blame output dictionary
 
     def set_user_password(self, username, password):
-        if(username != None):
+        if username != None:
             self.username = username
             self.svnclient.set_default_username(self.username)
-        if (password != None):
+        if  password != None:
             self.password = password
             self.svnclient.set_default_password(self.password)
 
     def get_login(self, realm, username, may_save):
         logging.debug("This is a svnclient.callback_get_login event. ")
-        if( self.username == None):
+        if self.username == None:
             self.username = raw_input("username for %s:" % realm)
         #save = True
-        if( self.password == None):
+        if self.password == None:
             self.password = getpass.getpass()
-        if(self.username== None or self.username ==''):
+        if self.username == None or self.username == '':
             retcode = False
         else:
             retcode = True
@@ -50,7 +49,7 @@ class SvnBlameClient(object):
     def findAuthorForFragment(self, filepath, startLineNumber=1, endLineNumber=1):
         '''
         find who is the main author of startLine/endLine code fragment
-        '''                                                         
+        '''
         blame = self.getBlame(filepath)
         auhtorCounts = dict()
         
@@ -61,7 +60,7 @@ class SvnBlameClient(object):
         for lineinfo in blame[startLineNumber: endLineNumber]:
             lineauthor = lineinfo['author']
             linerevision = lineinfo['revision']
-            auhtorCounts[(lineauthor,linerevision)] = auhtorCounts.get((lineauthor,linerevision), 0)+1
+            auhtorCounts[(lineauthor, linerevision)] = auhtorCounts.get((lineauthor, linerevision), 0)+1
 
         #now findout which author modified maximum number of lines
         maxauthor = sorted(auhtorCounts.iteritems(), key = operator.itemgetter(1))
@@ -76,13 +75,16 @@ class SvnBlameClient(object):
         '''
         if filepath not in self.blame_cache:
             logging.debug('trying to extract annotations for %s' % filepath)
+            
             output = self.svnclient.annotate(filepath)
             logging.debug('extracted annotations for %s' % filepath)
+            
             blameout = list()
+
             for blamedict in output:
                 blameinfo = dict()
                 blameinfo['revision'] = blamedict['revision'].number
-                blameinfo['author']= blamedict['author']
+                blameinfo['author'] = blamedict['author']
                 blameout.append(blameinfo)
             self.blame_cache[filepath] = blameout
 
