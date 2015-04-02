@@ -21,7 +21,7 @@ import operator
 
 import pysvn
 
-class SvnBlameClient:
+class SvnBlameClient(object):
     def __init__(self, username=None, password=None):
         self.svnclient = pysvn.Client()
         self.svnclient.exception_style = 1
@@ -91,10 +91,3 @@ class SvnBlameClient:
 
         return self.blame_cache[filepath]
 
-def main():
-    svnclient = SvnBlameClient()
-    path = "file:///F:/repos/svnrepos/dokanrepo/trunk/dokan/cleanup.c"
-    author = svnclient.findAuthorForFragment(path, 10,20)
-
-if __name__ == '__main__':
-    main()
