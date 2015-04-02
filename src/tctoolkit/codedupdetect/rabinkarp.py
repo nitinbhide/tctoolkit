@@ -17,6 +17,7 @@ from collections import deque
 from itertools import izip
 import operator
 import hashlib
+
 import tokenizer
 
 MAX_SINGLE_FILEMATCHES = 50 #Maximum number of matches to find in a single file
@@ -28,8 +29,8 @@ HASH_MOD =16777619;  #make sure it is a prime
 
 #read the FNV has wikipedia entry for the details of these constants.
 #http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
-FNV_OFFSET_BASIS=2166136261
-FNV_PRIME=16777619
+FNV_OFFSET_BASIS = 2166136261
+FNV_PRIME = 16777619
 
 def int_mod(a, b):
     return (a % b + b) % b
@@ -59,18 +60,18 @@ class RabinKarp(object):
         self.patternsize = patternsize #minimum number of tokens to match
         self.min_lines = min_lines #minimum number of lines to match.
         self.matchstore = matchstore
-        self.fuzzy=fuzzy
+        self.fuzzy = fuzzy
         self.blameflag = blameflag
         self.tokenqueue = deque()
         self.tokenizers = dict()
         self.token_hash = dict()
-        self.__rollhashbase =1
+        self.__rollhashbase = 1
         self.curfilematches = 0; #number of matches found the current file.
         for i in xrange(0, patternsize-1):
             self.__rollhashbase = (self.__rollhashbase*HASH_BASE) % HASH_MOD;
 
     
-    def rollCurHash(self,tknzr,curhash,pastmatchlen):
+    def rollCurHash(self, tknzr, curhash, pastmatchlen):
         matchlen=pastmatchlen
         if(len(self.tokenqueue) >= self.patternsize):
             '''
@@ -79,7 +80,7 @@ class RabinKarp(object):
             '''            
             (thash, firsttoken) = self.tokenqueue.popleft()            
             #add the current hash value in hashset
-            if(matchlen==0):                
+            if matchlen == 0:                
                 matchlen=self.findMatches(curhash,firsttoken,tknzr)
             else:
                 matchlen=matchlen-1
@@ -91,7 +92,7 @@ class RabinKarp(object):
     def getTokenHash(self,token):
         #if token size is only one charater (i.e. tokens like '{', '+' etc)
         #then don't call FNV hash. Just use the single character.
-        if( len(token) > 1):
+        if len(token) > 1:
             thash =FNV8_hash(token)
         else:
             thash = ord(token[0])
@@ -99,14 +100,14 @@ class RabinKarp(object):
         
     
     def addAllTokens(self,srcfile):
-        curhash =0
-        matchlen=0
+        curhash = 0
+        matchlen= 0
         #empty the tokenqueue since we are starting a new file
         self.tokenqueue.clear()
-        self.curfilematches=0
+        self.curfilematches = 0
         tknzr = self.getTokanizer(srcfile)
         for token in tknzr:
-            curhash,matchlen = self.rollCurHash(tknzr,curhash,matchlen)
+            curhash,matchlen = self.rollCurHash(tknzr, curhash, matchlen)
             curhash = self.addToken(curhash,token)
             if self.curfilematches > MAX_SINGLE_FILEMATCHES:
                 break
@@ -139,32 +140,32 @@ class RabinKarp(object):
                 #token are from different files.
                 yield matchtoken
                 
-    def findMatches(self,curhash,tokendata1,tknzr):
+    def findMatches(self, curhash, tokendata1, tknzr):
         '''
         search for matches for the current rolling hash in the matchstore.
         If the hash match is found then go for full comparision to search for the match.
         '''
-        assert(tknzr.srcfile== tokendata1[0])
+        assert tknzr.srcfile== tokendata1[0]
         maxmatchlen=0
             
-        matches = self.matchstore.getHashMatch(curhash,tokendata1)
-        if( matches!= None):
-            assert(tknzr.srcfile== tokendata1[0])
+        matches = self.matchstore.getHashMatch(curhash, tokendata1)
+        if matches!= None:
+            assert tknzr.srcfile== tokendata1[0]
             
             for tokendata2 in self.findPossibleMatches(tokendata1, matches):
                 matchlen,sha1_hash,match_end1,match_end2 =self.findMatchLength(tknzr,tokendata1,tokendata2)
                 
                 #matchlen has to be at least pattern size
                 #and matched line count has to be atleast self.min_lines
-                if (matchlen >= self.patternsize and (match_end1[1]-tokendata1[1]) >= self.min_lines):
+                if matchlen >= self.patternsize and (match_end1[1]-tokendata1[1]) >= self.min_lines:
                     #add the exact match to match store.
-                    self.matchstore.addExactMatch(matchlen,sha1_hash,tokendata1,match_end1,tokendata2,match_end2)
+                    self.matchstore.addExactMatch(matchlen, sha1_hash, tokendata1, match_end1, tokendata2, match_end2)
                     maxmatchlen =max(maxmatchlen,matchlen)
                     self.curfilematches = self.curfilematches+1
                     
         return(maxmatchlen)
         
-    def findMatchLength(self, tknzr1,tokendata1, tokendata2):
+    def findMatchLength(self, tknzr1, tokendata1, tokendata2):
         matchend1 = None
         matchend2 = None
         matchlen = 0
@@ -179,16 +180,16 @@ class RabinKarp(object):
 
             tknzr2 = tknzr1
                 
-            if( tokendata2[0] != tokendata1[0]): #filenames are different, get the different tokenizer
+            if tokendata2[0] != tokendata1[0]: #filenames are different, get the different tokenizer
                 srcfile2 = tokendata2[0]
                 tknzr2 = self.getTokanizer(srcfile2)
 
-            assert(tknzr1.srcfile== tokendata1[0])
-            assert(tknzr2.srcfile== tokendata2[0])
+            assert tknzr1.srcfile == tokendata1[0]
+            assert tknzr2.srcfile == tokendata2[0]
             sha1 = hashlib.sha1()
                         
             for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1[2]),tknzr2.get_tokens_frompos(tokendata2[2])):
-                if( matchdata1[3] != matchdata2[3]):                    
+                if matchdata1[3] != matchdata2[3]:
                     break
                 sha1.update(matchdata1[3])
                 matchend1 = matchdata1
@@ -204,11 +205,13 @@ class RabinKarp(object):
         get the tokenizer for the given source file.
         '''
         tknizer = self.tokenizers.get(srcfile)
-        if(tknizer == None):
+        if tknizer == None:
             tknizer = tokenizer.Tokenizer(srcfile, fuzzy=self.fuzzy)
             self.tokenizers[srcfile] = tknizer
-        assert(tknizer.srcfile == srcfile)
-        return(tknizer)
+        
+        assert tknizer.srcfile == srcfile
+
+        return tknizer
     
             
         
