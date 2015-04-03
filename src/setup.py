@@ -11,16 +11,17 @@ Setup file for installing Thinking Craftsman Toolkit
 
 from distutils.core import setup
 
-setup(name='TCToolkit', version ='0.6.8',
+setup(name='TCToolkit', version='0.6.8',
       description='python module to analyze source code in various ways',
       author='Nitin Bhide',
       author_email='nitinbhide@gmail.com',
-      license = 'http://www.opensource.org/licenses/bsd-license.php',
+      license='http://www.opensource.org/licenses/bsd-license.php',
       url='http://code.google.com/p/tctoolkit',
-      requires = ['pygments'],
-      packages=['tctoolkit', 'tctoolkit.codedupdetect','tctoolkit.tctoolkitutil',
+      requires=['pygments'],
+      packages=['tctoolkit', 'tctoolkit.codedupdetect', 'tctoolkit.tctoolkitutil',
                 'tctoolkit.featureanalysis', 'tctoolkit.tcdepends', 'tctoolkit.sourcemon',
-				'tctoolkit.thirdparty', 'tctoolkit.tokentagcloud'],
-      package_dir = {'': '.'},
-      package_data= {'tctoolkit':['README.htm'], 'tctoolkit.thirdparty': ['javascript/d3js/*.*']}
-     )
+                'tctoolkit.thirdparty', 'tctoolkit.tokentagcloud'],
+      package_dir={'': '.'},
+      package_data={
+          'tctoolkit': ['README.htm'], 'tctoolkit.thirdparty': ['javascript/d3js/*.*']}
+      )
