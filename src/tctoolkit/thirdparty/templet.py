@@ -79,10 +79,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import sys, re, inspect
+import sys
+import re
+import inspect
+
 
 class _TemplateBuilder(object):
-  __pattern = re.compile(r"""\$         # Directives begin with a $
+    __pattern = re.compile(r"""\$         # Directives begin with a $
         (?![.(/'"])(                    # $. $( $/ $' $" do not require escape
         \$                            | # $$ is an escape for $
         [^\S\n]*\n                    | # $\n is a line continuation
@@ -93,175 +96,197 @@ class _TemplateBuilder(object):
       )((?<=\}\})[^\S\n]*\n|)           # eat trailing newline after }}
     """, re.IGNORECASE | re.VERBOSE | re.DOTALL)
 
-  def __init__(s, *args):
-    s.defn, s.start, s.constpat, s.emitpat, s.listpat, s.finish = args
+    def __init__(s, *args):
+        s.defn, s.start, s.constpat, s.emitpat, s.listpat, s.finish = args
 
-  def __realign(self, str, spaces=''):
-    """Removes any leading empty columns of spaces and an initial empty line"""
-    lines = str.splitlines()
-    if lines and not lines[0].strip(): del lines[0]
-    lspace = [len(l) - len(l.lstrip()) for l in lines if l.lstrip()]
-    margin = len(lspace) and min(lspace)
-    return '\n'.join((spaces + l[margin:]) for l in lines)
+    def __realign(self, str, spaces=''):
+        """Removes any leading empty columns of spaces and an initial empty line"""
+        lines = str.splitlines()
+        if lines and not lines[0].strip():
+            del lines[0]
+        lspace = [len(l) - len(l.lstrip()) for l in lines if l.lstrip()]
+        margin = len(lspace) and min(lspace)
+        return '\n'.join((spaces + l[margin:]) for l in lines)
 
-  def __addcode(self, line, lineno, simple):
-    offset = lineno - self.extralines - len(self.code)
-    if offset <= 0 and simple and self.simple and self.code:
-      self.code[-1] += ';' + line
-    else:
-      self.code.append('\n' * (offset - 1) + line);
-      self.extralines += max(0, offset - 1)
-    self.extralines += line.count('\n')
-    self.simple = simple
+    def __addcode(self, line, lineno, simple):
+        offset = lineno - self.extralines - len(self.code)
+        if offset <= 0 and simple and self.simple and self.code:
+            self.code[-1] += ';' + line
+        else:
+            self.code.append('\n' * (offset - 1) + line)
+            self.extralines += max(0, offset - 1)
+        self.extralines += line.count('\n')
+        self.simple = simple
 
-  def build(self, template, filename, lineno, docline):
-    self.code = ['\n' * (lineno - 1) + self.defn, ' ' + self.start]
-    self.extralines, self.simple = max(0, lineno - 1), True
-    lineno += docline + (re.match(r'\s*\n', template) and 1 or 0)
-    for i, part in enumerate(self.__pattern.split(self.__realign(template))):
-      if i % 3 == 0 and part:
-        self.__addcode(' ' + self.constpat % repr(part), lineno, True)
-      elif i % 3 == 1:
-        if not part:
-          raise SyntaxError('Unescaped $ in %s:%d' % (filename, lineno))
-        elif part == '$':
-          self.__addcode(' ' + self.constpat % '"%s"' % part, lineno, True)
-        elif part.startswith('{{'):
-          self.__addcode(self.__realign(part[2:-2], ' '),
-            lineno + (re.match(r'\{\{\s*\n', part) and 1 or 0), False)
-        elif part.startswith('{['):                                             
-          self.__addcode(' ' + self.listpat % part[2:-2], lineno, True)
-        elif part.startswith('{'):
-          self.__addcode(' ' + self.emitpat % part[1:-1], lineno, True)
-        elif not part.endswith('\n'):
-          self.__addcode(' ' + self.emitpat % part, lineno, True)
-      lineno += part.count('\n')
-    self.code.append(' ' + self.finish)
-    return '\n'.join(self.code)
+    def build(self, template, filename, lineno, docline):
+        self.code = ['\n' * (lineno - 1) + self.defn, ' ' + self.start]
+        self.extralines, self.simple = max(0, lineno - 1), True
+        lineno += docline + (re.match(r'\s*\n', template) and 1 or 0)
+        for i, part in enumerate(self.__pattern.split(self.__realign(template))):
+            if i % 3 == 0 and part:
+                self.__addcode(' ' + self.constpat % repr(part), lineno, True)
+            elif i % 3 == 1:
+                if not part:
+                    raise SyntaxError(
+                        'Unescaped $ in %s:%d' % (filename, lineno))
+                elif part == '$':
+                    self.__addcode(' ' + self.constpat %
+                                   '"%s"' % part, lineno, True)
+                elif part.startswith('{{'):
+                    self.__addcode(self.__realign(part[2:-2], ' '),
+                                   lineno + (re.match(r'\{\{\s*\n', part) and 1 or 0), False)
+                elif part.startswith('{['):
+                    self.__addcode(' ' + self.listpat %
+                                   part[2:-2], lineno, True)
+                elif part.startswith('{'):
+                    self.__addcode(' ' + self.emitpat %
+                                   part[1:-1], lineno, True)
+                elif not part.endswith('\n'):
+                    self.__addcode(' ' + self.emitpat % part, lineno, True)
+            lineno += part.count('\n')
+        self.code.append(' ' + self.finish)
+        return '\n'.join(self.code)
+
 
 def _templatefunction(func, listname, stringtype):
-  globals, locals =  sys.modules[func.__module__].__dict__, {}
-  filename, lineno = func.func_code.co_filename, func.func_code.co_firstlineno
-  if func.__doc__ is None:
-    raise SyntaxError('No template string at %s:%d' % (filename, lineno))
-  try: # scan source code to find the docstring line number (2 if not found)
-    docline, (source, _) = 2, inspect.getsourcelines(func)
-    for lno, line in enumerate(source):
-      if re.match('(?:|[^#]*:)\\s*[ru]?[\'"]', line): docline = lno; break
-  except:
-    docline = 2
-  args = inspect.getargspec(func)
-  builder = _TemplateBuilder(
-      'def %s%s:' % (func.__name__, inspect.formatargspec(*args)),
-      '%s = []' % listname,
-      '%s.append(%%s)' % listname,
-      '%s.append(%s(%%s))' % (listname, stringtype),
-      '%s.extend(map(%s, [%%s]))' % (listname, stringtype),
-      'return "".join(%s)' % listname)
-  code_str = builder.build(func.__doc__, filename, lineno, docline)
-  code = compile(code_str, filename, 'exec')
-  exec code in globals, locals
-  return locals[func.__name__]
+    globals, locals = sys.modules[func.__module__].__dict__, {}
+    filename, lineno = func.func_code.co_filename, func.func_code.co_firstlineno
+    if func.__doc__ is None:
+        raise SyntaxError('No template string at %s:%d' % (filename, lineno))
+    try:  # scan source code to find the docstring line number (2 if not found)
+        docline, (source, _) = 2, inspect.getsourcelines(func)
+        for lno, line in enumerate(source):
+            if re.match('(?:|[^#]*:)\\s*[ru]?[\'"]', line):
+                docline = lno
+                break
+    except:
+        docline = 2
+    args = inspect.getargspec(func)
+    builder = _TemplateBuilder(
+        'def %s%s:' % (func.__name__, inspect.formatargspec(*args)),
+        '%s = []' % listname,
+        '%s.append(%%s)' % listname,
+        '%s.append(%s(%%s))' % (listname, stringtype),
+        '%s.extend(map(%s, [%%s]))' % (listname, stringtype),
+        'return "".join(%s)' % listname)
+    code_str = builder.build(func.__doc__, filename, lineno, docline)
+    code = compile(code_str, filename, 'exec')
+    exec code in globals, locals
+    return locals[func.__name__]
+
 
 def stringfunction(func):
-  """Function attribute for string template functions"""
-  return _templatefunction(func, listname='out', stringtype='str')
+    """Function attribute for string template functions"""
+    return _templatefunction(func, listname='out', stringtype='str')
+
 
 def unicodefunction(func):
-  """Function attribute for unicode template functions"""
-  return _templatefunction(func, listname='out', stringtype='unicode')
+    """Function attribute for unicode template functions"""
+    return _templatefunction(func, listname='out', stringtype='unicode')
 
 ##############################################################################
 # When executed as a script, run some testing code.
 if __name__ == '__main__':
-  ok = True
-  def expect(actual, expected):
-    global ok
-    if expected != actual:
-      print "error - expect: %s, got:\n%s" % (repr(expected), repr(actual))
-      ok = False
-  @stringfunction
-  def testBasic(name):
-    "Hello $name."
-  expect(testBasic('Henry'), "Hello Henry.")
-  @stringfunction
-  def testReps(a, count=5): r"""
+    ok = True
+
+    def expect(actual, expected):
+        global ok
+        if expected != actual:
+            print "error - expect: %s, got:\n%s" % (repr(expected), repr(actual))
+            ok = False
+
+    @stringfunction
+    def testBasic(name):
+        "Hello $name."
+    expect(testBasic('Henry'), "Hello Henry.")
+
+    @stringfunction
+    def testReps(a, count=5): r"""
     ${{ if count == 0: return '' }}
     $a${testReps(a, count - 1)}"""
-  expect(
-    testReps('foo'),
-    "foofoofoofoofoo")
-  @stringfunction
-  def testList(a): r"""
+    expect(
+        testReps('foo'),
+        "foofoofoofoofoo")
+
+    @stringfunction
+    def testList(a): r"""
     ${[testBasic(x) for x in a]}"""
-  expect(
-    testList(['David', 'Kevin']),
-    "Hello David.Hello Kevin.")
-  @unicodefunction
-  def testUnicode(count=4): u"""
+    expect(
+        testList(['David', 'Kevin']),
+        "Hello David.Hello Kevin.")
+
+    @unicodefunction
+    def testUnicode(count=4): u"""
     ${{ if not count: return '' }}
     \N{BLACK STAR}${testUnicode(count - 1)}"""
-  expect(
-    testUnicode(count=10),
-    u"\N{BLACK STAR}" * 10)
-  @stringfunction
-  def testmyrow(name, values):
-    '''
-    <tr><td>$name</td><td>${{
-       for val in values:
-         out.append(str(val))
-    }}</td></tr>
-    '''
-  expect(
-     testmyrow('prices', [1,2,3]),
-     "<tr><td>prices</td><td>123</td></tr>\n")
-  try:
-    got_exception = ''
-    def dummy_for_line(): pass
+    expect(
+        testUnicode(count=10),
+        u"\N{BLACK STAR}" * 10)
+
     @stringfunction
-    def testsyntaxerror():
-      # extra line here
-      # another extra line here
-      '''
-      some text
-      $a$<'''
-  except SyntaxError, e:
-    got_exception = str(e).split(':')[-1]
-  expect(got_exception, str(dummy_for_line.func_code.co_firstlineno + 7))
-  try:
-    got_line = 0
-    def dummy_for_line2(): pass
-    @stringfunction
-    def testruntimeerror(a):
-      '''
-      some $a text
-      ${{
-        out.append(a) # just using up more lines
-      }}
-      some more text
-      $b text $a again'''
-    expect(testruntimeerror.func_code.co_firstlineno,
-           dummy_for_line2.func_code.co_firstlineno + 1)
-    testruntimeerror('hello')
-  except NameError, e:
-    import traceback
-    _, got_line, _, _ = traceback.extract_tb(sys.exc_info()[2], 10)[-1]
-  expect(got_line, dummy_for_line2.func_code.co_firstlineno + 9)
-  exec("""if True:
+    def testmyrow(name, values):
+        '''
+        <tr><td>$name</td><td>${{
+           for val in values:
+             out.append(str(val))
+        }}</td></tr>
+        '''
+    expect(
+        testmyrow('prices', [1, 2, 3]),
+        "<tr><td>prices</td><td>123</td></tr>\n")
+    try:
+        got_exception = ''
+
+        def dummy_for_line(): pass
+
+        @stringfunction
+        def testsyntaxerror():
+            # extra line here
+            # another extra line here
+            '''
+            some text
+            $a$<'''
+    except SyntaxError, e:
+        got_exception = str(e).split(':')[-1]
+    expect(got_exception, str(dummy_for_line.func_code.co_firstlineno + 7))
+    try:
+        got_line = 0
+
+        def dummy_for_line2(): pass
+
+        @stringfunction
+        def testruntimeerror(a):
+            '''
+            some $a text
+            ${{
+              out.append(a) # just using up more lines
+            }}
+            some more text
+            $b text $a again'''
+        expect(testruntimeerror.func_code.co_firstlineno,
+               dummy_for_line2.func_code.co_firstlineno + 1)
+        testruntimeerror('hello')
+    except NameError, e:
+        import traceback
+        _, got_line, _, _ = traceback.extract_tb(sys.exc_info()[2], 10)[-1]
+    expect(got_line, dummy_for_line2.func_code.co_firstlineno + 9)
+    exec("""if True:
     @stringfunction
     def testnosource(a):
       "${[c for c in reversed(a)]} is '$a' backwards." """
-  )
-  expect(testnosource("hello"), "olleh is 'hello' backwards.")
-  error_line = None
-  try:
-    exec("""if True:
+         )
+    expect(testnosource("hello"), "olleh is 'hello' backwards.")
+    error_line = None
+    try:
+        exec("""if True:
       @stringfunction
       def testnosource_error(a):
         "${[c for c in reversed a]} is '$a' backwards." """
-    )
-  except SyntaxError, e:
-    error_line = re.search('line [0-9]*', str(e)).group(0)
-  expect(error_line, 'line 4')
-  if ok: print "OK"
-  else: print "FAIL"
+             )
+    except SyntaxError, e:
+        error_line = re.search('line [0-9]*', str(e)).group(0)
+    expect(error_line, 'line 4')
+    if ok:
+        print "OK"
+    else:
+        print "FAIL"

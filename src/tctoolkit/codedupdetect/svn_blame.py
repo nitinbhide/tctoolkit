@@ -17,22 +17,25 @@ import operator
 
 import pysvn
 
+
 class SvnBlameClient(object):
+
     '''
     Subversion client to query the 'blame' information for a file.
     '''
+
     def __init__(self, username=None, password=None):
         self.svnclient = pysvn.Client()
         self.svnclient.exception_style = 1
         self.svnclient.callback_get_login = self.get_login
         self.set_user_password(username, password)
-        self.blame_cache = dict() #file name against blame output dictionary
+        self.blame_cache = dict()  # file name against blame output dictionary
 
     def set_user_password(self, username, password):
         if username != None:
             self.username = username
             self.svnclient.set_default_username(self.username)
-        if  password != None:
+        if password != None:
             self.password = password
             self.svnclient.set_default_password(self.password)
 
@@ -55,33 +58,35 @@ class SvnBlameClient(object):
         '''
         blame = self.getBlame(filepath)
         auhtorCounts = dict()
-        
+
         startLineNumber = min(startLineNumber, len(blame))
         endLineNumber = min(endLineNumber, len(blame))
-        #create a statistics of author and revisiona and how many lines are modified in that
+        # create a statistics of author and revisiona and how many lines are modified in that
         #(auth,revision) combination
         for lineinfo in blame[startLineNumber: endLineNumber]:
             lineauthor = lineinfo['author']
             linerevision = lineinfo['revision']
-            auhtorCounts[(lineauthor, linerevision)] = auhtorCounts.get((lineauthor, linerevision), 0)+1
+            auhtorCounts[(lineauthor, linerevision)] = auhtorCounts.get(
+                (lineauthor, linerevision), 0) + 1
 
-        #now findout which author modified maximum number of lines
-        maxauthor = sorted(auhtorCounts.iteritems(), key = operator.itemgetter(1))
+        # now findout which author modified maximum number of lines
+        maxauthor = sorted(
+            auhtorCounts.iteritems(), key=operator.itemgetter(1))
         maxauthor = maxauthor[0]
-        #findout who make highest number of changes. This is tupple of the form ((author, revision), changedlinecount)
-        #we just need 'author and revision'.
+        # findout who make highest number of changes. This is tupple of the form ((author, revision), changedlinecount)
+        # we just need 'author and revision'.
         return maxauthor[0]
-        
+
     def getBlame(self, filepath):
         '''
         run the blame command on file. Read the blame for SVN or from cache.
         '''
         if filepath not in self.blame_cache:
             logging.debug('trying to extract annotations for %s' % filepath)
-            
+
             output = self.svnclient.annotate(filepath)
             logging.debug('extracted annotations for %s' % filepath)
-            
+
             blameout = list()
 
             for blamedict in output:
@@ -92,4 +97,3 @@ class SvnBlameClient(object):
             self.blame_cache[filepath] = blameout
 
         return self.blame_cache[filepath]
-

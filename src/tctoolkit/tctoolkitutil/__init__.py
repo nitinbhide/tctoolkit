@@ -16,4 +16,3 @@ from .sourcetokenizer import SourceCodeTokenizer
 from .sourcetokenizer import TagTypeFilter, KeywordFilter, NameFilter
 from .sourcetokenizer import ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
 from .sourcetokenizer import LiteralFilter
-
