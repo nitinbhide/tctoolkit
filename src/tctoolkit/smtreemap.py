@@ -11,41 +11,48 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 from __future__ import with_statement
 
-import sys, os, string
+import sys
+import os
+import string
 from optparse import OptionParser
-import Tkinter,tkFileDialog
+import Tkinter
+import tkFileDialog
 from idlelib.TreeWidget import TreeItem, TreeNode
 
-from tctoolkitutil.tktreemap import TreemapSquarified,TMColorMap,createScrollableCanvas
+from tctoolkitutil.tktreemap import TreemapSquarified, TMColorMap, createScrollableCanvas
 from tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
 from sourcemon import *
 
-SMFILEFORMATS =[
-    ('Source Monitor XML','*.xml'),
-    ('Source Monitor CSV','*.csv'),
-    ]
+SMFILEFORMATS = [
+    ('Source Monitor XML', '*.xml'),
+    ('Source Monitor CSV', '*.csv'),
+]
+
 
 class FileTreeItem(TreeItem):
+
     def __init__(self, smtreenode, tmcanvas):
         self.node = smtreenode
         self.tmcanvas = tmcanvas
-        
+
     def GetText(self):
         return(self.node.name)
-        
+
     def IsExpandable(self):
         node = self.node
         return len(node) > 0
 
     def GetSubList(self):
         items = [FileTreeItem(child, self.tmcanvas) for child in self.node]
-        items = sorted(items, key=lambda child : child.node.name)
+        items = sorted(items, key=lambda child: child.node.name)
         return(items)
-    
+
     def OnDoubleClick(self):
         self.tmcanvas.drawTreemap(self.node)
-        
+
+
 class App(object):
+
     def __init__(self):
         self.root = Tkinter.Tk()
         self.root.title("Source Monitor Treemap")
@@ -58,19 +65,21 @@ class App(object):
         self.filetree = None
 
     def initTreemapCanvas(self):
-        self.tmcanvas = TreemapSquarified(self.pane,width='13i', height='8i')
+        self.tmcanvas = TreemapSquarified(self.pane, width='13i', height='8i')
         self.tmcanvas.config(bg='white')
         self.pane.config(bg='blue')
         self.pane.add(self.tmcanvas.frame)
-        self.pane.paneconfigure(self.tmcanvas.frame, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
+        self.pane.paneconfigure(
+            self.tmcanvas.frame, sticky=Tkinter.N + Tkinter.S + Tkinter.E + Tkinter.W)
         self.tooltip = TkCanvasToolTip(self.tmcanvas, follow=True)
-        
+
     def initTreeCanvas(self):
         frame = Tkinter.Frame(self.pane)
         self.treecanvas = createScrollableCanvas(frame, width='2i')
         self.pane.add(frame)
-        self.pane.paneconfigure(frame, sticky=Tkinter.N+Tkinter.S+Tkinter.E+Tkinter.W)
-        
+        self.pane.paneconfigure(
+            frame, sticky=Tkinter.N + Tkinter.S + Tkinter.E + Tkinter.W)
+
     def initMenu(self):
         menubar = Tkinter.Menu(self.root)
         filemenu = Tkinter.Menu(menubar, tearoff=0)
@@ -85,14 +94,16 @@ class App(object):
         self.sizeOption.set(SIZE_PROP)
         self.colorOption = Tkinter.StringVar()
         self.colorOption.set(CLR_PROP)
-        #get the list of options
+        # get the list of options
         options = set(SMPROP_MAPPING.itervalues())
-        #now convert the set to sorted list
+        # now convert the set to sorted list
         options = sorted(options)
-        
-        self.optionsSize = Tkinter.OptionMenu(self.dropdownframe, self.sizeOption,command=self.optionchange, *options)
+
+        self.optionsSize = Tkinter.OptionMenu(
+            self.dropdownframe, self.sizeOption, command=self.optionchange, *options)
         self.optionsSize.grid(row=0, column=0)
-        self.optionsClr = Tkinter.OptionMenu(self.dropdownframe,self.colorOption,command=self.optionchange, *options)
+        self.optionsClr = Tkinter.OptionMenu(
+            self.dropdownframe, self.colorOption, command=self.optionchange, *options)
         self.optionsClr.grid(row=0, column=1)
         self.dropdownframe.pack()
 
@@ -100,62 +111,65 @@ class App(object):
         sizepropname = self.sizeOption.get()
         clrpropname = self.colorOption.get()
         self.createtreemap(sizepropname=sizepropname, clrpropname=clrpropname)
-        
-    def createtreemap(self, tmrootnode=None,sizepropname=SIZE_PROP, clrpropname=CLR_PROP):
+
+    def createtreemap(self, tmrootnode=None, sizepropname=SIZE_PROP, clrpropname=CLR_PROP):
         del self.filetree
-        if( tmrootnode != None):
+        if(tmrootnode != None):
             self.tmrootnode = tmrootnode
         ftreeroot = FileTreeItem(self.tmrootnode, self.tmcanvas)
         self.filetree = TreeNode(self.treecanvas, None, ftreeroot)
         self.filetree.update()
         self.filetree.expand()
         clrmap = self.getPropClrMap(self.tmrootnode, clrpropname)
-        self.tmcanvas.set(tmcolormap=clrmap,sizeprop=sizepropname,clrprop=clrpropname,upper=[1200,700],tooltip=self.tooltip)
+        self.tmcanvas.set(tmcolormap=clrmap, sizeprop=sizepropname,
+                          clrprop=clrpropname, upper=[1200, 700], tooltip=self.tooltip)
         self.tmcanvas.drawTreemap(self.tmrootnode)
 
     def getNeutralVal(self, clrpropname, minval, maxval):
         neutralval = COLOR_PROP_CONFIG.get(clrpropname)
-        
-        if(  neutralval== None):
-            neutralval = 0.5*(minval+maxval)
+
+        if(neutralval == None):
+            neutralval = 0.5 * (minval + maxval)
         return(neutralval)
-            
-    def getPropClrMap(self,tmrootnode, clrpropname):
-        clrmap = TMColorMap(minclr=(0,255,0),maxclr=(255,0,0))        
+
+    def getPropClrMap(self, tmrootnode, clrpropname):
+        clrmap = TMColorMap(minclr=(0, 255, 0), maxclr=(255, 0, 0))
         minval = tmrootnode.minclr(clrpropname)
         maxval = tmrootnode.maxclr(clrpropname)
         neutralval = self.getNeutralVal(clrpropname, minval, maxval)
-        clrmap.setlimits(minval,maxval, neutralval=neutralval)
+        clrmap.setlimits(minval, maxval, neutralval=neutralval)
         return(clrmap)
 
     def openSMFile(self):
-        filename = tkFileDialog.askopenfilename(title="Choose Source Monitor output file", filetypes=SMFILEFORMATS,defaultextension=".xml")
+        filename = tkFileDialog.askopenfilename(
+            title="Choose Source Monitor output file", filetypes=SMFILEFORMATS, defaultextension=".xml")
         smtree = SMTree(filename)
         self.createtreemap(smtree)
-            
+
     def run(self):
         self.root.mainloop()
-        #Now destroy the top level window. Otherwise it just sits there if you are running this application from inside interpreter like IDLE or PythonWin
+        # Now destroy the top level window. Otherwise it just sits there if you are running this application from inside interpreter like IDLE or PythonWin
         # You may get warning there.
-        #self.root.destroy()
+        # self.root.destroy()
+
 
 def RunMain():
     usage = "usage: %prog [options] <source monitor xml or csv filename>"
     description = '''SourceMonitor treemap display.
     (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
     '''
-    parser = OptionParser(usage,description=description)
+    parser = OptionParser(usage, description=description)
 
     (options, args) = parser.parse_args()
-    
-    if( len(args) < 1):
+
+    if(len(args) < 1):
         print "Invalid number of arguments. Use smtreemap.py --help to see the details."
-    else:            
+    else:
         app = App()
         smfile = args[0]
         tmroot = SMTree(smfile)
         app.createtreemap(tmroot)
         app.run()
-    
-if( __name__ == "__main__"):
+
+if(__name__ == "__main__"):
     RunMain()
