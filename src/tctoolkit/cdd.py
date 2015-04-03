@@ -12,7 +12,9 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import sys
 import logging
 
-import string, os, datetime
+import string
+import os
+import datetime
 import json
 from optparse import OptionParser
 
@@ -24,10 +26,13 @@ from thirdparty.templet import *
 from codedupdetect import CodeDupDetect
 from exceptions import ImportError
 
+
 class HtmlWriter(object):
+
     '''
     class to output the duplication information in html format
     '''
+
     def __init__(self, cddapp):
         self.cddapp = cddapp
         self.formatter = HtmlFormatter(encoding='utf-8')
@@ -40,7 +45,7 @@ class HtmlWriter(object):
 
     def write(self, fname, blameflag=False):
         self.blameflag = blameflag
-        with codecs.open(fname, "wb", encoding='utf-8', errors= 'ignore') as outf:
+        with codecs.open(fname, "wb", encoding='utf-8', errors='ignore') as outf:
             outf.write(self.output())
 
     def getCooccuranceData(self):
@@ -48,25 +53,27 @@ class HtmlWriter(object):
         create a co-occurance data in JSON format.
         '''
         groups, nodes, links = self.cddapp.getCooccuranceData()
-        nodelist = [None]* len(nodes)
+        nodelist = [None] * len(nodes)
         linklist = list()
-        #create a list of node dictionaries
+        # create a list of node dictionaries
         assert(len(nodelist) == len(nodes))
-        grouplist = [None]*len(groups)
+        grouplist = [None] * len(groups)
 
         for group, index in groups.iteritems():
             grouplist[index] = group
 
         for node, index in nodes.iteritems():
             groupname = os.path.dirname(node)
-            nodelist[index] = {'name':os.path.basename(node), 'group':groups[groupname], 'fullpath':node}
-        #create a list of link dictionaries
+            nodelist[index] = {
+                'name': os.path.basename(node), 'group': groups[groupname], 'fullpath': node}
+        # create a list of link dictionaries
         for link, value in links.iteritems():
             source = link[0]
             target = link[1]
-            linklist.append({ 'source':nodes[source], 'target':nodes[target], 'value':value})
+            linklist.append(
+                {'source': nodes[source], 'target': nodes[target], 'value': value})
 
-        return json.dumps({ 'groups': grouplist, 'nodes':nodelist, 'links' : linklist}, ensure_ascii=False, encoding='utf-8')
+        return json.dumps({'groups': grouplist, 'nodes': nodelist, 'links': linklist}, ensure_ascii=False, encoding='utf-8')
 
     @unicodefunction
     def outputCooccurenceMatrix(self):
@@ -259,7 +266,7 @@ class HtmlWriter(object):
             var dupData = ${self.getCooccuranceData()};
             drawCooccurrence(dupData);
         '''
-        #duplication co-occurance matrix data.
+        # duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
 
     @unicodefunction
@@ -356,30 +363,33 @@ class HtmlWriter(object):
         '''
 
     def getSyntaxHighlightedSource(self, matchset):
-        return  highlight(''.join(matchset.getMatchSource()),matchset.getSourceLexer(), self.formatter, outfile=None)
+        return highlight(''.join(matchset.getMatchSource()), matchset.getSourceLexer(), self.formatter, outfile=None)
 
     def getD3JS(self):
         jsdir = getJsDirPath()
-        return readJsText(jsdir, ["d3js", "d3.min.js"]);
+        return readJsText(jsdir, ["d3js", "d3.min.js"])
+
 
 class CDDApp(TCApp):
+
     '''
     Application for 'code duplication detector'.
     '''
+
     def __init__(self, optparser):
-        super(CDDApp, self).__init__(optparser,min_num_args=1)
+        super(CDDApp, self).__init__(optparser, min_num_args=1)
         self.matches = None
         self.dupsInFile = None
 
     def parse_args(self):
-        success = super(CDDApp,self).parse_args()
+        success = super(CDDApp, self).parse_args()
         if success:
             if self.options.report != None:
                 self.options.format = 'html'
                 self.outfile = self.options.report
 
             if self.options.format == None:
-                #auto detect the format based on the out file extension.
+                # auto detect the format based on the out file extension.
                 self.options.format = 'txt'
                 if self.outfile:
                     name, ext = os.path.splitext(self.outfile)
@@ -403,12 +413,12 @@ class CDDApp(TCApp):
         self.cdd = self.getCDDInstance()
 
         if self.options.format.lower() == 'html':
-            #self.cdd.html_output(self.options.filename)
+            # self.cdd.html_output(self.options.filename)
             htmlwriter = HtmlWriter(self)
             htmlwriter.write(self.outfile, self.options.blame)
 
         else:
-            #assume that format is 'txt'.
+            # assume that format is 'txt'.
             self.printDuplicates(self.outfile)
 
         if self.options.comments:
@@ -424,12 +434,13 @@ class CDDApp(TCApp):
         return true if there is atleast one match found.
         '''
         matches = self.getMatches()
-        return( len(matches) > 0)
+        return(len(matches) > 0)
 
     def getMatches(self):
-        if( self.matches == None):
+        if(self.matches == None):
             exactmatches = self.cdd.findcopies()
-            self.matches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
+            self.matches = sorted(
+                exactmatches, reverse=True, key=lambda x: x.matchedlines)
         return(self.matches)
 
     def getCooccuranceData(self):
@@ -437,8 +448,9 @@ class CDDApp(TCApp):
 
     def getCDDInstance(self):
         filelist = self.getFileList(self.args[0])
-        return CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
-                                 min_lines=self.options.min_lines, blameflag=self.options.blame)
+        return CodeDupDetect(filelist, self.options.minimum, fuzzy=self.options.fuzzy,
+                             min_lines=self.options.min_lines, blameflag=self.options.blame)
+
 
 def RunMain():
     parser = createOptionParser()
@@ -446,13 +458,14 @@ def RunMain():
     with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
         app.run()
 
+
 def createOptionParser():
     usage = "usage: %prog [options] <directory name>"
     description = """Code Duplication Detector. (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
     Uses RabinKarp algorithm for finding exact duplicates. Fuzzy duplication detection support is
     experimental.
     """
-    parser = OptionParser(usage,description=description)
+    parser = OptionParser(usage, description=description)
 
     parser.add_option("-c", "--comments", action="store_true", dest="comments", default=False,
                       help="Mark duplicate patterns in-source with c-style comment.")
@@ -472,12 +485,13 @@ def createOptionParser():
                       help='ignores further arguments & runs tests for this program')
     return parser
 
+
 def runtests():
     import unittest
-    alltests = unittest.defaultTestLoader.discover(start_dir=os.path.dirname(__file__), pattern="*tests.py")
+    alltests = unittest.defaultTestLoader.discover(
+        start_dir=os.path.dirname(__file__), pattern="*tests.py")
     unittest.TextTestRunner(verbosity=2).run(alltests)
 
 
 if(__name__ == "__main__"):
     RunMain()
-
