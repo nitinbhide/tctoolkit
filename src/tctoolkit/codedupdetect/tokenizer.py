@@ -19,16 +19,18 @@ from pygments.token import Token
 
 
 class Tokenizer(SourceCodeTokenizer):
+
     '''
     tokenizer for code duplication detection.
     '''
+
     def __init__(self, srcfile, fuzzy=False):
         super(Tokenizer, self).__init__(srcfile)
         self.fuzzy = fuzzy
         self.pos_dict = dict()
 
     def update_token_list(self):
-        if(self.tokenlist==None):
+        if(self.tokenlist == None):
             self.tokenlist = list()
             for idx, token in enumerate(self.get_tokens()):
                 self.tokenlist.append(token)
@@ -50,23 +52,21 @@ class Tokenizer(SourceCodeTokenizer):
         token tupple is returned. Format of token data tuple is
         (source file path, line number of token, charposition of token, text value of the token)
         '''
-        linenum=1
+        linenum = 1
         for srctoken in self._parse_tokens():
-            #print ttype
-            if( self.fuzzy and self.is_fuzzy_token(srctoken)):
-                #we are doing fuzzy matching. Hence replace the names
-                #e.g. variable names by value 'Variable'.
-                value='#FUZZY#'
+            # print ttype
+            if(self.fuzzy and self.is_fuzzy_token(srctoken)):
+                # we are doing fuzzy matching. Hence replace the names
+                # e.g. variable names by value 'Variable'.
+                value = '#FUZZY#'
             else:
                 value = srctoken.value
-                if( value !='' and not srctoken.is_type(Token.Comment)):
-                    yield self.srcfile, linenum,srctoken.charpos,value
+                if(value != '' and not srctoken.is_type(Token.Comment)):
+                    yield self.srcfile, linenum, srctoken.charpos, value
 
-            linenum=linenum + srctoken.num_lines
-
+            linenum = linenum + srctoken.num_lines
 
     def get_tokens_frompos(self, fromcharpos):
         self.update_token_list()
         idx = self.pos_dict[fromcharpos]
         return self.tokenlist[idx:]
-

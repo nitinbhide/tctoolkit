@@ -22,25 +22,28 @@ from tctoolkitutil import SourceCodeTokenizer
 from tctoolkitutil import KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
 from tctoolkitutil import LiteralFilter
 
+
 class TagCloudTokenizer(SourceCodeTokenizer):
+
     '''
     create tokenizer useful for tag cloud generation. (ignore comments, single character variable names, etc)
     '''
+
     def __init__(self, srcfile, ignore_comments=True):
         super(TagCloudTokenizer, self).__init__(srcfile)
         self.ignore_comments = ignore_comments
 
     def ignore_token(self, srctoken):
-        
+
         ignore = False
-        if(self.ignore_comments==True and srctoken.is_type(Token.Comment)):
-            ignore=True
-        elif( srctoken.is_type(Token.Operator) or srctoken.is_type(Token.Punctuation)):
+        if(self.ignore_comments == True and srctoken.is_type(Token.Comment)):
             ignore = True
-        elif( srctoken.value ==''):
-            ignore=True
-        elif( (srctoken.is_type(Token.Name) or srctoken.is_type(Token.Literal)) and len(srctoken.value) < 2):
-            ignore=True        
+        elif(srctoken.is_type(Token.Operator) or srctoken.is_type(Token.Punctuation)):
+            ignore = True
+        elif(srctoken.value == ''):
+            ignore = True
+        elif((srctoken.is_type(Token.Name) or srctoken.is_type(Token.Literal)) and len(srctoken.value) < 2):
+            ignore = True
         return(ignore)
 
     def update_type(self, srctoken, prevtoken):
@@ -54,25 +57,27 @@ class TagCloudTokenizer(SourceCodeTokenizer):
 
 
 class SourceCodeTagCloud(object):
+
     '''
     wrapper class for generating the data for source code tag cloud
     '''
+
     def __init__(self, dirname, pattern='*.c', lang=None):
         self.dirname = dirname
         self.pattern = pattern
         self.lang = lang
-        self.tagcloud = None #Stores frequency of tag cloud.
-        self.fileTagCount = dict() #Store information about how many files that tag was found
+        self.tagcloud = None  # Stores frequency of tag cloud.
+        # Store information about how many files that tag was found
+        self.fileTagCount = dict()
         self.createTagCloud()
-        
-        
+
     def createTagCloud(self):
         self.tagcloud = TagCloud()
-    
-        dirlister= DirFileLister(self.dirname)    
-        for fname in dirlister.getFilesForPatternOrLang(pattern= self.pattern, lang=self.lang):
+
+        dirlister = DirFileLister(self.dirname)
+        for fname in dirlister.getFilesForPatternOrLang(pattern=self.pattern, lang=self.lang):
             self.__addFile(fname)
-        
+
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
         print "Adding tags information of file: %s" % srcfile
@@ -80,26 +85,26 @@ class SourceCodeTagCloud(object):
         fileTokenset = set()
         for srctoken in tokenizer:
             value = srctoken.value
-            self.tagcloud.addWord(value,srctoken.ttype)
+            self.tagcloud.addWord(value, srctoken.ttype)
             if value not in fileTokenset:
-                self.fileTagCount[value] = self.fileTagCount.get(value, 0)+1
+                self.fileTagCount[value] = self.fileTagCount.get(value, 0) + 1
                 fileTokenset.add(value)
-    
+
     def getTags(self, numWords=100, filterFunc=None):
         return self.tagcloud.getSortedTagWordList(numWords, filterFunc)
-    
+
     def getFileCount(self, tagWord):
         return self.fileTagCount.get(tagWord, 0)
-    
-    
+
+
 def KeywordTagCloud(dirname, pattern):
-    tagcld = CreateTagCloud(dirname, pattern)            
+    tagcld = CreateTagCloud(dirname, pattern)
     taghtml = tagcld.getTagCloudHtml(filterFunc=KeywordFilter)
     return(taghtml)
 
-def NameTagCloud(dirname, pattern):
-    tagcld = CreateTagCloud(dirname, pattern)    
-    taghtml = tagcld.getTagCloudHtml(filterFunc=NameFilter)
-    
-    return(taghtml)
 
+def NameTagCloud(dirname, pattern):
+    tagcld = CreateTagCloud(dirname, pattern)
+    taghtml = tagcld.getTagCloudHtml(filterFunc=NameFilter)
+
+    return(taghtml)
