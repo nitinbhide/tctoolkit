@@ -56,7 +56,7 @@ class HtmlWriter(object):
 
         for group, index in groups.iteritems():
             grouplist[index] = group
-            
+
         for node, index in nodes.iteritems():
             groupname = os.path.dirname(node)
             nodelist[index] = {'name':os.path.basename(node), 'group':groups[groupname], 'fullpath':node}
@@ -73,7 +73,7 @@ class HtmlWriter(object):
         '''
         // Co-occurance matrix
         function drawCooccurrence(cooc_mat) {
-            var margin = {top: 100, right: 100, bottom: 10, left: 80};                
+            var margin = {top: 100, right: 100, bottom: 10, left: 80};
             var width = cooc_mat.nodes.length*15;
             var height = width;
 
@@ -85,16 +85,16 @@ class HtmlWriter(object):
             var x = d3.scale.ordinal().rangeBands([0, width]),
                 z = d3.scale.linear().range(colors),
                 c = d3.scale.category10().domain(d3.range(10));
-            
+
             var tooltip = d3.select("body")
                     .append("div")
                     .classed("tooltip", true)
                     .style("visibility", "hidden");
-        
+
             var svg = d3.select("#co_ocm").append("svg")
                 .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)                
-              
+                .attr("height", height + margin.top + margin.bottom)
+
               var matrix = [],
                   nodes = cooc_mat.nodes,
                   n = nodes.length;
@@ -111,8 +111,8 @@ class HtmlWriter(object):
               var maxLinkValue = 0;
               cooc_mat.links.forEach(function(link) {
                 var lines = link.value.lines;
-                matrix[link.source][link.target].z = lines;                
-                matrix[link.target][link.source].z = lines;                
+                matrix[link.source][link.target].z = lines;
+                matrix[link.target][link.source].z = lines;
                 nodes[link.source].count += lines;
                 nodes[link.target].count += lines;
                 maxLinkValue = d3.max([maxLinkValue, lines]);
@@ -146,7 +146,7 @@ class HtmlWriter(object):
                       .attr("transform", function(d, i) { return "translate(0, "+x(i) + ")"; });
 
               var columntitles = svg.append('g')
-                .attr("transform", "translate(" + margin.left + ","+margin.top+")")                
+                .attr("transform", "translate(" + margin.left + ","+margin.top+")")
                 .selectAll('.columntitle')
                 .data(nodes)
                 .enter().append("text")
@@ -155,16 +155,16 @@ class HtmlWriter(object):
                   .attr("y", x.rangeBand() / 2)
                   .attr("text-anchor", "start")
                   .text(function(d, i) { return d.name; })
-                  .attr("transform", function(d, i) { return "translate(" + x(i) + ",0)rotate(-45)"; });              
+                  .attr("transform", function(d, i) { return "translate(" + x(i) + ",0)rotate(-45)"; });
 
-              
+
               svg = svg.append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-                          
+
               svg.append("rect")
                   .attr("class", "background")
                   .attr("width", width)
-                  .attr("height", height);                  
+                  .attr("height", height);
 
               var row = svg.selectAll(".row")
                   .data(matrix)
@@ -175,7 +175,7 @@ class HtmlWriter(object):
 
               row.append("line")
                   .attr("x2", width);
-              
+
               var column = svg.selectAll(".column")
                   .data(matrix)
                 .enter().append("g")
@@ -184,7 +184,7 @@ class HtmlWriter(object):
 
               column.append("line")
                   .attr("x1", -width);
-              
+
               function row(row) {
                 var cell = d3.select(this).selectAll(".cell")
                     .data(row.filter(function(d) { return d.z; }))
@@ -196,12 +196,12 @@ class HtmlWriter(object):
                     /*.style("fill-opacity", function(d) { return z(d.z); })*/
                     .style("fill", function(d) { return z(Math.log(d.z));})
                     .on("mouseover", mouseover)
-                    .on("mouseout", mouseout)                    
+                    .on("mouseout", mouseout)
                     .on("mousemove", function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px");});
               }
 
               // Prepare the tooltip
-              function setTooltipText(d) {                    
+              function setTooltipText(d) {
                     var node1 = nodes[d.x];
                     var node2 = nodes[d.y];
                     var tooltiphtml = "<ul><li>Column : "+groups[node1.group]+'/'+node1.name+"</li>"+
@@ -211,10 +211,10 @@ class HtmlWriter(object):
                     tooltip.html(tooltiphtml);
                     tooltip.style("visibility", "visible");
               }
-                              
+
               function mouseover(p) {
                 d3.selectAll("text.rowtitle").classed("active", function(d, i) {
-                 return i == p.y; 
+                 return i == p.y;
                 });
                 d3.selectAll("text.columntitle").classed("active", function(d, i) { return i == p.x; });
                 setTooltipText(p);
@@ -251,13 +251,13 @@ class HtmlWriter(object):
                 columntitles.transition().duration(2500)
                     .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-45)"; });
               }
-              
+
               order("group");
             };
 
             //duplication co-occurance data
             var dupData = ${self.getCooccuranceData()};
-            drawCooccurrence(dupData);            
+            drawCooccurrence(dupData);
         '''
         #duplication co-occurance matrix data.
         # similar to http://bost.ocks.org/mike/miserables/
@@ -311,20 +311,20 @@ class HtmlWriter(object):
                 </div>
                 <div id="dup_co_ocm">
                     <h1>Duplication Cooccurance Matrix</h1>
-                    <div id="co_ocm">                    
+                    <div id="co_ocm">
                     </div>
-                </div>                
+                </div>
             </body>
             <script>
             ${self.outputCooccurenceMatrix()}
             </script>
         </html>
         '''
-    
+
     @unicodefunction
     def getMatchLink(self, i, matchset):
         '''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
-        
+
     @unicodefunction
     def getMatchHtml(self, i, matchset):
         '''<div id="match_$i">
@@ -332,19 +332,19 @@ class HtmlWriter(object):
                <ul>
                ${[self.getMatchInfo(m) for m in matchset]}
                </ul>
-               <div class="highlight">               
+               <div class="highlight">
                     ${self.getSyntaxHighlightedSource(matchset)}
                     <a href="#">Up</a>
                </div>
            </div>
         '''
-    
+
     def getMatchInfo(self, match):
         if self.blameflag:
             return self.getMatchInfoBlameTemplate(match)
         else:
             return self.getMatchInfoTemplate(match)
-        
+
     @unicodefunction
     def getMatchInfoTemplate(self, match):
         '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
@@ -354,17 +354,17 @@ class HtmlWriter(object):
         '''
             <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}: In Revision ${match.getRevisionNumber()} by ${match.getAuthorName()}:</li>
         '''
-        
-    def getSyntaxHighlightedSource(self, matchset):                
+
+    def getSyntaxHighlightedSource(self, matchset):
         return  highlight(''.join(matchset.getMatchSource()),matchset.getSourceLexer(), self.formatter, outfile=None)
-    
+
     def getD3JS(self):
         jsdir = getJsDirPath()
         return readJsText(jsdir, ["d3js", "d3.min.js"]);
 
 class CDDApp(TCApp):
     '''
-    Application for 'code duplication detector'. 
+    Application for 'code duplication detector'.
     '''
     def __init__(self, optparser):
         super(CDDApp, self).__init__(optparser,min_num_args=1)
@@ -373,11 +373,11 @@ class CDDApp(TCApp):
 
     def parse_args(self):
         success = super(CDDApp,self).parse_args()
-        if success:    
+        if success:
             if self.options.report != None:
                 self.options.format = 'html'
                 self.outfile = self.options.report
-                
+
             if self.options.format == None:
                 #auto detect the format based on the out file extension.
                 self.options.format = 'txt'
@@ -388,6 +388,10 @@ class CDDApp(TCApp):
         return success
 
     def _run(self):
+        if (self.options.runtests == True):
+            runtests()
+            return
+
         if (self.options.blame):
             try:
                 import pysvn
@@ -395,46 +399,54 @@ class CDDApp(TCApp):
                 raise ImportError("Install pysvn module before proceeding")
 
         #print("pysvn module mandatory for 'Blame' is available")
-                        
-        filelist = self.getFileList(self.args[0])        
-        self.cdd = CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
-                                 min_lines=self.options.min_lines, blameflag=self.options.blame)
-        
+
+        self.cdd = self.getCDDInstance()
+
         if self.options.format.lower() == 'html':
             #self.cdd.html_output(self.options.filename)
-            htmlwriter = HtmlWriter(self)            
+            htmlwriter = HtmlWriter(self)
             htmlwriter.write(self.outfile, self.options.blame)
 
         else:
             #assume that format is 'txt'.
             self.printDuplicates(self.outfile)
-            
+
         if self.options.comments:
-            self.cdd.insert_comments(self.dirname)        
-        
+            self.cdd.insert_comments(self.dirname)
+
     def printDuplicates(self, filename):
         with FileOrStdout(filename) as output:
             exactmatch = self.cdd.printmatches(output)
-            tm2 = datetime.datetime.now()            
+            tm2 = datetime.datetime.now()
 
     def foundMatches(self):
         '''
         return true if there is atleast one match found.
         '''
         matches = self.getMatches()
-        return( len(matches) > 0)        
-            
+        return( len(matches) > 0)
+
     def getMatches(self):
         if( self.matches == None):
             exactmatches = self.cdd.findcopies()
             self.matches = sorted(exactmatches,reverse=True,key=lambda x:x.matchedlines)
         return(self.matches)
-    
+
     def getCooccuranceData(self):
         return self.cdd.getCooccuranceData(self.dirname)
 
-                                      
+    def getCDDInstance(self):
+        filelist = self.getFileList(self.args[0])
+        return CodeDupDetect(filelist,self.options.minimum, fuzzy=self.options.fuzzy,\
+                                 min_lines=self.options.min_lines, blameflag=self.options.blame)
+
 def RunMain():
+    parser = createOptionParser()
+    app = CDDApp(parser)
+    with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
+        app.run()
+
+def createOptionParser():
     usage = "usage: %prog [options] <directory name>"
     description = """Code Duplication Detector. (C) Nitin Bhide nitinbhide@thinkingcraftsman.in
     Uses RabinKarp algorithm for finding exact duplicates. Fuzzy duplication detection support is
@@ -456,13 +468,16 @@ def RunMain():
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     parser.add_option("-b", "--blame", dest="blame", default=False, action="store_true",
                       help="Enable svn blame information output in reports.")
+    parser.add_option('--test', action="store_true", dest='runtests',
+                      help='ignores further arguments & runs tests for this program')
+    return parser
 
-    
-    app = CDDApp(parser)
-    
-    with TimeIt(sys.stdout, "Time to calculate the duplicates") as timer:
-        app.run()
-                    
-if(__name__ == "__main__"):    
+def runtests():
+    import unittest
+    alltests = unittest.defaultTestLoader.discover(start_dir=os.path.dirname(__file__), pattern="*tests.py")
+    unittest.TextTestRunner(verbosity=2).run(alltests)
+
+
+if(__name__ == "__main__"):
     RunMain()
-    
+
