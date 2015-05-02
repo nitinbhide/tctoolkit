@@ -24,4 +24,4 @@ setup(name='TCToolkit', version='0.6.8',
       package_dir={'': '.'},
       package_data={
           'tctoolkit': ['README.htm'], 'tctoolkit.thirdparty': ['javascript/d3js/*.*']}
-      )
+    )
