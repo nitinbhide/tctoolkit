@@ -19,8 +19,9 @@ from optparse import OptionParser
 
 from thirdparty.templet import unicodefunction
 from tokentagcloud.tokentagcloud import *
-from tctoolkitutil import readJsText,getJsDirPath,FileOrStdout
+from tctoolkitutil import readJsText, getJsDirPath, FileOrStdout
 from tctoolkitutil import TCApp
+
 
 @unicodefunction
 def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
@@ -99,14 +100,14 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         colors.reverse();
         var fill =  d3.scale.linear();
         fill.range(colors);
-        
+
         function drawTagCloud(wordsAndFreq, selector, width, height)
         {
             //console.log("selector is " + selector);
             // Font size is calculated based on word frequency
             var minFreq = d3.min(wordsAndFreq, function(d) { return d.count});
             var maxFreq = d3.max(wordsAndFreq, function(d) { return d.count});
-            
+
             var fontSize = d3.scale.log();
             fontSize.domain([minFreq, maxFreq]);
             fontSize.range([5,100])
@@ -115,7 +116,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
             maxColor = d3.max(wordsAndFreq, function(d) { return d.filecount});
             var step = (Math.log(maxColor+1)-Math.log(minColor))/colors.length;            
             fill.domain(d3.range(Math.log(minColor), Math.log(maxColor+1), step));
-          
+
             d3.layout.cloud().size([width, height])
                 .words(wordsAndFreq)
                 .padding(5)            
@@ -124,7 +125,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                 .fontSize(function(d) { return fontSize(+d.count); })
                 .on("end", draw)
                 .start();
-          
+
             function draw(words) {
                // console.log("calling draw");
               d3.select('body').select(selector).append("svg")
@@ -158,7 +159,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                     tooltip.html(tooltiphtml);
                     tooltip.style("visibility", "visible");
               }
-                              
+
               function mouseover(p) {                
                 setTooltipText(p);
               }
@@ -168,7 +169,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
               }
 
         }
-        
+
         function drawColorScale(clrscaleDivs, fill)
         {            
             var clrScale = clrscaleDivs.append('div').append('ul').style("list-style-type","none").style("margin",0).style("padding",0)
@@ -180,7 +181,7 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
                     .style("background-color", function(d, i){return range[i];} )
                     .html('&nbsp;&nbsp;&nbsp;');
         }
-        
+
         var width=900;
         var height = width*3.0/4.0;
         // Show the tag cloud for keywords
@@ -192,43 +193,48 @@ def OutputTagCloud(tagcld, d3js_text, d3cloud_text):
         // Show the tag cloud for function names only
         var funcNamesAndFreq = ${ tagcld.getJSON(filterFunc=FuncNameFilter) };        
         drawTagCloud(funcNamesAndFreq, "#functionnames",width, height);
-        
+
         var literalsAndFreq = ${ tagcld.getJSON(filterFunc=LiteralFilter) };        
         drawTagCloud(literalsAndFreq, "#literals",width, height);
 
         var clrScaleDivs = d3.select('body').selectAll('.colorscale');
         drawColorScale(clrScaleDivs, fill);
-        
+
       </script>
 
     </body>
     </html>
-    '''    
+    '''
 
 
 class D3SourceTagCloud(SourceCodeTagCloud):
+
     '''
     Generate source code tag cloud in HTML format
-    '''    
+    '''
+
     def __init__(self, dirname, pattern='*.c', lang=None):
         super(D3SourceTagCloud, self).__init__(dirname, pattern, lang)
-                
+
     def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
 
         tagWordList = self.getTags(numWords, filterFunc)
-        #create list of dictionaries them dump list using json.dumps
+        # create list of dictionaries them dump list using json.dumps
         tagList = []
 
-        if( len(tagWordList) > 0):                                    
-            #change the font size between "-2" to "+8" relative to current font size
-            tagList = [{ 'text': w, 'count':freq, 'filecount':self.getFileCount(w)} for w, freq in tagWordList]            
+        if(len(tagWordList) > 0):
+            # change the font size between "-2" to "+8" relative to current
+            # font size
+            tagList = [{'text': w, 'count': freq, 'filecount': self.getFileCount(
+                w)} for w, freq in tagWordList]
         tagJsonStr = json.dumps(tagList)
-        
+
         return(tagJsonStr)
-    
-    
+
+
 class TTCApp(TCApp):
+
     '''
     Token Tag Cloud application.
     Generate 'tag' cloud of tokens (function names, class names, language keywords etc) from
@@ -236,20 +242,23 @@ class TTCApp(TCApp):
     size of token : defines the number of times the token occurs.
     colour of token : defines the number of files the token occurs.
     '''
+
     def __init__(self, optparser):
-        super(TTCApp, self).__init__(optparser,min_num_args=1)
-    
+        super(TTCApp, self).__init__(optparser, min_num_args=1)
+
     def _run(self):
         self.dirname = self.args[0]
-        tagcld = D3SourceTagCloud(self.dirname, pattern=self.pattern, lang=self.lang)
+        tagcld = D3SourceTagCloud(
+            self.dirname, pattern=self.pattern, lang=self.lang)
         jsdir = getJsDirPath()
-        
+
         with FileOrStdout(self.outfile) as outf:
-            #read the text of d3js file
-            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"]);
-            d3cloud_text = readJsText(jsdir, ["d3js", "d3.layout.cloud.js"]);
-            outf.write(OutputTagCloud(tagcld,d3jstext, d3cloud_text))
-        
+            # read the text of d3js file
+            d3jstext = readJsText(jsdir, ["d3js", "d3.min.js"])
+            d3cloud_text = readJsText(jsdir, ["d3js", "d3.layout.cloud.js"])
+            outf.write(OutputTagCloud(tagcld, d3jstext, d3cloud_text))
+
+
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
     description = '''Token Tag Cloud (C) Nitin Bhide
@@ -260,12 +269,10 @@ def RunMain():
     The size of word is based on total number of occurances of that 'token' in the various source code files
     The color of word is based on number of files that 'token' is found.
     '''
-    parser = OptionParser(usage,description=description)
+    parser = OptionParser(usage, description=description)
 
     app = TTCApp(parser)
     app.run()
-        
+
 if(__name__ == "__main__"):
     RunMain()
-    
-    

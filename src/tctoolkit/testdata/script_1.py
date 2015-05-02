@@ -1,3 +1,11 @@
+'''
+This module is part of Thinking Craftsman Toolkit (TC Toolkit).
+and is released under the New BSD License: http://www.opensource.org/licenses/bsd-license.php
+TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
+
+Purpose: This is only the testdata for testing tctoolkit, not actual code of tctoolkit.
+'''
+
 #!/usr/bin/env python
 import cookielib
 import difflib
@@ -1174,7 +1182,7 @@ class SVNClient(SCMClient):
         if options.file_list:
             fList = string.split(options.file_list,',')
             files = fList
-        
+
         return (self.do_diff(["svn", "diff"] + files),
                 None)
 
@@ -2633,7 +2641,7 @@ def parse_options(args):
 
     parser.add_option("-l", "--file-list",
                       dest="file_list", default=None,
-                      help="comma separated list of changed files")    
+                      help="comma separated list of changed files")
 
     (globals()["options"], args) = parser.parse_args(args)
 
@@ -2671,7 +2679,7 @@ def parse_options(args):
         sys.stderr.write("The --repository-url option requires the "
                          "--revision-range option.\n")
         sys.exit(1)
-    
+
     return args
 
 def determine_client():
@@ -2852,7 +2860,7 @@ def get_repository_info(strRepoUrl):
         if not m:
             return None
 
-        return SvnRepositoryInfo(path, base_path, m.group(1))    
+        return SvnRepositoryInfo(path, base_path, m.group(1))
 
 def getRBServerWithParameters(strReviewBoardUrl, strRepoUrl):
         proxy_support = urllib2.ProxyHandler({})
@@ -2873,10 +2881,10 @@ def getRBServerWithParameters(strReviewBoardUrl, strRepoUrl):
         args = parse_options(sys.argv[1:])
 
         repository_info = get_repository_info(strRepoUrl)
-        
+
         # Try to find a valid Review Board server to use.
         server_url=strReviewBoardUrl
-        
+
         if not server_url:
             sys.stderr.write(r'Unable to find Reviewboard server %s'%server_url)
             print "Unable to find a Review Board server for this source code tree."
