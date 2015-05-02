@@ -16,25 +16,27 @@ import locale
 
 
 class TagCloud(object):
+
     '''
     store the information about tags
     '''
+
     def __init__(self):
         self.tagDict = dict()
         self.tagTypeDict = dict()
-            
+
     def addWord(self, word, ttype):
         '''
         add word, update frequency and type of the word
         '''
         freq = self.tagDict.get(word, 0)
-        freq = freq +1
+        freq = freq + 1
         self.tagDict[word] = freq
-        #now update the word
+        # now update the word
         cur_ttype = self.tagTypeDict.get(word, None)
         if cur_ttype == None or (ttype != cur_ttype and ttype in cur_ttype):
             self.tagTypeDict[word] = ttype
-        
+
     def filterWords(self, filterFunc):
         '''
         filter the words using the filter function
@@ -52,20 +54,21 @@ class TagCloud(object):
         '''
         tagWordList = []
         tagDict = self.tagDict
-        if( filterFunc != None):
+        if(filterFunc != None):
             tagDict = self.filterWords(filterFunc)
-        
-        if( len(tagDict) > 0):            
-            #first get sorted wordlist (reverse sorted by frequency)
-            tagWordList = sorted(tagDict.items(), key=operator.itemgetter(1),reverse=True)
+
+        if(len(tagDict) > 0):
+            # first get sorted wordlist (reverse sorted by frequency)
+            tagWordList = sorted(
+                tagDict.items(), key=operator.itemgetter(1), reverse=True)
             totalTagWords = len(tagWordList)
-            #now extract top 'numWords' from the list and then sort it with alphabetical order.
-            #comparison should be case-insensitive            
+            # now extract top 'numWords' from the list and then sort it with alphabetical order.
+            # comparison should be case-insensitive
             tagWordList = sorted(tagWordList[0:numWords], key=operator.itemgetter(0),
-                                 cmp=lambda x,y: cmp(x.lower(), y.lower()) )
-        
+                                 cmp=lambda x, y: cmp(x.lower(), y.lower()))
+
         return tagWordList
-    
+
     def getTagStats(self, numWords, filterFunc):
         '''
         return tag statistics as 'tuple' of (tag name, count_or_frequency, log(frequency))
@@ -74,9 +77,6 @@ class TagCloud(object):
         for word, freq in tagWordList:
             yield word, freq, math.log(freq)
 
-    
     def printTagStats(self, numWords=100, filterFunc=None):
         for word, freq, log_freq in self.getTagStats(numWords, filterFunc):
             print "%s(%d):%f" % (word, freq, log_freq)
-        
-    

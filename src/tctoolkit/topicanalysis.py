@@ -14,21 +14,24 @@ from __future__ import with_statement
 
 import logging
 import string
-import sys,fnmatch
+import sys
+import fnmatch
 import math
 from optparse import OptionParser
 
 from tctoolkitutil.common import PreparePygmentsFileList
 from featureanalysis.topicanalysis_gensim import *
- 
+
+
 def IdentifyTopics(dirname, pattern, corpusname):
     filelist = PreparePygmentsFileList(dirname)
-    filelist = fnmatch.filter(filelist,pattern)
-    
+    filelist = fnmatch.filter(filelist, pattern)
+
     feat = TopicAnalysisGensim(filelist)
     feat.detectTopics()
     feat.save(corpusname)
-    
+
+
 def FindSimilar(corpusname, filename):
     '''
     find the documents similar to text 'filename'
@@ -37,28 +40,31 @@ def FindSimilar(corpusname, filename):
     simidx = Similarity(corpusname)
     simidx.print_similar_docs(filename, numdocs=20)
 
+
 def TestTokenizer(fname):
     from featureanalysis.topictokenizer import TopicTokenizer
-    
+
     dbgfile = os.path.basename(fname) + '.token'
     dbgfile = os.path.join('./test/ldaout/', dbgfile)
     with open(dbgfile, "w") as outf:
         tokenizer = TopicTokenizer(fname)
         for tk in tokenizer.get_tokens():
             outf.write("%s " % tk)
-            
+
 
 def TestMain():
     #IdentifyTopics('./test/apache_httpd', '*.c', "features.txt")
     #IdentifyTopics('./test/tomcat', '*.java', "features.txt")
     #IdentifyTopics('./test/ccnet/', '*.cs', "ccnet")
     FindSimilar("ccnet", "testbug.txt")
-    
-    #TestTokenizer(".\\test\\ccnet\\core\\util\\xmlutil.cs")
-    #TestTokenizer(".\\test\\ccnet\\UnitTests\\Core\\SourceControl\\RegExIssueTrackerUrlBuilderTest.cs")
-    
+
+    # TestTokenizer(".\\test\\ccnet\\core\\util\\xmlutil.cs")
+    # TestTokenizer(".\\test\\ccnet\\UnitTests\\Core\\SourceControl\\RegExIssueTrackerUrlBuilderTest.cs")
+
+
 def RunMain():
-    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+    logging.basicConfig(
+        format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     usage = "usage: %prog [options] <directory name>"
     parser = OptionParser(usage)
@@ -67,18 +73,16 @@ def RunMain():
                       help="do feature analysis of files matching the pattern")
     parser.add_option("-o", "--outfile", dest="outfile", default="features.txt",
                       help="outfile name. Output to stdout if not specified")
-    
+
     (options, args) = parser.parse_args()
-    
-    if( len(args) < 1):
+
+    if(len(args) < 1):
         print "Invalid number of arguments. Use featureanalysis.py --help to see the details."
-    else:        
+    else:
         dirname = args[0]
-            
-        AnalyzeTopics(dirname, options.pattern, options.outfile)            
-        
+
+        AnalyzeTopics(dirname, options.pattern, options.outfile)
+
 if(__name__ == "__main__"):
-    #RunMain()
+    # RunMain()
     TestMain()
-    
-    
