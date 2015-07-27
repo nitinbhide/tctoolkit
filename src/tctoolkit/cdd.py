@@ -271,7 +271,7 @@ class HtmlWriter(object):
 
     @unicodefunction
     def output(self):
-        '''<!DOCTYPE html>
+        u'''<!DOCTYPE html>
         <html>
             <head>
                 <meta http-equiv="content-type" content="text/html;charset=utf-8">
@@ -330,11 +330,11 @@ class HtmlWriter(object):
 
     @unicodefunction
     def getMatchLink(self, i, matchset):
-        '''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
+        u'''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
 
     @unicodefunction
     def getMatchHtml(self, i, matchset):
-        '''<div id="match_$i">
+        u'''<div id="match_$i">
                 <h1>MATCH ${i+1}</h1>
                <ul>
                ${[self.getMatchInfo(m) for m in matchset]}
@@ -354,16 +354,20 @@ class HtmlWriter(object):
 
     @unicodefunction
     def getMatchInfoTemplate(self, match):
-        '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
+        u'''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
 
     @unicodefunction
     def getMatchInfoBlameTemplate(self, match):
-        '''
+        u'''
             <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}: In Revision ${match.getRevisionNumber()} by ${match.getAuthorName()}:</li>
         '''
 
     def getSyntaxHighlightedSource(self, matchset):
-        return highlight(''.join(matchset.getMatchSource()), matchset.getSourceLexer(), self.formatter, outfile=None)
+        source_code = ''.join(matchset.getMatchSource())
+        highlighted = highlight(source_code, matchset.getSourceLexer(), self.formatter, outfile=None)
+        #out of 'highlight' function is string, encoded with 'self.formatter.encoding'. Hence we have to
+        #decode it with appropriate encoding and then covert it to unicode.
+        return unicode(highlighted.decode(self.formatter.encoding))
 
     def getD3JS(self):
         jsdir = getJsDirPath()
