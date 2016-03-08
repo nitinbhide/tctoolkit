@@ -27,12 +27,23 @@ class DirFileLister(object):
     '''
     IGNOREDIRS = set([u'.svn', u'.cvs', u'.hg', u'.git'])
 
-    def __init__(self, dirname):
+    def __init__(self, dirname, exclude_dirs=[]):
         self.dirname = dirname
+        self.exclude_dirs = exclude_dirs
+        assert exclude_dirs != None
+        if isinstance(self.exclude_dirs, base_string):
+            self.exclude_dirs = self.exclude_dirs.split(',')
+
         # dirname is not unicode then convert it to unicode using the
         # filesystem encoding
-        if isinstance(self.dirname, str):
-            self.dirname = self.dirname.decode(sys.getfilesystemencoding())
+        systemencoding = sys.getfilesystemencoding()
+        def decode_dirname(dirname):
+            if isinstance(dirname, str):
+                dirname = dirname.decode(systemencoding)
+            return dirname
+        
+        self.dirname = decode_dirname(self.dirname)
+        self.exclude_dirs = set([decode_dirname(dname) for dname in self.exclude_dirs])
 
     def RemoveIgnoreDirs(self, dirs):
         '''
@@ -40,7 +51,7 @@ class DirFileLister(object):
         same 'input' variable. Since 'dirs' variable may have come from the os.walk. Hence
         it is important to change the same variable.
         '''
-        dirs2 = list(set(dirs) - DirFileLister.IGNOREDIRS)
+        dirs2 = list((set(dirs) - self.IGNOREDIRS) - self.exclude_dirs)
         dirs[:] = dirs2
 
     def getFileList(self):
