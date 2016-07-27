@@ -79,13 +79,13 @@ class TCApp(object):
 
         return success
 
-    def getFileList(self, dirname=None):
+    def getFileList(self, dirname=None, exclude_dirs=None):
         '''
         iterator over the file list based on the options parameters
         '''
         if self.filelist == None or self.dirname != dirname:
             self.dirname = dirname
-            filelister = DirFileLister(self.dirname)
+            filelister = DirFileLister(self.dirname, exclude_dirs)
 
             # first add all names into the set
             self.filelist = filelister.getFilesForPatternOrLang(
