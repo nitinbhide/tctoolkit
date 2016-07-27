@@ -27,23 +27,13 @@ class DirFileLister(object):
     '''
     IGNOREDIRS = set([u'.svn', u'.cvs', u'.hg', u'.git'])
 
-    def __init__(self, dirname, exclude_dirs=[]):
+    def __init__(self, dirname, exclude_dirs):
         self.dirname = dirname
         self.exclude_dirs = exclude_dirs
-        assert exclude_dirs != None
-        if isinstance(self.exclude_dirs, base_string):
-            self.exclude_dirs = self.exclude_dirs.split(',')
-
         # dirname is not unicode then convert it to unicode using the
         # filesystem encoding
-        systemencoding = sys.getfilesystemencoding()
-        def decode_dirname(dirname):
-            if isinstance(dirname, str):
-                dirname = dirname.decode(systemencoding)
-            return dirname
-        
-        self.dirname = decode_dirname(self.dirname)
-        self.exclude_dirs = set([decode_dirname(dname) for dname in self.exclude_dirs])
+        if isinstance(self.dirname, str):
+            self.dirname = self.dirname.decode(sys.getfilesystemencoding())
 
     def RemoveIgnoreDirs(self, dirs):
         '''
@@ -51,7 +41,14 @@ class DirFileLister(object):
         same 'input' variable. Since 'dirs' variable may have come from the os.walk. Hence
         it is important to change the same variable.
         '''
-        dirs2 = list((set(dirs) - self.IGNOREDIRS) - self.exclude_dirs)
+        dirs2 = list(set(dirs) - DirFileLister.IGNOREDIRS)
+        dirs[:] = dirs2
+
+    def RemoveExcludedDirs(self, dirs):
+        '''
+        remove directories to be excluded from the analysis
+        '''
+        dirs2 = list(set(dirs) - set(self.exclude_dirs))
         dirs[:] = dirs2
 
     def getFileList(self):
@@ -68,6 +65,7 @@ class DirFileLister(object):
 
         for root, dirs, files in os.walk(self.dirname, topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
+            self.RemoveExcludedDirs(dirs)
             logging.info("searching directory %s" % root)
             for fname in files:
                 rawfilelist.append(os.path.join(root, fname))

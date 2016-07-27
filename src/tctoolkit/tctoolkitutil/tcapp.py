@@ -50,8 +50,6 @@ class TCApp(object):
                                   help="outfile name. Output to stdout if not specified")
         self.optparser.add_option("-l", "--lang", dest="lang", default=None,
                                   help="programming language. Pattern will be ignored if language is defined.")
-        self.optparser.add_option("-x", "--exclude", dest="exclude_dir", default=None,
-                                  help="comma seperated list of directories to exclude from the operation")
 
     def parse_args(self):
         self.options, self.args = self.optparser.parse_args()
@@ -81,13 +79,13 @@ class TCApp(object):
 
         return success
 
-    def getFileList(self, dirname=None, exclude_dirs=[]):
+    def getFileList(self, dirname=None, exclude_dirs=None):
         '''
         iterator over the file list based on the options parameters
         '''
         if self.filelist == None or self.dirname != dirname:
             self.dirname = dirname
-            filelister = DirFileLister(self.dirname,exclude_dirs=exclude_dirs)
+            filelister = DirFileLister(self.dirname, exclude_dirs)
 
             # first add all names into the set
             self.filelist = filelister.getFilesForPatternOrLang(
