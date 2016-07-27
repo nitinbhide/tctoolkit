@@ -27,8 +27,9 @@ class DirFileLister(object):
     '''
     IGNOREDIRS = set([u'.svn', u'.cvs', u'.hg', u'.git'])
 
-    def __init__(self, dirname):
+    def __init__(self, dirname, exclude_dirs):
         self.dirname = dirname
+        self.exclude_dirs = exclude_dirs
         # dirname is not unicode then convert it to unicode using the
         # filesystem encoding
         if isinstance(self.dirname, str):
@@ -41,6 +42,13 @@ class DirFileLister(object):
         it is important to change the same variable.
         '''
         dirs2 = list(set(dirs) - DirFileLister.IGNOREDIRS)
+        dirs[:] = dirs2
+
+    def RemoveExcludedDirs(self, dirs):
+        '''
+        remove directories to be excluded from the analysis
+        '''
+        dirs2 = list(set(dirs) - set(self.exclude_dirs))
         dirs[:] = dirs2
 
     def getFileList(self):
@@ -57,6 +65,7 @@ class DirFileLister(object):
 
         for root, dirs, files in os.walk(self.dirname, topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
+            self.RemoveExcludedDirs(dirs)
             logging.info("searching directory %s" % root)
             for fname in files:
                 rawfilelist.append(os.path.join(root, fname))

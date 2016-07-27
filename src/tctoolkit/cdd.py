@@ -399,6 +399,9 @@ class CDDApp(TCApp):
                     name, ext = os.path.splitext(self.outfile)
                     if ext in set(['.html', '.htm', '.xhtml']):
                         self.options.format = 'html'
+            
+            self.exclude = self.options.exclude.split(',')
+
         return success
 
     def _run(self):
@@ -451,7 +454,7 @@ class CDDApp(TCApp):
         return self.cdd.getCooccuranceData(self.dirname)
 
     def getCDDInstance(self):
-        filelist = self.getFileList(self.args[0])
+        filelist = self.getFileList(self.args[0], exclude_dirs=self.exclude)
         return CodeDupDetect(filelist, self.options.minimum, fuzzy=self.options.fuzzy,
                              min_lines=self.options.min_lines, blameflag=self.options.blame)
 
@@ -487,6 +490,8 @@ def createOptionParser():
                       help="Enable svn blame information output in reports.")
     parser.add_option('--test', action="store_true", dest='runtests',
                       help='ignores further arguments & runs tests for this program')
+    parser.add_option("-x", "--exclude", dest="exclude", default='',
+                      help="Directories to exclude in analysis")
     return parser
 
 
