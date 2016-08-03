@@ -31,7 +31,7 @@ class DirFileLister(object):
         self.dirname = dirname
         self.exclude_dirs = exclude_dirs
         assert exclude_dirs != None
-        if isinstance(self.exclude_dirs, base_string):
+        if isinstance(self.exclude_dirs, basestring):
             self.exclude_dirs = self.exclude_dirs.split(',')
 
         # dirname is not unicode then convert it to unicode using the
