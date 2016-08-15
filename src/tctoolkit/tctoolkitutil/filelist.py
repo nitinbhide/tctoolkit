@@ -15,6 +15,7 @@ import os
 import string
 import logging
 import sys
+import platform
 
 __all__ = ['DirFileLister', 'FindFileInPathList']
 
@@ -43,6 +44,7 @@ class DirFileLister(object):
         if isinstance(self.dirname, str):
             self.dirname = self.dirname.decode(sys.getfilesystemencoding())
 
+        
     def RemoveIgnoreDirs(self, dirs):
         '''
         remove directories in the IGNOREDIRS list from the 'dirs'. Update
@@ -70,8 +72,16 @@ class DirFileLister(object):
         def errfunc(err):
             logging.warn(err.message)
             print err
-
-        for root, dirs, files in os.walk(self.dirname, topdown=True, onerror=errfunc):
+        
+        dirname = self.dirname
+        #Windows directory and file names have of limit of 260 characters. To make sure
+        #that things work with really long files name we have to prepend the directory/filename
+        #with '\\\\?\\'
+        #  check http://superuser.com/questions/216704/how-to-copy-files-that-have-too-long-of-a-filepath-in-windows
+        if platform.system() == 'Windows':
+            dirname= u'\\\\?\\' + self.dirname
+        
+        for root, dirs, files in os.walk(dirname, topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
             self.RemoveExcludedDirs(dirs)
             logging.info("searching directory %s" % root)
