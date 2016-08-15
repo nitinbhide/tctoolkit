@@ -30,6 +30,14 @@ class DirFileLister(object):
     def __init__(self, dirname, exclude_dirs):
         self.dirname = dirname
         self.exclude_dirs = exclude_dirs
+        assert exclude_dirs != None
+        if isinstance(self.exclude_dirs, basestring):
+            # exclude_dirs is not unicode then convert it to unicode using the
+            # filesystem encoding
+            if isinstance(self.exclude_dirs, str):
+                self.exclude_dirs = self.exclude_dirs.decode(sys.getfilesystemencoding())    
+            self.exclude_dirs = self.exclude_dirs.split(u',')
+
         # dirname is not unicode then convert it to unicode using the
         # filesystem encoding
         if isinstance(self.dirname, str):
