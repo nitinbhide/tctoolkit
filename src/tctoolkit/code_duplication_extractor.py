@@ -15,6 +15,7 @@ import os
 def extract_duplicates(optionparser=None):
     parser = cdd.createOptionParser() if (
         optionparser == None) else optionparser
+    
     app = DuplicatesExtractor(parser)
     app.run()
     return app.extract_duplicates()
@@ -25,7 +26,7 @@ def extract_duplicates(optionparser=None):
 class DuplicatesExtractor(cdd.CDDApp):
 
     def getCDDInstance(self):
-        filelist = self.getFileList(self.args[0])
+        filelist = self.getFileList(self.args[0],'')
         return DuplicatesDetector(filelist, self.options.minimum, fuzzy=self.options.fuzzy,
                                   min_lines=self.options.min_lines, blameflag=self.options.blame)
 
