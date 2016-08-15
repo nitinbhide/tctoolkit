@@ -73,14 +73,19 @@ class DirFileLister(object):
             logging.warn(err.message)
             print err
         
+        #find out the absolute path for the given directory name.
         dirname = self.dirname
+        dirname = os.path.normpath(dirname)
+        dirname = os.path.abspath(dirname)
         #Windows directory and file names have of limit of 260 characters. To make sure
         #that things work with really long files name we have to prepend the directory/filename
         #with '\\\\?\\'
         #  check http://superuser.com/questions/216704/how-to-copy-files-that-have-too-long-of-a-filepath-in-windows
         if platform.system() == 'Windows':
-            dirname= u'\\\\?\\' + self.dirname
+            dirname= "\\\\?\\" + dirname
         
+        logging.info("Searching file list in directory %s" % dirname)
+            
         for root, dirs, files in os.walk(dirname, topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
             self.RemoveExcludedDirs(dirs)
