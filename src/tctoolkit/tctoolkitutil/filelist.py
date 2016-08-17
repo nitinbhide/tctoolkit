@@ -17,8 +17,13 @@ import logging
 import sys
 import platform
 
-__all__ = ['DirFileLister', 'FindFileInPathList']
+__all__ = ['DirFileLister', 'FindFileInPathList', 'make_uncpath', 'make_nonunc_path']
 
+__UNC_PREFIX = "\\\\?\\"
+__IS_WINDOWS = False
+
+if platform.system() == 'Windows' :
+    __IS_WINDOWS = True
 
 class DirFileLister(object):
 
@@ -75,20 +80,14 @@ class DirFileLister(object):
         
         #find out the absolute path for the given directory name.
         dirname = self.dirname
-        dirname = os.path.normpath(dirname)
-        dirname = os.path.abspath(dirname)
-        #Windows directory and file names have of limit of 260 characters. To make sure
-        #that things work with really long files name we have to prepend the directory/filename
-        #with '\\\\?\\'
-        #  check http://superuser.com/questions/216704/how-to-copy-files-that-have-too-long-of-a-filepath-in-windows
-        if platform.system() == 'Windows':
-            dirname= "\\\\?\\" + dirname
+        dirname  = make_uncpath(dirname)
         
         logging.info("Searching file list in directory %s" % dirname)
             
         for root, dirs, files in os.walk(dirname, topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
             self.RemoveExcludedDirs(dirs)
+            root = make_nonunc_path(root)
             logging.info("searching directory %s" % root)
             for fname in files:
                 rawfilelist.append(os.path.join(root, fname))
@@ -197,6 +196,29 @@ def FindFileInPathList(fname, pathlist, extList=None):
             if(os.path.exists(testfname)):
                 return(testfname)
     return(None)
+    
+
+def make_uncpath(path):
+    '''
+    convert path to Windows UNC format. On non-windows os, just return the absolute path
+    '''
+    path = os.path.normpath(path)
+    path = os.path.abspath(path)
+    #Windows directory and file names have of limit of 260 characters. To make sure
+    #that things work with really long files name we have to prepend the directory/filename
+    #with '\\\\?\\'
+    #  check http://superuser.com/questions/216704/how-to-copy-files-that-have-too-long-of-a-filepath-in-windows
+    if __IS_WINDOWS:
+        path= __UNC_PREFIX + path
+    return path
+
+def make_nonunc_path(path):
+    '''
+    if the path is a Windows UNC path, remove the UNC prefix
+    '''
+    if __IS_WINDOWS and path.startswith(__UNC_PREFIX):
+        path= path[len(__UNC_PREFIX):]
+    return path
 
 #############################
 # temporary for backward compatibility
