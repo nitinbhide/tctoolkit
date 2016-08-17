@@ -45,6 +45,7 @@ class HtmlWriter(object):
 
     def write(self, fname, blameflag=False):
         self.blameflag = blameflag
+        fname = make_uncpath(fname)
         with codecs.open(fname, "wb", encoding='utf-8', errors='ignore') as outf:
             outf.write(self.output())
 
