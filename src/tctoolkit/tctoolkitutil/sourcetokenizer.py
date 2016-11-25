@@ -16,7 +16,7 @@ import codecs
 from pygments.lexers import get_lexer_for_filename, get_lexer_by_name, get_all_lexers
 from pygments.filter import simplefilter
 from pygments.token import Token
-
+from tctoolkitutil import make_uncpath
 
 class SourceToken(object):
 
