@@ -33,7 +33,7 @@ class DirFileLister(object):
     '''
     IGNOREDIRS = set([u'.svn', u'.cvs', u'.hg', u'.git'])
 
-    def __init__(self, dirname, exclude_dirs):
+    def __init__(self, dirname, exclude_dirs=[]):
         self.dirname = dirname
         self.exclude_dirs = exclude_dirs
         assert exclude_dirs != None
@@ -41,7 +41,7 @@ class DirFileLister(object):
             # exclude_dirs is not unicode then convert it to unicode using the
             # filesystem encoding
             if isinstance(self.exclude_dirs, str):
-                self.exclude_dirs = self.exclude_dirs.decode(sys.getfilesystemencoding())    
+                self.exclude_dirs = self.exclude_dirs.decode(sys.getfilesystemencoding())
             self.exclude_dirs = self.exclude_dirs.split(u',')
 
         # dirname is not unicode then convert it to unicode using the
@@ -49,7 +49,7 @@ class DirFileLister(object):
         if isinstance(self.dirname, str):
             self.dirname = self.dirname.decode(sys.getfilesystemencoding())
 
-        
+
     def RemoveIgnoreDirs(self, dirs):
         '''
         remove directories in the IGNOREDIRS list from the 'dirs'. Update
@@ -77,13 +77,13 @@ class DirFileLister(object):
         def errfunc(err):
             logging.warn(err.message)
             print err
-        
+
         #find out the absolute path for the given directory name.
         dirname = self.dirname
         dirname  = make_uncpath(dirname)
-        
+
         logging.info("Searching file list in directory %s" % dirname)
-            
+
         for root, dirs, files in os.walk(dirname, topdown=True, onerror=errfunc):
             self.RemoveIgnoreDirs(dirs)
             self.RemoveExcludedDirs(dirs)
@@ -196,7 +196,7 @@ def FindFileInPathList(fname, pathlist, extList=None):
             if(os.path.exists(testfname)):
                 return(testfname)
     return(None)
-    
+
 
 def make_uncpath(path):
     '''
