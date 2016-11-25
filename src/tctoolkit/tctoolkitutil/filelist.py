@@ -17,7 +17,7 @@ import logging
 import sys
 import platform
 
-__all__ = ['DirFileLister', 'FindFileInPathList', 'make_uncpath', 'make_nonunc_path']
+__all__ = ['DirFileLister', 'FindFileInPathList', 'make_uncpath', 'make_nonunc_path','PreparePygmentsFileList']
 
 __UNC_PREFIX = "\\\\?\\"
 __IS_WINDOWS = False
