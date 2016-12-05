@@ -35,7 +35,7 @@ class SvnBlameClient(object):
     '''
     Subversion client to query the 'blame' information for a file.
     '''
-    MAX_REVISIONS_FOR_BLAME = 100
+    MAX_REVISIONS_FOR_BLAME = 50
 
     def __init__(self, username=None, password=None):
         self.svnclient = pysvn.Client()
@@ -114,8 +114,9 @@ class SvnBlameClient(object):
 
             blameout = list()
 
-            for blamedict in output:
+            for lineno, blamedict in enumerate(output):
                 blameinfo = BlameInfo(blamedict['author'], blamedict['revision'].number)
+                assert lineno == int(blamedict['number'])
                 blameout.append(blameinfo)
             self.blame_cache[filepath] = blameout
 
