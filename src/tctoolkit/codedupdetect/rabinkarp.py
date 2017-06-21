@@ -75,6 +75,15 @@ class RabinKarp(object):
         for i in xrange(0, patternsize - 1):
             self.__rollhashbase = (self.__rollhashbase * HASH_BASE) % HASH_MOD
 
+    def removeFirstToken(self, curhash):
+        '''
+        remove first token and update the current hash
+        '''
+        (thash, firsttoken) = self.tokenqueue.popleft()
+        curhash = int_mod(
+                curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
+        return curhash
+
     def rollCurHash(self, tknzr, curhash, pastmatchlen):
         matchlen = pastmatchlen
         if(len(self.tokenqueue) >= self.patternsize):
@@ -82,7 +91,7 @@ class RabinKarp(object):
             if the number of tokens are reached patternsize then
             then remove hash value of first token from the rolling hash
             '''
-            (thash, firsttoken) = self.tokenqueue.popleft()
+            (thash, firsttoken) = self.tokenqueue[0]
             # add the current hash value in hashset
             self.matchstore.addHash(curhash, firsttoken)
 
@@ -90,10 +99,8 @@ class RabinKarp(object):
                 matchlen = self.findMatches(curhash, firsttoken, tknzr)
             else:
                 matchlen = matchlen - 1
-
-            curhash = int_mod(
-                curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
-
+            curhash = self.removeFirstToken(curhash)
+            
         return(curhash, matchlen)
 
     def getTokenHash(self, token):
