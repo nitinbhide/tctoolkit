@@ -93,7 +93,7 @@ class RabinKarp(object):
 
             curhash = int_mod(
                 curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
-            
+
         return(curhash, matchlen)
 
     def getTokenHash(self, token):
@@ -198,9 +198,9 @@ class RabinKarp(object):
             sha1 = hashlib.sha1()
 
             for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1.charpos), tknzr2.get_tokens_frompos(tokendata2.charpos)):
-                if matchdata1[3] != matchdata2[3]:
+                if matchdata1.value != matchdata2.value:
                     break
-                sha1.update(matchdata1[3])
+                sha1.update(matchdata1.value.encode('utf-8'))
                 matchend1 = matchdata1
                 matchend2 = matchdata2
                 matchlen = matchlen + 1
