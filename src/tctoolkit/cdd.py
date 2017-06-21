@@ -400,7 +400,7 @@ class CDDApp(TCApp):
                     name, ext = os.path.splitext(self.outfile)
                     if ext in set(['.html', '.htm', '.xhtml']):
                         self.options.format = 'html'
-            
+
             self.exclude = self.options.exclude.split(',')
 
         return success
@@ -481,7 +481,7 @@ def createOptionParser():
                       help="Output html to given filename.This is essentially combination '-f html -o <filename>")
     parser.add_option("-f", "--fmt", dest="format", default=None,
                       help="output file format. If not specified, determined from outputfile extension. Supported : txt, html")
-    parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
+    parser.add_option("-m", "--minimum", dest="minimum", default=5, type="int",
                       help="Minimum token count for matched patterns.")
     parser.add_option("", "--lines", dest="min_lines", default=3, type="int",
                       help="Minimum line count for matched patterns.")
@@ -493,7 +493,7 @@ def createOptionParser():
                       help="Directories to exclude in analysis")
     parser.add_option("", '--test', action="store_true", dest='runtests',
                       help='ignores further arguments & runs tests for this program')
-    
+
     return parser
 
 
