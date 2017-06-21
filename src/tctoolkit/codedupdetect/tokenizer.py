@@ -61,9 +61,10 @@ class Tokenizer(SourceCodeTokenizer):
                 value = '#FUZZY#'
             else:
                 value = srctoken.value
-                if(value != '' and not srctoken.is_type(Token.Comment)):
-                    duptoken = DupToken(self.srcfile, linenum, srctoken.charpos, value)
-                    yield duptoken
+
+            if(value != '' and not srctoken.is_type(Token.Comment)):
+                duptoken = DupToken(self.srcfile, linenum, srctoken.charpos, value)
+                yield duptoken
 
             linenum = linenum + srctoken.num_lines
 
