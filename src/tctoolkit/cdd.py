@@ -456,7 +456,7 @@ class CDDApp(TCApp):
 
     def getCDDInstance(self):
         filelist = self.getFileList(self.args[0], exclude_dirs=self.exclude)
-        return CodeDupDetect(filelist, self.options.minimum, fuzzy=self.options.fuzzy,
+        return CodeDupDetect(filelist, self.options.chunk, fuzzy=self.options.fuzzy,
                              min_lines=self.options.min_lines, blameflag=self.options.blame)
 
 
@@ -481,8 +481,8 @@ def createOptionParser():
                       help="Output html to given filename.This is essentially combination '-f html -o <filename>")
     parser.add_option("-f", "--fmt", dest="format", default=None,
                       help="output file format. If not specified, determined from outputfile extension. Supported : txt, html")
-    parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
-                      help="Minimum token count for matched patterns.")
+    parser.add_option("-m", "--minimum", dest="chunk", default=5, type="int",
+                      help="Minimum token count for matching patterns.")
     parser.add_option("", "--lines", dest="min_lines", default=3, type="int",
                       help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
