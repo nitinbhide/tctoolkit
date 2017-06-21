@@ -34,7 +34,7 @@ class Tokenizer(SourceCodeTokenizer):
             self.tokenlist = list()
             for idx, token in enumerate(self.get_tokens()):
                 self.tokenlist.append(token)
-                self.pos_dict[token[2]] = idx
+                self.pos_dict[token.charpos] = idx
 
     def is_fuzzy_token(self, srctoken):
         '''
@@ -71,7 +71,7 @@ class Tokenizer(SourceCodeTokenizer):
                 yield duptoken
 
             linenum = linenum + srctoken.num_lines
-            
+
     def get_tokens_frompos(self, fromcharpos):
         self.update_token_list()
         idx = self.pos_dict[fromcharpos]
