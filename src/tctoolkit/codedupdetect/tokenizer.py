@@ -52,6 +52,10 @@ class Tokenizer(SourceCodeTokenizer):
         token tupple is returned. Format of token data tuple is
         (source file path, line number of token, charposition of token, text value of the token)
         '''
+        def is_comment(tkn):
+            return srctoken.is_type(Token.Comment.Multiline) or \
+                    srctoken.is_type(Token.Comment.Single)
+
         linenum = 1
         for srctoken in self._parse_tokens():
             # print ttype
@@ -62,12 +66,12 @@ class Tokenizer(SourceCodeTokenizer):
             else:
                 value = srctoken.value
 
-            if(value != '' and not srctoken.is_type(Token.Comment)):
+            if(value != '' and not is_comment(srctoken)):
                 duptoken = DupToken(self.srcfile, linenum, srctoken.charpos, value)
                 yield duptoken
 
             linenum = linenum + srctoken.num_lines
-
+            
     def get_tokens_frompos(self, fromcharpos):
         self.update_token_list()
         idx = self.pos_dict[fromcharpos]
