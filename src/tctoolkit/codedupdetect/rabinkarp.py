@@ -60,10 +60,13 @@ def FNV8_hash(str):
 
 
 class RabinKarp(object):
-
-    def __init__(self, patternsize, min_lines, matchstore, fuzzy=False, blameflag=False):
-        self.patternsize = patternsize  # minimum number of tokens to match
+    '''
+    Rabin Karp duplication detection algorithm
+    '''
+    def __init__(self, chunk, min_lines, matchstore, fuzzy=False, blameflag=False):
+        self.chunk = chunk  # minimum number of tokens to match
         self.min_lines = min_lines  # minimum number of lines to match.
+        self.patternsize = self.chunk*self.min_lines
         self.matchstore = matchstore
         self.fuzzy = fuzzy
         self.blameflag = blameflag
@@ -72,16 +75,17 @@ class RabinKarp(object):
         self.token_hash = dict()
         self.__rollhashbase = 1
         self.curfilematches = 0  # number of matches found the current file.
-        for i in xrange(0, patternsize - 1):
+        for i in xrange(0, self.chunk*self.min_lines - 1):
             self.__rollhashbase = (self.__rollhashbase * HASH_BASE) % HASH_MOD
 
-    def removeFirstToken(self, curhash):
+    def removeTokens(self, curhash, num_tokens):
         '''
         remove first token and update the current hash
         '''
-        (thash, firsttoken) = self.tokenqueue.popleft()
-        curhash = int_mod(
-                curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
+        for i in range(0, num_tokens):
+            (thash, firsttoken) = self.tokenqueue.popleft()
+            curhash = int_mod(
+                    curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
         return curhash
 
     def rollCurHash(self, tknzr, curhash, pastmatchlen):
@@ -92,15 +96,16 @@ class RabinKarp(object):
             then remove hash value of first token from the rolling hash
             '''
             (thash, firsttoken) = self.tokenqueue[0]
-            # add the current hash value in hashset
-            self.matchstore.addHash(curhash, firsttoken)
 
-            if matchlen == 0:
+            if matchlen <= 0:
                 matchlen = self.findMatches(curhash, firsttoken, tknzr)
             else:
-                matchlen = matchlen - 1
-            curhash = self.removeFirstToken(curhash)
-            
+                matchlen = matchlen - self.chunk
+
+            # add the current hash value in hashset
+            self.matchstore.addHash(curhash, firsttoken)
+            curhash = self.removeTokens(curhash, 1)
+
         return(curhash, matchlen)
 
     def getTokenHash(self, token):
@@ -191,7 +196,7 @@ class RabinKarp(object):
         #   and the line numbers cannot be same
         if(tokendata1.value == tokendata2.value
                 and (tokendata1.srcfile != tokendata2.srcfile
-                     or ((abs(tokendata1.charpos - tokendata2.charpos) > self.patternsize) and tokendata1.lineno > tokendata2.lineno))):
+                     or ((abs(tokendata1.charpos - tokendata2.charpos) > self.chunk*self.min_lines) and tokendata1.lineno > tokendata2.lineno))):
 
             tknzr2 = tknzr1
 
