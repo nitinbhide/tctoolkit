@@ -84,14 +84,18 @@ class RabinKarp(object):
             '''
             (thash, firsttoken) = self.tokenqueue.popleft()
             # add the current hash value in hashset
-            if matchlen == 0:
-                matchlen = self.findMatches(curhash, firsttoken, tknzr)
-            else:
-                matchlen = matchlen - 1
-
             self.matchstore.addHash(curhash, firsttoken)
-            curhash = int_mod(
-                curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
+
+            while len(self.tokenqueue)  > 0:
+                if matchlen == 0:
+                    matchlen = self.findMatches(curhash, firsttoken, tknzr)
+                else:
+                    matchlen = matchlen - 1
+
+                curhash = int_mod(
+                    curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
+                (thash, firsttoken) = self.tokenqueue.popleft()
+            
         return(curhash, matchlen)
 
     def getTokenHash(self, token):
