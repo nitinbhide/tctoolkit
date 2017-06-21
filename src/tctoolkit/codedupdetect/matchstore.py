@@ -23,9 +23,8 @@ except:
 
 
 class MatchData(object):
-
     '''
-    store the match/duplication data of one instance
+    store the match/duplication data of one instance in a MatchSet
     '''
     __slots__ = ['matchlen', 'starttoken', 'endtoken', 'revisioninfo']
 
@@ -72,7 +71,10 @@ class MatchData(object):
 
 
 class MatchSet(object):
-
+    '''
+    Store one set of duplicates. Match set contains 'collection' of MatchData.
+    Match
+    '''
     def __init__(self, blameflag):
         self.matchset = set()
         self.matchedlines = None
@@ -130,7 +132,9 @@ class MatchSet(object):
 
 
 class MatchStore(object):
-
+    '''
+    store the hashes and duplicates (i.e.matches)
+    '''
     def __init__(self, minmatch, blameflag):
         self.minmatch = minmatch
         self.blameflag = blameflag
