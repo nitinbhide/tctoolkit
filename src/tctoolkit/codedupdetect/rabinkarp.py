@@ -130,14 +130,14 @@ class RabinKarp(object):
         distance between the tokens has to be at least 'patternsize'.
         This avoidds 'self' matches for sitations like "[0,0,0,0,0,0]"
         '''
-        srcfile = tokendata1[0]
-        srclineno = tokendata1[1]
+        srcfile = tokendata1.srcfile
+        srclineno = tokendata1.lineno
         for matchtoken in hashmatches:
-            matchfile = matchtoken[0]
+            matchfile = matchtoken.srcfile
             if(srcfile == matchfile):
                 # token are from same files. Now check the line numbers. The linenumbers
                 # difference has to be at least 3
-                matchlineno = matchtoken[1]
+                matchlineno = matchtoken.lineno
                 if abs(matchlineno - srclineno) > 3:
                     yield matchtoken
             else:
