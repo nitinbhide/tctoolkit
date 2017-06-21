@@ -41,6 +41,8 @@ class CodeDupDetect(object):
             logging.info("Analyzing file %s (%d of %d)" %
                          (srcfile, i + 1, totalfiles))
             rk.addAllTokens(srcfile)
+        print("Total Hashes Stored %d\n" % len(self.matchstore.hashset))
+        
         self.foundcopies = True
 
     def findcopies(self):
