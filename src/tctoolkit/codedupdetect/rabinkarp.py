@@ -149,12 +149,12 @@ class RabinKarp(object):
         search for matches for the current rolling hash in the matchstore.
         If the hash match is found then go for full comparision to search for the match.
         '''
-        assert tknzr.srcfile == tokendata1[0]
+        assert tknzr.srcfile == tokendata1.srcfile
         maxmatchlen = 0
 
         matches = self.matchstore.getHashMatch(curhash, tokendata1)
         if matches != None:
-            assert tknzr.srcfile == tokendata1[0]
+            assert tknzr.srcfile == tokendata1.srcfile
 
             for tokendata2 in self.findPossibleMatches(tokendata1, matches):
                 matchlen, sha1_hash, match_end1, match_end2 = self.findMatchLength(
@@ -180,22 +180,22 @@ class RabinKarp(object):
         # make a basic sanity check token value is same
         # if the filename is same then distance between the token positions has to be at least patternsize
         #   and the line numbers cannot be same
-        if(tokendata1[3] == tokendata2[3]
-                and (tokendata1[0] != tokendata2[0]
-                     or ((abs(tokendata1[2] - tokendata2[2]) > self.patternsize) and tokendata1[1] > tokendata2[1]))):
+        if(tokendata1.value == tokendata2.value
+                and (tokendata1.srcfile != tokendata2.srcfile
+                     or ((abs(tokendata1.charpos - tokendata2.charpos) > self.patternsize) and tokendata1.lineno > tokendata2.lineno))):
 
             tknzr2 = tknzr1
 
             # filenames are different, get the different tokenizer
-            if tokendata2[0] != tokendata1[0]:
-                srcfile2 = tokendata2[0]
+            if tokendata2.srcfile != tokendata1.srcfile:
+                srcfile2 = tokendata2.srcfile
                 tknzr2 = self.getTokanizer(srcfile2)
 
-            assert tknzr1.srcfile == tokendata1[0]
-            assert tknzr2.srcfile == tokendata2[0]
+            assert tknzr1.srcfile == tokendata1.srcfile
+            assert tknzr2.srcfile == tokendata2.srcfile
             sha1 = hashlib.sha1()
 
-            for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1[2]), tknzr2.get_tokens_frompos(tokendata2[2])):
+            for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1.charpos), tknzr2.get_tokens_frompos(tokendata2.charpos)):
                 if matchdata1[3] != matchdata2[3]:
                     break
                 sha1.update(matchdata1[3])
