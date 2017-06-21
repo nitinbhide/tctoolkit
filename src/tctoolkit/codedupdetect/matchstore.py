@@ -54,15 +54,15 @@ class MatchData(object):
         return hash(tpl)
 
     def getLineCount(self):
-        lc = self.endtoken[1] - self.starttoken[1]
+        lc = self.endtoken.lineno - self.starttoken.lineno
         assert lc >= 0
         return lc
 
     def srcfile(self):
-        return self.starttoken[0]
+        return self.starttoken.srcfile
 
     def getStartLine(self):
-        return self.starttoken[1]
+        return self.starttoken.lineno
 
     def getRevisionNumber(self):
         return self.revisioninfo[1]
@@ -137,18 +137,18 @@ class MatchStore(object):
         self.hashset = dict()
         self.matchlist = dict()
 
-    def addHash(self, rhash, tokendata):
+    def addHash(self, rhash, duptoken):
         # create a new hash with (rolling hash value and actual token string)
-        rhash = hash((rhash, tokendata[3]))
+        rhash = hash((rhash, duptoken.value))
         hashdata = self.hashset.get(rhash)
         if hashdata == None:
             hashdata = []
-        hashdata.append(tokendata)
+        hashdata.append(duptoken)
         self.hashset[rhash] = hashdata
 
-    def getHashMatch(self, rhash, tokendata):
+    def getHashMatch(self, rhash, duptoken):
         # create a new hash with (rolling hash value and actual token string)
-        rhash = hash((rhash, tokendata[3]))
+        rhash = hash((rhash, duptoken.value))
         return(self.hashset.get(rhash))
 
     def addExactMatch(self, matchlen, sha1_hash, matchstart1, matchend1, matchstart2, matchend2):

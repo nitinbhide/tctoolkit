@@ -12,14 +12,14 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 import os
 import logging
-
+from collections import namedtuple
 from tctoolkit.tctoolkitutil import SourceCodeTokenizer
 
 from pygments.token import Token
 
+DupToken = namedtuple('DupToken', ['srcfile', 'lineno', 'charpos', 'value'])
 
 class Tokenizer(SourceCodeTokenizer):
-
     '''
     tokenizer for code duplication detection.
     '''
@@ -62,7 +62,8 @@ class Tokenizer(SourceCodeTokenizer):
             else:
                 value = srctoken.value
                 if(value != '' and not srctoken.is_type(Token.Comment)):
-                    yield self.srcfile, linenum, srctoken.charpos, value
+                    duptoken = DupToken(self.srcfile, linenum, srctoken.charpos, value)
+                    yield duptoken
 
             linenum = linenum + srctoken.num_lines
 
