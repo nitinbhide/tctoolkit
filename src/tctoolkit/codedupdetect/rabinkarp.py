@@ -95,12 +95,12 @@ class RabinKarp(object):
             if the number of tokens are reached patternsize then
             then remove hash value of first token from the rolling hash
             '''
-            (thash, firsttoken) = self.tokenqueue[0]
 
+            (thash, firsttoken) = self.tokenqueue[0]
             if matchlen <= 0:
                 matchlen = self.findMatches(curhash, firsttoken, tknzr)
             else:
-                matchlen = matchlen - self.chunk
+                matchlen = matchlen - 1
 
             # add the current hash value in hashset
             self.matchstore.addHash(curhash, firsttoken)
