@@ -59,54 +59,23 @@ def FNV8_hash(str):
     return(fhash)
 
 
-class RabinKarp(object):
+class RollingHash(object):
     '''
-    Rabin Karp duplication detection algorithm
+    separated out rolling hash algorithm so that it can be indepdently tested.
+    Any bugs in this algorithm will cause wrong duplicate detection
+    roll_after : roll the hash after so many tokens.
     '''
-    def __init__(self, chunk, min_lines, matchstore, fuzzy=False, blameflag=False):
-        self.chunk = chunk  # minimum number of tokens to match
-        self.min_lines = min_lines  # minimum number of lines to match.
-        self.patternsize = self.chunk*self.min_lines
-        self.matchstore = matchstore
-        self.fuzzy = fuzzy
-        self.blameflag = blameflag
-        self.tokenqueue = deque()
-        self.tokenizers = dict()
-        self.token_hash = dict()
+    def __init__(self, roll_after, value_func=lambda tokendata:tokendata.value):
+        assert roll_after > 1
         self.__rollhashbase = 1
-        self.curfilematches = 0  # number of matches found the current file.
-        for i in xrange(0, self.chunk*self.min_lines - 1):
+        self.curhash = 0
+        self.roll_after =roll_after
+        self.value_func = value_func
+        
+        for i in xrange(0, self.roll_after - 1):
             self.__rollhashbase = (self.__rollhashbase * HASH_BASE) % HASH_MOD
-
-    def removeTokens(self, curhash, num_tokens):
-        '''
-        remove first token and update the current hash
-        '''
-        for i in range(0, num_tokens):
-            (thash, firsttoken) = self.tokenqueue.popleft()
-            curhash = int_mod(
-                    curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
-        return curhash
-
-    def rollCurHash(self, tknzr, curhash, pastmatchlen):
-        matchlen = pastmatchlen
-        if(len(self.tokenqueue) >= self.patternsize):
-            '''
-            if the number of tokens are reached patternsize then
-            then remove hash value of first token from the rolling hash
-            '''
-
-            (thash, firsttoken) = self.tokenqueue[0]
-            if matchlen <= 0:
-                matchlen = self.findMatches(curhash, firsttoken, tknzr)
-            else:
-                matchlen = matchlen - 1
-
-            # add the current hash value in hashset
-            self.matchstore.addHash(curhash, firsttoken)
-            curhash = self.removeTokens(curhash, 1)
-
-        return(curhash, matchlen)
+        self.tokenqueue = deque()
+        self.token_hash = dict()
 
     def getTokenHash(self, token):
         # if token size is only one charater (i.e. tokens like '{', '+' etc)
@@ -115,27 +84,87 @@ class RabinKarp(object):
             thash = FNV8_hash(token)
         else:
             thash = ord(token[0])
+        thash = thash % HASH_BASE
         return(thash)
+    
+    def addToken(self, tokendata):
+        thash = self.getTokenHash(self.value_func(tokendata))
+        self.curhash = int_mod(self.curhash * HASH_BASE, HASH_MOD)
+        self.curhash = int_mod(self.curhash + thash, HASH_MOD)
+        self.tokenqueue.append((thash, tokendata))
+        if len(self.tokenqueue) >= self.roll_after:
+            self.removeToken()
 
+    def removeToken(self):
+        '''
+        remove first token and update the current hash
+        '''
+        (thash, firsttoken) = self.tokenqueue.popleft()
+        self.curhash = int_mod(
+                self.curhash - int_mod(thash * self.__rollhashbase, HASH_MOD), HASH_MOD)
+        return firsttoken
+    
+    def firstToken(self):
+        '''
+        return first token and current hash 
+        '''
+        (thash, firsttoken) = self.tokenqueue[0]
+            
+        return self.curhash, thash, firsttoken    
+        
+    def restart(self):
+        '''
+        restart the rolling hash computations
+        '''
+        self.tokenqueue.clear()
+        self.curhash = 0
+        
+class RabinKarp(object):
+    '''
+    Rabin Karp duplication detection algorithm
+    '''
+    def __init__(self, chunk, min_lines, matchstore, fuzzy=False, blameflag=False):
+        self.chunk = chunk  # minimum number of tokens to match
+        self.min_lines = min_lines  # minimum number of lines to match.
+        self.patternsize = self.chunk
+        self.matchstore = matchstore
+        self.fuzzy = fuzzy
+        self.blameflag = blameflag
+        self.tokenizers = dict()
+        self.curfilematches = 0  # number of matches found the current file.
+        self.rollinghash = RollingHash(self.chunk*self.min_lines)
+            
     def addAllTokens(self, srcfile):
-        curhash = 0
         matchlen = 0
         # empty the tokenqueue since we are starting a new file
-        self.tokenqueue.clear()
         self.curfilematches = 0
+        self.rollinghash.restart()
         tknzr = self.getTokanizer(srcfile)
         for token in tknzr:
-            curhash, matchlen = self.rollCurHash(tknzr, curhash, matchlen)
-            curhash = self.addToken(curhash, token)
+            matchlen = self.rollCurHash(tknzr, matchlen)
+            curhash = self.rollinghash.addToken(token)
             if self.curfilematches > MAX_SINGLE_FILEMATCHES:
                 break
 
-    def addToken(self, curhash, tokendata):
-        thash = self.getTokenHash(tokendata[3])
-        curhash = int_mod(curhash * HASH_BASE, HASH_MOD)
-        curhash = int_mod(curhash + thash, HASH_MOD)
-        self.tokenqueue.append((thash, tokendata))
-        return(curhash)
+    def rollCurHash(self, tknzr, pastmatchlen):
+        matchlen = pastmatchlen
+        if(len(self.rollinghash.tokenqueue) >= self.patternsize):
+            '''
+            if the number of tokens are reached patternsize then
+            then remove hash value of first token from the rolling hash
+            '''
+            (curhash, thash, firsttoken) = self.rollinghash.firstToken()
+            if matchlen <= 0:
+                matchlen = self.findMatches(curhash, firsttoken, tknzr)
+            else:
+                matchlen = matchlen - 1
+
+            # add the current hash value in hashset after every 'chunksize' number of tokens
+            #are found. Don't add for every token.
+            if firsttoken.charpos % self.chunk == 0:
+                self.matchstore.addHash(curhash, firsttoken)
+            
+        return(matchlen)
 
     def findPossibleMatches(self, tokendata1, hashmatches):
         '''
@@ -176,7 +205,8 @@ class RabinKarp(object):
 
                 # matchlen has to be at least pattern size
                 # and matched line count has to be atleast self.min_lines
-                if matchlen >= self.patternsize and (match_end1[1] - tokendata1[1]) >= self.min_lines:
+                if matchlen >= self.patternsize and (match_end1.lineno - tokendata1.lineno) >= self.min_lines \
+                        and (match_end2.lineno - tokendata2.lineno) >= self.min_lines:
                     # add the exact match to match store.
                     self.matchstore.addExactMatch(
                         matchlen, sha1_hash, tokendata1, match_end1, tokendata2, match_end2)
@@ -232,3 +262,23 @@ class RabinKarp(object):
         assert tknizer.srcfile == srcfile
 
         return tknizer
+
+if __name__ == '__main__':
+    def addtokens(rh, inputval):
+        for token in inputval:
+            rh.addToken(token)
+            print rh.curhash
+            
+    def test_rolling_hash(inputval):
+        rhash1 = RollingHash(5, value_func=lambda x:x)
+        addtokens(rhash1, inputval)
+        #rhash1.removeToken()
+        print 'starting next'
+        rhash2 = RollingHash(5,value_func=lambda x:x)
+        nextval = inputval[1:]
+        addtokens(rhash2, inputval[1:])
+        assert rhash1.curhash == rhash2.curhash
+    
+    test_rolling_hash('nitin bhide')
+    #test_rolling_hash('never argue with idiots')
+    
