@@ -159,10 +159,9 @@ class RabinKarp(object):
             else:
                 matchlen = matchlen - 1
 
-            # add the current hash value in hashset after every 'chunksize' number of tokens
-            #are found. Don't add for every token.
-            if firsttoken.charpos % self.chunk == 0:
-                self.matchstore.addHash(curhash, firsttoken)
+            #current rolling hash has to be added for every token else match is found
+            #on line boundaries and may not work well.
+            self.matchstore.addHash(curhash, firsttoken)
             
         return(matchlen)
 
