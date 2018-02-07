@@ -63,16 +63,17 @@ class RollingHash(object):
     '''
     separated out rolling hash algorithm so that it can be indepdently tested.
     Any bugs in this algorithm will cause wrong duplicate detection
-    roll_after : roll the hash after so many tokens.
+    window_size : window size for calculating rolling hash. Every hash is computed for 'windows_size'
+     number of previous tokens.
     '''
-    def __init__(self, roll_after, value_func=lambda tokendata:tokendata.value):
-        assert roll_after > 1
+    def __init__(self, window_size, value_func=lambda tokendata:tokendata.value):
+        assert window_size > 1
         self.__rollhashbase = 1
         self.curhash = 0
-        self.roll_after =roll_after
+        self.window_size =window_size
         self.value_func = value_func
         
-        for i in xrange(0, self.roll_after - 1):
+        for i in xrange(0, self.window_size - 1):
             self.__rollhashbase = (self.__rollhashbase * HASH_BASE) % HASH_MOD
         self.tokenqueue = deque()
         self.token_hash = dict()
@@ -92,7 +93,7 @@ class RollingHash(object):
         self.curhash = int_mod(self.curhash * HASH_BASE, HASH_MOD)
         self.curhash = int_mod(self.curhash + thash, HASH_MOD)
         self.tokenqueue.append((thash, tokendata))
-        if len(self.tokenqueue) >= self.roll_after:
+        if len(self.tokenqueue) >= self.window_size:
             self.removeToken()
 
     def removeToken(self):
