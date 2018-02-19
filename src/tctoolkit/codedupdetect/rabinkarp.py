@@ -22,7 +22,7 @@ import tokenizer
 
 # Maximum number of matches to find in a single file
 MAX_SINGLE_FILEMATCHES = 50
-HASH_BASE = 256
+HASH_BASE = (256*256*256*256)  #a single token hash value is made up of 4 bytes
 HASH_MOD = 16777619  # make sure it is a prime
 
 # TOKEN_HASHBASE=HASH_BASE
@@ -38,7 +38,7 @@ def int_mod(a, b):
     return (a % b + b) % b
 
 
-def FNV8_hash(str):
+def FNV_hash(str):
     '''
     8 bit FNV hash created by XOR folding the FNV32 hash of the string
     '''
@@ -53,8 +53,8 @@ def FNV8_hash(str):
 
     # now fold it with XOR folding
     # print "token hash ", hash
-    fhash = (fhash >> 16) ^ (fhash & 0xFFFF)
-    fhash = (fhash >> 8) ^ (fhash & 0xFF)
+    #fhash = (fhash >> 16) ^ (fhash & 0xFFFF)
+    #fhash = (fhash >> 8) ^ (fhash & 0xFF)
     # print "hash after folding ", hash
     return(fhash)
 
@@ -81,10 +81,7 @@ class RollingHash(object):
     def getTokenHash(self, token):
         # if token size is only one charater (i.e. tokens like '{', '+' etc)
         # then don't call FNV hash. Just use the single character.
-        if len(token) > 1:
-            thash = FNV8_hash(token)
-        else:
-            thash = ord(token[0])
+        thash = FNV_hash(token)
         thash = thash % HASH_BASE
         return(thash)
     
