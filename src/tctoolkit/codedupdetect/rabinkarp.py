@@ -175,8 +175,8 @@ class RabinKarp(object):
         for matchtoken in hashmatches:
             matchfile = matchtoken.srcfile
             if(srcfile == matchfile):
-                # token are from same files. Now check the line numbers. The linenumbers
-                # difference has to be at least 3
+                # token are from same files. Now check the line numbers. The line numbers cannot be 
+                # overlapping. For exmaple source line 1 to 5 and destination line 4 to 8 cannot happen
                 matchlineno = matchtoken.lineno
                 if abs(matchlineno - srclineno) > 3:
                     yield matchtoken
@@ -244,6 +244,8 @@ class RabinKarp(object):
                 matchend2 = matchdata2
                 matchlen = matchlen + 1
             sha1_hash = sha1.digest()
+
+           
 
         return(matchlen, sha1_hash, matchend1, matchend2)
 
