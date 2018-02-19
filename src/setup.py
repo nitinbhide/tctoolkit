@@ -11,12 +11,12 @@ Setup file for installing Thinking Craftsman Toolkit
 
 from distutils.core import setup
 
-setup(name='TCToolkit', version='0.7.0',
+setup(name='TCToolkit', version='0.7.1',
       description='python module to analyze source code in various ways',
       author='Nitin Bhide',
       author_email='nitinbhide@gmail.com',
       license='http://www.opensource.org/licenses/bsd-license.php',
-      url='http://code.google.com/p/tctoolkit',
+      url='https://bitbucket.org/nitinbhide/tctoolkit/',
       requires=['pygments'],
       packages=['tctoolkit', 'tctoolkit.codedupdetect', 'tctoolkit.tctoolkitutil',
                 'tctoolkit.featureanalysis', 'tctoolkit.tcdepends', 'tctoolkit.sourcemon',
