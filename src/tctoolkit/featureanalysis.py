@@ -19,7 +19,7 @@ import fnmatch
 import math
 from optparse import OptionParser
 
-from tctoolkitutil.common import PreparePygmentsFileList
+from tctoolkitutil import PreparePygmentsFileList
 from featureanalysis.featureanalysis import FeatureAnalysis
 
 

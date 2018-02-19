@@ -26,6 +26,7 @@ def get_default_options():
             self.outfile = '.\\testdata\out.txt'
             self.runtests = False
             self.comments = False
+            self.exclude = ''
     return Options()
 
 

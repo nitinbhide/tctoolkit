@@ -45,6 +45,7 @@ class HtmlWriter(object):
 
     def write(self, fname, blameflag=False):
         self.blameflag = blameflag
+        fname = make_uncpath(fname)
         with codecs.open(fname, "wb", encoding='utf-8', errors='ignore') as outf:
             outf.write(self.output())
 
@@ -399,7 +400,7 @@ class CDDApp(TCApp):
                     name, ext = os.path.splitext(self.outfile)
                     if ext in set(['.html', '.htm', '.xhtml']):
                         self.options.format = 'html'
-            
+
             self.exclude = self.options.exclude.split(',')
 
         return success
@@ -455,7 +456,7 @@ class CDDApp(TCApp):
 
     def getCDDInstance(self):
         filelist = self.getFileList(self.args[0], exclude_dirs=self.exclude)
-        return CodeDupDetect(filelist, self.options.minimum, fuzzy=self.options.fuzzy,
+        return CodeDupDetect(filelist, self.options.chunk, fuzzy=self.options.fuzzy,
                              min_lines=self.options.min_lines, blameflag=self.options.blame)
 
 
@@ -480,18 +481,19 @@ def createOptionParser():
                       help="Output html to given filename.This is essentially combination '-f html -o <filename>")
     parser.add_option("-f", "--fmt", dest="format", default=None,
                       help="output file format. If not specified, determined from outputfile extension. Supported : txt, html")
-    parser.add_option("-m", "--minimum", dest="minimum", default=100, type="int",
-                      help="Minimum token count for matched patterns.")
+    parser.add_option("-m", "--minimum", dest="chunk", default=3, type="int",
+                      help="Minimum token count for matching patterns.")
     parser.add_option("", "--lines", dest="min_lines", default=3, type="int",
                       help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
     parser.add_option("-b", "--blame", dest="blame", default=False, action="store_true",
                       help="Enable svn blame information output in reports.")
-    parser.add_option('--test', action="store_true", dest='runtests',
-                      help='ignores further arguments & runs tests for this program')
     parser.add_option("-x", "--exclude", dest="exclude", default='',
                       help="Directories to exclude in analysis")
+    parser.add_option("", '--test', action="store_true", dest='runtests',
+                      help='ignores further arguments & runs tests for this program')
+
     return parser
 
 

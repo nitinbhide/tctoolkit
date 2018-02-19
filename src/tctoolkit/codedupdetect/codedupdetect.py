@@ -22,9 +22,9 @@ from rabinkarp import RabinKarp
 
 class CodeDupDetect(object):
 
-    def __init__(self, filelist, minmatch=100, fuzzy=False, min_lines=3, blameflag=False):
-        self.matchstore = matchstore.MatchStore(minmatch, blameflag)
-        self.minmatch = minmatch  # minimum number of tokens to be matched.
+    def __init__(self, filelist, chunk=5, fuzzy=False, min_lines=3, blameflag=False):
+        self.chunk = chunk  # minimum number of tokens to be matched.
+        self.matchstore = matchstore.MatchStore(chunk, blameflag)
         self.min_lines = min_lines  # minimum number of lines to match
         self.filelist = filelist
         self.foundcopies = False
@@ -34,13 +34,15 @@ class CodeDupDetect(object):
         totalfiles = len(self.filelist)
 
         rk = RabinKarp(
-            self.minmatch, self.min_lines, self.matchstore, self.fuzzy)
+            self.chunk, self.min_lines, self.matchstore, self.fuzzy)
 
         for i, srcfile in enumerate(self.filelist):
             print "Analyzing file %s (%d of %d)" % (srcfile, i + 1, totalfiles)
             logging.info("Analyzing file %s (%d of %d)" %
                          (srcfile, i + 1, totalfiles))
             rk.addAllTokens(srcfile)
+        print("Total Hashes Stored %d\n" % len(self.matchstore.hashset))
+
         self.foundcopies = True
 
     def findcopies(self):

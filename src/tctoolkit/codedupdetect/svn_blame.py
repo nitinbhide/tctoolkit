@@ -15,7 +15,19 @@ import logging
 import getpass
 import operator
 
+from collections import OrderedDict
+
 import pysvn
+
+class BlameInfo(object):
+    '''
+    small class to store blame information. Uses slots to reduce 
+    memory consumption.
+    '''
+    __slots__ = ['author', 'revision']
+    def __init__(self, author, revision):
+        self.author = author
+        self.revision = revision
 
 
 class SvnBlameClient(object):
@@ -23,13 +35,14 @@ class SvnBlameClient(object):
     '''
     Subversion client to query the 'blame' information for a file.
     '''
+    MAX_REVISIONS_FOR_BLAME = 50
 
     def __init__(self, username=None, password=None):
         self.svnclient = pysvn.Client()
         self.svnclient.exception_style = 1
         self.svnclient.callback_get_login = self.get_login
         self.set_user_password(username, password)
-        self.blame_cache = dict()  # file name against blame output dictionary
+        self.blame_cache = OrderedDict()  # file name against blame output dictionary
 
     def set_user_password(self, username, password):
         if username != None:
@@ -64,8 +77,8 @@ class SvnBlameClient(object):
         # create a statistics of author and revisiona and how many lines are modified in that
         #(auth,revision) combination
         for lineinfo in blame[startLineNumber: endLineNumber]:
-            lineauthor = lineinfo['author']
-            linerevision = lineinfo['revision']
+            lineauthor = lineinfo.author
+            linerevision = lineinfo.revision
             auhtorCounts[(lineauthor, linerevision)] = auhtorCounts.get(
                 (lineauthor, linerevision), 0) + 1
 
@@ -84,15 +97,26 @@ class SvnBlameClient(object):
         if filepath not in self.blame_cache:
             logging.debug('trying to extract annotations for %s' % filepath)
 
-            output = self.svnclient.annotate(filepath)
+            revision_start = pysvn.Revision( pysvn.opt_revision_kind.number, 0 )
+            revision_end = pysvn.Revision( pysvn.opt_revision_kind.head )
+
+            #call 'log' and query the last 100 revisions of given file. For large repositories
+            #annotate can put lot of stress on the server. Hence limit it to 100 revisions
+            revlogs = self.svnclient.log(filepath, discover_changed_paths=False, 
+                                         limit=self.MAX_REVISIONS_FOR_BLAME, include_merged_revisions=True,
+                                         revprops = ['revision'])
+
+            revision_start = revlogs[-1].revision
+            revision_end = revlogs[0].revision
+            output = self.svnclient.annotate(filepath,revision_start=revision_start,
+                                             revision_end=revision_end)
             logging.debug('extracted annotations for %s' % filepath)
 
             blameout = list()
 
-            for blamedict in output:
-                blameinfo = dict()
-                blameinfo['revision'] = blamedict['revision'].number
-                blameinfo['author'] = blamedict['author']
+            for lineno, blamedict in enumerate(output):
+                blameinfo = BlameInfo(blamedict['author'], blamedict['revision'].number)
+                assert lineno == int(blamedict['number'])
                 blameout.append(blameinfo)
             self.blame_cache[filepath] = blameout
 

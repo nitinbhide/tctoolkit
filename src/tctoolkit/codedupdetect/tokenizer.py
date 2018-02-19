@@ -12,14 +12,14 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 import os
 import logging
-
+from collections import namedtuple
 from tctoolkit.tctoolkitutil import SourceCodeTokenizer
 
 from pygments.token import Token
 
+DupToken = namedtuple('DupToken', ['srcfile', 'lineno', 'charpos', 'value'])
 
 class Tokenizer(SourceCodeTokenizer):
-
     '''
     tokenizer for code duplication detection.
     '''
@@ -34,7 +34,7 @@ class Tokenizer(SourceCodeTokenizer):
             self.tokenlist = list()
             for idx, token in enumerate(self.get_tokens()):
                 self.tokenlist.append(token)
-                self.pos_dict[token[2]] = idx
+                self.pos_dict[token.charpos] = idx
 
     def is_fuzzy_token(self, srctoken):
         '''
@@ -52,6 +52,10 @@ class Tokenizer(SourceCodeTokenizer):
         token tupple is returned. Format of token data tuple is
         (source file path, line number of token, charposition of token, text value of the token)
         '''
+        def is_comment(tkn):
+            return srctoken.is_type(Token.Comment.Multiline) or \
+                    srctoken.is_type(Token.Comment.Single)
+
         linenum = 1
         for srctoken in self._parse_tokens():
             # print ttype
@@ -61,8 +65,10 @@ class Tokenizer(SourceCodeTokenizer):
                 value = '#FUZZY#'
             else:
                 value = srctoken.value
-                if(value != '' and not srctoken.is_type(Token.Comment)):
-                    yield self.srcfile, linenum, srctoken.charpos, value
+
+            if(value != '' and not is_comment(srctoken)):
+                duptoken = DupToken(self.srcfile, linenum, srctoken.charpos, value)
+                yield duptoken
 
             linenum = linenum + srctoken.num_lines
 

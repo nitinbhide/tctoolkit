@@ -18,7 +18,7 @@ from itertools import izip, tee
 
 from pygments.token import Token
 
-from tokentagcloud.tokentagcloud import Tokenizer
+from tctoolkitutil import SourceCodeTokenizer
 
 
 STOPWORDS_SET = set(["a", "about", "above", "above", "across", "after", "afterwards", "again", "against", "all",
@@ -71,7 +71,7 @@ def deaccent(text):
     return unicodedata.normalize("NFC", result)
 
 
-class TopicTokenizer(Tokenizer):
+class TopicTokenizer(SourceCodeTokenizer):
 
     '''
     Tokenizes the source code for use in feature/topic detection

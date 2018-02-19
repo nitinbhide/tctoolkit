@@ -23,9 +23,8 @@ except:
 
 
 class MatchData(object):
-
     '''
-    store the match/duplication data of one instance
+    store the match/duplication data of one instance in a MatchSet
     '''
     __slots__ = ['matchlen', 'starttoken', 'endtoken', 'revisioninfo']
 
@@ -54,15 +53,15 @@ class MatchData(object):
         return hash(tpl)
 
     def getLineCount(self):
-        lc = self.endtoken[1] - self.starttoken[1]
+        lc = self.endtoken.lineno - self.starttoken.lineno
         assert lc >= 0
         return lc
 
     def srcfile(self):
-        return self.starttoken[0]
+        return self.starttoken.srcfile
 
     def getStartLine(self):
-        return self.starttoken[1]
+        return self.starttoken.lineno
 
     def getRevisionNumber(self):
         return self.revisioninfo[1]
@@ -72,7 +71,10 @@ class MatchData(object):
 
 
 class MatchSet(object):
-
+    '''
+    Store one set of duplicates. Match set contains 'collection' of MatchData.
+    Match
+    '''
     def __init__(self, blameflag):
         self.matchset = set()
         self.matchedlines = None
@@ -130,27 +132,43 @@ class MatchSet(object):
 
 
 class MatchStore(object):
-
+    '''
+    store the hashes and duplicates (i.e.matches)
+    '''
     def __init__(self, minmatch, blameflag):
         self.minmatch = minmatch
         self.blameflag = blameflag
         self.hashset = dict()
         self.matchlist = dict()
 
-    def addHash(self, rhash, tokendata):
+    def addHash(self, rhash, duptoken):
         # create a new hash with (rolling hash value and actual token string)
-        rhash = hash((rhash, tokendata[3]))
+        rhash = hash((rhash, duptoken.value))
         hashdata = self.hashset.get(rhash)
         if hashdata == None:
             hashdata = []
-        hashdata.append(tokendata)
+        hashdata.append(duptoken)
         self.hashset[rhash] = hashdata
 
-    def getHashMatch(self, rhash, tokendata):
+    def getHashMatch(self, rhash, duptoken):
         # create a new hash with (rolling hash value and actual token string)
-        rhash = hash((rhash, tokendata[3]))
+        rhash = hash((rhash, duptoken.value))
         return(self.hashset.get(rhash))
 
+    def is_overlapping(self, matchstart1, matchend1, matchstart2, matchend2):
+        '''
+        rare cases we may get an 'overlapping' match for same file (e.g. intializing arrays with 0 on multiple lines)
+        such cases detect the overlapp and ignore it. Dont add it as match
+        '''
+        assert matchstart1.srcfile == matchend1.srcfile
+        assert matchstart2.srcfile == matchend2.srcfile
+
+        return matchstart1.srcfile  == matchstart2.srcfile and \
+            ((matchstart1.charpos <= matchstart2.charpos and matchstart2.charpos < matchend1.charpos) \
+                or (matchstart1.charpos <= matchend2.charpos and matchend2.charpos < matchend1.charpos) or \
+                (matchstart2.charpos <= matchstart1.charpos and matchstart1.charpos < matchend2.charpos)  \
+                or (matchstart2.charpos <= matchend1.charpos and matchend1.charpos < matchend2.charpos))
+            
     def addExactMatch(self, matchlen, sha1_hash, matchstart1, matchend1, matchstart2, matchend2):
         # ensure filenames of start and end are same
         assert matchstart1[0] == matchend1[0]
@@ -162,15 +180,16 @@ class MatchStore(object):
         assert matchstart2[2] < matchend2[2]
         assert matchlen >= self.minmatch
 
-        matchset = self.matchlist.get(sha1_hash)
-        if matchset == None:
-            matchset = MatchSet(self.blameflag)
-        matchset.addMatch(matchlen, matchstart1, matchend1)
-        matchset.addMatch(matchlen, matchstart2, matchend2)
+        if not self.is_overlapping(matchstart1, matchend1, matchstart2, matchend2):
+            matchset = self.matchlist.get(sha1_hash)
+            if matchset == None:
+                matchset = MatchSet(self.blameflag)
+            matchset.addMatch(matchlen, matchstart1, matchend1)
+            matchset.addMatch(matchlen, matchstart2, matchend2)
 
-        if len(matchset) > 1:
-            self.matchlist[sha1_hash] = matchset
-
+            if len(matchset) > 1:
+                self.matchlist[sha1_hash] = matchset
+        
     def iter_matches(self):
         # print "number hashes : %d" % len(self.hashset)
         return self.matchlist.itervalues()
