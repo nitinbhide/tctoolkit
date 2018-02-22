@@ -135,14 +135,13 @@ class RabinKarp(object):
     def addAllTokens(self, srcfile):
         matchlen = 0
         # empty the tokenqueue since we are starting a new file
-        self.curfilematches = 0
+        #self.curfilematches = 0
         self.rollinghash.restart()
         tknzr = self.getTokanizer(srcfile)
         for token in tknzr:
             matchlen = self.rollCurHash(tknzr, matchlen)
             curhash = self.rollinghash.addToken(token)
-            if self.curfilematches > MAX_SINGLE_FILEMATCHES:
-                break
+        print("Current number of matches %d" % self.curfilematches)
 
     def rollCurHash(self, tknzr, pastmatchlen):
         matchlen = pastmatchlen
@@ -171,6 +170,8 @@ class RabinKarp(object):
         assert tknzr.srcfile == tokendata1.srcfile
         maxmatchlen = 0
 
+        breakflag = False
+        
         matches = self.matchstore.getHashMatch(curhash, tokendata1)
         if matches != None:
             assert tknzr.srcfile == tokendata1.srcfile
@@ -220,7 +221,6 @@ class RabinKarp(object):
                 matchend2 = matchdata2
                 matchlen = matchlen + 1
             sha1_hash = sha1.digest()
-
 
         return(matchlen, sha1_hash, matchend1, matchend2)
 
