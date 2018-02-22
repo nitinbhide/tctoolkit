@@ -20,8 +20,6 @@ import hashlib
 
 import tokenizer
 
-# Maximum number of matches to find in a single file
-MAX_SINGLE_FILEMATCHES = 50
 HASH_BASE = (256*256*256*256)  #a single token hash value is made up of 4 bytes
 HASH_MOD = 16777619  # make sure it is a prime
 
