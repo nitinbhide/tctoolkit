@@ -200,10 +200,7 @@ class RabinKarp(object):
         # make a basic sanity check token value is same
         # if the filename is same then distance between the token positions has to be at least patternsize
         #   and the line numbers cannot be same
-        if(tokendata1.value == tokendata2.value
-                and (tokendata1.srcfile != tokendata2.srcfile
-                     or ((abs(tokendata1.charpos - tokendata2.charpos) > self.chunk*self.min_lines) and tokendata1.lineno > tokendata2.lineno))):
-
+        if(tokendata1.value == tokendata2.value):
             tknzr2 = tknzr1
 
             # filenames are different, get the different tokenizer
@@ -224,7 +221,6 @@ class RabinKarp(object):
                 matchlen = matchlen + 1
             sha1_hash = sha1.digest()
 
-           
 
         return(matchlen, sha1_hash, matchend1, matchend2)
 
