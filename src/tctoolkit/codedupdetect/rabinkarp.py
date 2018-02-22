@@ -163,27 +163,6 @@ class RabinKarp(object):
             
         return(matchlen)
 
-    def findPossibleMatches(self, tokendata1, hashmatches):
-        '''
-        filter the hashmatches for probabble matches. Current this filter checks
-        if the match is in the same file and if in the same file then the
-        distance between the tokens has to be at least 'patternsize'.
-        This avoidds 'self' matches for sitations like "[0,0,0,0,0,0]"
-        '''
-        srcfile = tokendata1.srcfile
-        srclineno = tokendata1.lineno
-        for matchtoken in hashmatches:
-            matchfile = matchtoken.srcfile
-            if(srcfile == matchfile):
-                # token are from same files. Now check the line numbers. The line numbers cannot be 
-                # overlapping. For exmaple source line 1 to 5 and destination line 4 to 8 cannot happen
-                matchlineno = matchtoken.lineno
-                if abs(matchlineno - srclineno) > 3:
-                    yield matchtoken
-            else:
-                # token are from different files.
-                yield matchtoken
-
     def findMatches(self, curhash, tokendata1, tknzr):
         '''
         search for matches for the current rolling hash in the matchstore.
@@ -196,7 +175,7 @@ class RabinKarp(object):
         if matches != None:
             assert tknzr.srcfile == tokendata1.srcfile
 
-            for tokendata2 in self.findPossibleMatches(tokendata1, matches):
+            for tokendata2 in matches:
                 matchlen, sha1_hash, match_end1, match_end2 = self.findMatchLength(
                     tknzr, tokendata1, tokendata2)
 
