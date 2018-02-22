@@ -144,9 +144,7 @@ class MatchStore(object):
     def addHash(self, rhash, duptoken):
         # create a new hash with (rolling hash value and actual token string)
         rhash = hash((rhash, duptoken.value))
-        hashdata = self.hashset.get(rhash)
-        if hashdata == None:
-            hashdata = []
+        hashdata = self.hashset.setdefault(rhash, list())
         hashdata.append(duptoken)
         self.hashset[rhash] = hashdata
 
