@@ -14,7 +14,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import logging
 
 from collections import deque
-from itertools import izip
+from itertools import izip, groupby
 import operator
 import hashlib
 
@@ -88,8 +88,14 @@ class RollingHash(object):
         self.curhash = int_mod(self.curhash * HASH_BASE, HASH_MOD)
         self.curhash = int_mod(self.curhash + thash, HASH_MOD)
         self.tokenqueue.append((thash, tokendata))
+        '''
+        if the number of tokens are reached window size then
+        then remove hash value of first token from the rolling hash
+        '''
+        
         if len(self.tokenqueue) >= self.window_size:
             self.removeToken()
+        return thash
 
     def removeToken(self):
         '''
@@ -128,69 +134,90 @@ class RabinKarp(object):
         self.blameflag = blameflag
         self.tokenizers = dict()
         self.curfilematches = 0  # number of matches found the current file.
-        self.rollinghash = RollingHash(self.chunk*self.min_lines)
+        self.rollinghash = RollingHash(self.chunk)
             
     def addAllTokens(self, srcfile):
-        matchlen = 0
-        # empty the tokenqueue since we are starting a new file
+        '''
+        add all token in the srcfile to matchstore.
+        '''
         #self.curfilematches = 0
+        hashlist = list()
         self.rollinghash.restart()
         tknzr = self.getTokanizer(srcfile)
         for token in tknzr:
-            matchlen = self.rollCurHash(tknzr, matchlen)
-            curhash = self.rollinghash.addToken(token)
+            curhash, firsttoken = self.addHashInMatchStore()
+            self.rollinghash.addToken(token)
+            if curhash and firsttoken:
+                hashlist.append((firsttoken, curhash))
+
+        self.detectMatches(hashlist, srcfile)
+
         print("Current number of matches %d" % self.curfilematches)
 
-    def rollCurHash(self, tknzr, pastmatchlen):
-        matchlen = pastmatchlen
-        if(len(self.rollinghash.tokenqueue) >= self.patternsize):
-            '''
-            if the number of tokens are reached patternsize then
-            then remove hash value of first token from the rolling hash
-            '''
+    def findPossibleMatches(self, hashlist):
+        '''
+        return location/tokens in current file with possible matches
+        '''
+        def possibledup(tokendata):
+            token, thash = tokendata
+            matches = self.matchstore.getHashMatch(thash, token)
+
+            bFoundMatch = (matches != None and len(matches) > 1)
+            return bFoundMatch
+         
+        for hasmatch, matchgroup in groupby(hashlist, possibledup):
+            if hasmatch:
+                matchgroup = list(matchgroup)
+                if len(matchgroup) > 1:
+                    yield matchgroup
+
+    def detectMatches(self, hashlist, srcfile):
+        '''
+        detect matches in the hash list of current file.
+        '''
+        for matchgroup in self.findPossibleMatches(hashlist):
+            #last duptoken in the each match group is current source file i.e. srcfile
+            starttoken, starthash = matchgroup[0]
+            endtoken, endhash = matchgroup[-1]
+            assert starttoken.srcfile == srcfile
+            assert endtoken.srcfile == srcfile
+            if (endtoken.lineno-starttoken.lineno >= self.min_lines):
+                self.findMatches(starthash, starttoken)
+    
+
+    def addHashInMatchStore(self):
+        curhash, firsttoken = None, None
+        if len(self.rollinghash.tokenqueue) > 0:
             (curhash, thash, firsttoken) = self.rollinghash.firstToken()
-            if matchlen <= 0:
-                matchlen = self.findMatches(curhash, firsttoken, tknzr)
-            else:
-                matchlen = matchlen - 1
-
-            #current rolling hash has to be added for every token else match is found
-            #on line boundaries and may not work well.
             self.matchstore.addHash(curhash, firsttoken)
-            
-        return(matchlen)
-
-    def findMatches(self, curhash, tokendata1, tknzr):
+        return curhash, firsttoken
+        
+    def findMatches(self, curhash, tokendata1):
         '''
         search for matches for the current rolling hash in the matchstore.
         If the hash match is found then go for full comparision to search for the match.
         '''
-        assert tknzr.srcfile == tokendata1.srcfile
         maxmatchlen = 0
 
-        breakflag = False
-        
         matches = self.matchstore.getHashMatch(curhash, tokendata1)
-        if matches != None:
-            assert tknzr.srcfile == tokendata1.srcfile
+        assert matches != None
+        
+        for tokendata2 in matches:
+            matchlen, sha1_hash, match_end1, match_end2 = self.findMatchLength(tokendata1, tokendata2)
 
-            for tokendata2 in matches:
-                matchlen, sha1_hash, match_end1, match_end2 = self.findMatchLength(
-                    tknzr, tokendata1, tokendata2)
-
-                # matchlen has to be at least pattern size
-                # and matched line count has to be atleast self.min_lines
-                if matchlen >= self.patternsize and (match_end1.lineno - tokendata1.lineno) >= self.min_lines \
-                        and (match_end2.lineno - tokendata2.lineno) >= self.min_lines:
-                    # add the exact match to match store.
-                    self.matchstore.addExactMatch(
-                        matchlen, sha1_hash, tokendata1, match_end1, tokendata2, match_end2)
-                    maxmatchlen = max(maxmatchlen, matchlen)
-                    self.curfilematches = self.curfilematches + 1
+            # matchlen has to be at least pattern size
+            # and matched line count has to be atleast self.min_lines
+            if matchlen >= self.patternsize and (match_end1.lineno - tokendata1.lineno) >= self.min_lines \
+                    and (match_end2.lineno - tokendata2.lineno) >= self.min_lines:
+                # add the exact match to match store.
+                self.matchstore.addExactMatch(
+                    matchlen, sha1_hash, tokendata1, match_end1, tokendata2, match_end2)
+                maxmatchlen = max(maxmatchlen, matchlen)
+                self.curfilematches = self.curfilematches + 1
 
         return(maxmatchlen)
 
-    def findMatchLength(self, tknzr1, tokendata1, tokendata2):
+    def findMatchLength(self, tokendata1, tokendata2):
         matchend1 = None
         matchend2 = None
         matchlen = 0
@@ -200,6 +227,7 @@ class RabinKarp(object):
         # if the filename is same then distance between the token positions has to be at least patternsize
         #   and the line numbers cannot be same
         if(tokendata1.value == tokendata2.value):
+            tknzr1 = self.getTokanizer(tokendata1.srcfile)
             tknzr2 = tknzr1
 
             # filenames are different, get the different tokenizer
