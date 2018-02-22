@@ -481,9 +481,9 @@ def createOptionParser():
                       help="Output html to given filename.This is essentially combination '-f html -o <filename>")
     parser.add_option("-f", "--fmt", dest="format", default=None,
                       help="output file format. If not specified, determined from outputfile extension. Supported : txt, html")
-    parser.add_option("-m", "--minimum", dest="chunk", default=3, type="int",
+    parser.add_option("-m", "--minimum", dest="chunk", default=10, type="int",
                       help="Minimum token count for matching patterns.")
-    parser.add_option("", "--lines", dest="min_lines", default=3, type="int",
+    parser.add_option("", "--lines", dest="min_lines", default=5, type="int",
                       help="Minimum line count for matched patterns.")
     parser.add_option("-z", "--fuzzy", dest="fuzzy", default=False, action="store_true",
                       help="Enable fuzzy matching (ignore variable names, function names etc).")
