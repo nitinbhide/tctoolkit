@@ -152,7 +152,7 @@ class RabinKarp(object):
 
         self.detectMatches(hashlist, srcfile)
 
-        print("Current number of matches %d" % self.curfilematches)
+        #print("Current number of matches %d" % self.curfilematches)
 
     def findPossibleMatches(self, hashlist):
         '''
