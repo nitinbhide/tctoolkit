@@ -77,7 +77,6 @@ class MatchSet(object):
     '''
     def __init__(self, blameflag):
         self.matchset = set()
-        self.matchedlines = None
         self.firstMatch = None
         self.svn_blame_client = None
 
@@ -102,11 +101,14 @@ class MatchSet(object):
         if self.firstMatch == None:
             self.firstMatch = matchdata
 
-        lc = matchdata.getLineCount()
-        if self.matchedlines == None:
-            self.matchedlines = lc
-        else:
-            self.matchedlines = min(self.matchedlines, lc)
+    @property
+    def matchedlines(self):
+        '''
+        matched lines is minimum line count of all matched samples. Line count of each match is 
+        sometimes different because of empty lines are ignored.
+        '''
+        matchdata =min(self.matchset, key=lambda matchdata:matchdata.getLineCount())
+        return matchdata.getLineCount()
 
     def __len__(self):
         return len(self.matchset)
@@ -130,6 +132,14 @@ class MatchSet(object):
         '''
         return tokenizer.Tokenizer.get_lexer_for_file(self.firstMatch.srcfile())
 
+    def getDuplicateLineCount(self):
+        '''
+        return number of duplicate lines in the match set
+        first matchdata object is considered as 'original' and remaining considered
+        duplicates for calculating the duplicate line count
+        '''
+        totallines = reduce(lambda accum, match: accum+match.getLineCount(), self.matchset, 0)
+        return totallines - self.matchedlines
 
 class MatchStore(object):
     '''
