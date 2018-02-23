@@ -53,23 +53,20 @@ class CodeDupDetect(object):
     def printmatches(self, output):
         exactmatches = self.findcopies()
         # now sort the matches based on the matched line count (in reverse)
-        exactmatches = sorted(
-            exactmatches, reverse=True, key=lambda x: x.matchedlines)
-        matchcount = 0
-
-        for matches in exactmatches:
+        exactmatches = sorted(exactmatches, reverse=True, key=lambda x: x.matchedlines)
+        duplicateLineCount = 0
+        for matchidx, matches in enumerate(exactmatches, 1):
             output.write('%s\n' % ('=' * 50))
-            matchcount = matchcount + 1
-            output.write("Match %d:\n" % matchcount)
+            output.write("Match %d:\n" % matchidx)
             fcount = len(matches)
-            first = True
+            duplicateLineCount = duplicateLineCount+matches.getDuplicateLineCount()
+            output.write("Found an minimum %d line duplication in %d files.\n" % (matches.matchedlines, fcount))
+
             for match in matches:
-                if first:
-                    output.write("Found an approx. %d line duplication in %d files.\n" % (
-                        match.getLineCount(), fcount))
-                    first = False
                 output.write("Starting at line %d of %s\n" %
                              (match.getStartLine(), match.srcfile()))
+        
+        output.write("\n\nTotal Duplicate Lines : %d" % duplicateLineCount)
 
         return exactmatches
 
