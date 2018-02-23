@@ -14,7 +14,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import logging
 
 from collections import deque
-from itertools import izip, groupby
+from itertools import izip, groupby,ifilter
 import operator
 import hashlib
 
@@ -202,7 +202,7 @@ class RabinKarp(object):
         matches = self.matchstore.getHashMatch(curhash, tokendata1)
         assert matches != None
         
-        for tokendata2 in matches:
+        for tokendata2 in ifilter(lambda tokendata: tokendata1 != tokendata, matches):
             matchlen, sha1_hash, match_end1, match_end2 = self.findMatchLength(tokendata1, tokendata2)
 
             # matchlen has to be at least pattern size
