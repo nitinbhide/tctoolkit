@@ -65,6 +65,18 @@ if __name__ == '__main__':
     bits9[8] = 1
     assert bits9[8] == 1 and bits9[0] == 0
     
-    
+    #simple performance test to set 100000 bits and read them back
+    from random import randrange
+    from time import time
+    start = time()
+    size = 100000
+    bits = BitArray(size)
+    for i in range(0, 100*1000):
+        i = randrange(size)
+        bits[i] = 1
+        assert bits[i] == 1
+    end = time()
+    #print(bits.hex())
+    print(end-start)
     
     
