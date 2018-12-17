@@ -186,6 +186,10 @@ class RabinKarp(object):
     
 
     def addHashInMatchStore(self):
+        '''
+        At appropriate point, the 'first token' is removed from the token queue and then 
+        the rolling hash is added to match store. Later new token is added in 'rolling hash'        
+        '''
         curhash, firsttoken = None, None
         if len(self.rollinghash.tokenqueue) > 0:
             (curhash, thash, firsttoken) = self.rollinghash.firstToken()
@@ -218,6 +222,9 @@ class RabinKarp(object):
         return(maxmatchlen)
 
     def findMatchLength(self, tokendata1, tokendata2):
+        '''
+        find how many tokens (characters) are matching between tokendata1 and tokendata2.
+        '''
         matchend1 = None
         matchend2 = None
         matchlen = 0
