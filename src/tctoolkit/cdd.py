@@ -2,7 +2,7 @@
 Code Duplication Detector
 using the Rabin Karp algorithm to detect duplicates
 
-Copyright (C) 2009 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsman.in)
+Copyright (C) 2019 Nitin Bhide (nitinbhide@gmail.com, nitinbhide@thinkingcraftsman.in)
 
 This module is part of Thinking Craftsman Toolkit (TC Toolkit).
 and is released under the New BSD License: http://www.opensource.org/licenses/bsd-license.php
@@ -24,7 +24,7 @@ from pygments.formatters import HtmlFormatter
 from tctoolkitutil import *
 from thirdparty.templet import *
 from codedupdetect import CodeDupDetect
-from exceptions import ImportError
+#from exceptions import ImportError
 
 
 class HtmlWriter(object):
@@ -60,15 +60,15 @@ class HtmlWriter(object):
         assert(len(nodelist) == len(nodes))
         grouplist = [None] * len(groups)
 
-        for group, index in groups.iteritems():
+        for group, index in groups.items():
             grouplist[index] = group
 
-        for node, index in nodes.iteritems():
+        for node, index in nodes.items():
             groupname = os.path.dirname(node)
             nodelist[index] = {
                 'name': os.path.basename(node), 'group': groups[groupname], 'fullpath': node}
         # create a list of link dictionaries
-        for link, value in links.iteritems():
+        for link, value in links.items():
             source = link[0]
             target = link[1]
             linklist.append(
@@ -272,7 +272,7 @@ class HtmlWriter(object):
 
     @unicodefunction
     def output(self):
-        u'''<!DOCTYPE html>
+        '''<!DOCTYPE html>
         <html>
             <head>
                 <meta http-equiv="content-type" content="text/html;charset=utf-8">
@@ -331,11 +331,11 @@ class HtmlWriter(object):
 
     @unicodefunction
     def getMatchLink(self, i, matchset):
-        u'''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
+        '''<a href="#match_$i">Match ${i+1}&nbsp;</a>'''
 
     @unicodefunction
     def getMatchHtml(self, i, matchset):
-        u'''<div id="match_$i">
+        '''<div id="match_$i">
                 <h1>MATCH ${i+1}</h1>
                <ul>
                ${[self.getMatchInfo(m) for m in matchset]}
@@ -355,11 +355,11 @@ class HtmlWriter(object):
 
     @unicodefunction
     def getMatchInfoTemplate(self, match):
-        u'''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
+        '''<li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()} (apporx. ${match.getLineCount()} lines)</li>'''
 
     @unicodefunction
     def getMatchInfoBlameTemplate(self, match):
-        u'''
+        '''
             <li>${match.srcfile()}:${match.getStartLine()}-${match.getStartLine()+match.getLineCount()}: In Revision ${match.getRevisionNumber()} by ${match.getAuthorName()}:</li>
         '''
 
@@ -368,7 +368,7 @@ class HtmlWriter(object):
         highlighted = highlight(source_code, matchset.getSourceLexer(), self.formatter, outfile=None)
         #out of 'highlight' function is string, encoded with 'self.formatter.encoding'. Hence we have to
         #decode it with appropriate encoding and then covert it to unicode.
-        return unicode(highlighted.decode(self.formatter.encoding))
+        return str(highlighted.decode(self.formatter.encoding))
 
     def getD3JS(self):
         jsdir = getJsDirPath()

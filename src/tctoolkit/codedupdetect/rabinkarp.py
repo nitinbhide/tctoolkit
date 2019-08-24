@@ -14,11 +14,11 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import logging
 
 from collections import deque
-from itertools import izip, groupby,ifilter
+from itertools import groupby
 import operator
 import hashlib
 
-import tokenizer
+from . import tokenizer
 
 HASH_BASE = (256*256*256*256)  #a single token hash value is made up of 4 bytes
 HASH_MOD = 16777619  # make sure it is a prime
@@ -71,7 +71,7 @@ class RollingHash(object):
         self.window_size =window_size
         self.value_func = value_func
         
-        for i in xrange(0, self.window_size - 1):
+        for i in range(0, self.window_size - 1):
             self.__rollhashbase = (self.__rollhashbase * HASH_BASE) % HASH_MOD
         self.tokenqueue = deque()
         self.token_hash = dict()
@@ -206,7 +206,7 @@ class RabinKarp(object):
         matches = self.matchstore.getHashMatch(curhash, tokendata1)
         assert matches != None
         
-        for tokendata2 in ifilter(lambda tokendata: tokendata1 != tokendata, matches):
+        for tokendata2 in filter(lambda tokendata: tokendata1 != tokendata, matches):
             matchlen, sha1_hash, match_end1, match_end2 = self.findMatchLength(tokendata1, tokendata2)
 
             # matchlen has to be at least pattern size
@@ -246,7 +246,7 @@ class RabinKarp(object):
             assert tknzr2.srcfile == tokendata2.srcfile
             sha1 = hashlib.sha1()
 
-            for matchdata1, matchdata2 in izip(tknzr1.get_tokens_frompos(tokendata1.charpos), tknzr2.get_tokens_frompos(tokendata2.charpos)):
+            for matchdata1, matchdata2 in zip(tknzr1.get_tokens_frompos(tokendata1.charpos), tknzr2.get_tokens_frompos(tokendata2.charpos)):
                 if matchdata1.value != matchdata2.value:
                     break
                 sha1.update(matchdata1.value.encode('utf-8'))
@@ -274,13 +274,13 @@ if __name__ == '__main__':
     def addtokens(rh, inputval):
         for token in inputval:
             rh.addToken(token)
-            print rh.curhash
+            print(rh.curhash)
             
     def test_rolling_hash(inputval):
         rhash1 = RollingHash(5, value_func=lambda x:x)
         addtokens(rhash1, inputval)
         #rhash1.removeToken()
-        print 'starting next'
+        print('starting next')
         rhash2 = RollingHash(5,value_func=lambda x:x)
         nextval = inputval[1:]
         addtokens(rhash2, inputval[1:])

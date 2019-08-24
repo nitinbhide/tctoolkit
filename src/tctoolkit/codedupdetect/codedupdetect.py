@@ -10,14 +10,16 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 
+
+
 import logging
 import tempfile
 import os
 import shutil
-from itertools import tee, izip
+from itertools import tee
 
-import matchstore
-from rabinkarp import RabinKarp
+from . import matchstore
+from .rabinkarp import RabinKarp
 
 
 class CodeDupDetect(object):
@@ -30,14 +32,16 @@ class CodeDupDetect(object):
         self.foundcopies = False
         self.fuzzy = fuzzy
 
-    def __findcopies(self):
+    def __find_rk_copies(self):
+        '''
+        detect exact copies using the RabinKarp algorithm
+        '''
         totalfiles = len(self.filelist)
 
-        rk = RabinKarp(
-            self.chunk, self.min_lines, self.matchstore, self.fuzzy)
+        rk = RabinKarp(self.chunk, self.min_lines, self.matchstore, self.fuzzy)
 
         for i, srcfile in enumerate(self.filelist):
-            print "Analyzing file %s (%d of %d)" % (srcfile, i + 1, totalfiles)
+            print("Analyzing file %s (%d of %d)" % (srcfile, i + 1, totalfiles))
             logging.info("Analyzing file %s (%d of %d)" %
                          (srcfile, i + 1, totalfiles))
             rk.addAllTokens(srcfile)
@@ -47,7 +51,7 @@ class CodeDupDetect(object):
 
     def findcopies(self):
         if self.foundcopies == False:
-            self.__findcopies()
+            self.__find_rk_copies()
         return self.matchstore.iter_matches()
 
     def printmatches(self, output):
@@ -142,7 +146,7 @@ class CodeDupDetect(object):
             "s -> (s0, s1), (s1, s2), (s2, s3), ..."
             a, b = tee(iterable)
             next(b, None)
-            return izip(a, b)
+            return zip(a, b)
 
         for matchset in self.findcopies():
             # for each matchset first add files into the nodes dictionary

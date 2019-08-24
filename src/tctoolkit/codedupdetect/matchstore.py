@@ -12,13 +12,14 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 
 import codecs
-import tokenizer
+from . import tokenizer
+from functools import reduce
 
 try:
-    from svn_blame import *
+    from .svn_blame import *
     BLAME_SUPPORT = True
 except:
-    print "svn_blame not found : SVN blame detection for duplicate files is not supported"
+    print("svn_blame not found : SVN blame detection for duplicate files is not supported")
     BLAME_SUPPORT = False
 
 
@@ -200,4 +201,4 @@ class MatchStore(object):
         
     def iter_matches(self):
         # print "number hashes : %d" % len(self.hashset)
-        return self.matchlist.itervalues()
+        return iter(self.matchlist.values())
