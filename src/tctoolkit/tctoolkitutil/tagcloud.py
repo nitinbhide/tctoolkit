@@ -42,7 +42,7 @@ class TagCloud(object):
         filter the words using the filter function
         '''
         tagDict = dict()
-        for word, freq in self.tagDict.iteritems():
+        for word, freq in self.tagDict.items():
             taginfo = filterFunc(word, self.tagTypeDict[word], freq)
             if(taginfo != None):
                 tagDict[taginfo[0]] = taginfo[1]
@@ -60,7 +60,7 @@ class TagCloud(object):
         if(len(tagDict) > 0):
             # first get sorted wordlist (reverse sorted by frequency)
             tagWordList = sorted(
-                tagDict.items(), key=operator.itemgetter(1), reverse=True)
+                list(tagDict.items()), key=operator.itemgetter(1), reverse=True)
             totalTagWords = len(tagWordList)
             # now extract top 'numWords' from the list and then sort it with alphabetical order.
             # comparison should be case-insensitive
@@ -79,4 +79,4 @@ class TagCloud(object):
 
     def printTagStats(self, numWords=100, filterFunc=None):
         for word, freq, log_freq in self.getTagStats(numWords, filterFunc):
-            print "%s(%d):%f" % (word, freq, log_freq)
+            print("%s(%d):%f" % (word, freq, log_freq))

@@ -150,7 +150,7 @@ class _TemplateBuilder(object):
 
 def _templatefunction(func, listname, stringtype):
     globals, locals = sys.modules[func.__module__].__dict__, {}
-    filename, lineno = func.func_code.co_filename, func.func_code.co_firstlineno
+    filename, lineno = func.__code__.co_filename, func.__code__.co_firstlineno
     if func.__doc__ is None:
         raise SyntaxError('No template string at %s:%d' % (filename, lineno))
     try:  # scan source code to find the docstring line number (2 if not found)
@@ -171,7 +171,7 @@ def _templatefunction(func, listname, stringtype):
         'return "".join(%s)' % listname)
     code_str = builder.build(func.__doc__, filename, lineno, docline)
     code = compile(code_str, filename, 'exec')
-    exec code in globals, locals
+    exec(code, globals, locals)
     return locals[func.__name__]
 
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     def expect(actual, expected):
         global ok
         if expected != actual:
-            print "error - expect: %s, got:\n%s" % (repr(expected), repr(actual))
+            print("error - expect: %s, got:\n%s" % (repr(expected), repr(actual)))
             ok = False
 
     @stringfunction
@@ -216,12 +216,12 @@ if __name__ == '__main__':
         "Hello David.Hello Kevin.")
 
     @unicodefunction
-    def testUnicode(count=4): u"""
+    def testUnicode(count=4): """
     ${{ if not count: return '' }}
     \N{BLACK STAR}${testUnicode(count - 1)}"""
     expect(
         testUnicode(count=10),
-        u"\N{BLACK STAR}" * 10)
+        "\N{BLACK STAR}" * 10)
 
     @stringfunction
     def testmyrow(name, values):
@@ -246,9 +246,9 @@ if __name__ == '__main__':
             '''
             some text
             $a$<'''
-    except SyntaxError, e:
+    except SyntaxError as e:
         got_exception = str(e).split(':')[-1]
-    expect(got_exception, str(dummy_for_line.func_code.co_firstlineno + 7))
+    expect(got_exception, str(dummy_for_line.__code__.co_firstlineno + 7))
     try:
         got_line = 0
 
@@ -263,13 +263,13 @@ if __name__ == '__main__':
             }}
             some more text
             $b text $a again'''
-        expect(testruntimeerror.func_code.co_firstlineno,
-               dummy_for_line2.func_code.co_firstlineno + 1)
+        expect(testruntimeerror.__code__.co_firstlineno,
+               dummy_for_line2.__code__.co_firstlineno + 1)
         testruntimeerror('hello')
-    except NameError, e:
+    except NameError as e:
         import traceback
         _, got_line, _, _ = traceback.extract_tb(sys.exc_info()[2], 10)[-1]
-    expect(got_line, dummy_for_line2.func_code.co_firstlineno + 9)
+    expect(got_line, dummy_for_line2.__code__.co_firstlineno + 9)
     exec("""if True:
     @stringfunction
     def testnosource(a):
@@ -283,10 +283,10 @@ if __name__ == '__main__':
       def testnosource_error(a):
         "${[c for c in reversed a]} is '$a' backwards." """
              )
-    except SyntaxError, e:
+    except SyntaxError as e:
         error_line = re.search('line [0-9]*', str(e)).group(0)
     expect(error_line, 'line 4')
     if ok:
-        print "OK"
+        print("OK")
     else:
-        print "FAIL"
+        print("FAIL")

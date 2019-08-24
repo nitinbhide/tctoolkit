@@ -31,22 +31,22 @@ class DirFileLister(object):
     creates list of files for given directory. Matching file pattern or all files handled by pygments
     or files specific to a language etc
     '''
-    IGNOREDIRS = set([u'.svn', u'.cvs', u'.hg', u'.git'])
+    IGNOREDIRS = set(['.svn', '.cvs', '.hg', '.git'])
 
     def __init__(self, dirname, exclude_dirs=[]):
         self.dirname = dirname
         self.exclude_dirs = exclude_dirs
         assert exclude_dirs != None
-        if isinstance(self.exclude_dirs, basestring):
+        if isinstance(self.exclude_dirs, str):
             # exclude_dirs is not unicode then convert it to unicode using the
             # filesystem encoding
             if isinstance(self.exclude_dirs, str):
                 self.exclude_dirs = self.exclude_dirs.decode(sys.getfilesystemencoding())
-            self.exclude_dirs = self.exclude_dirs.split(u',')
+            self.exclude_dirs = self.exclude_dirs.split(',')
 
         # dirname is not unicode then convert it to unicode using the
         # filesystem encoding
-        if isinstance(self.dirname, str):
+        if isinstance(self.dirname, bytes):
             self.dirname = self.dirname.decode(sys.getfilesystemencoding())
 
 
@@ -75,8 +75,8 @@ class DirFileLister(object):
         # 'ignoredirs' list.
 
         def errfunc(err):
-            logging.warn(err.message)
-            print err
+            logging.warn(err)
+            print(err)
 
         #find out the absolute path for the given directory name.
         dirname = self.dirname
@@ -98,7 +98,7 @@ class DirFileLister(object):
         Get list of files matching to 'patterns' in directory 'dirname'.
         patterns : list (or iterable) of fnmatch patterns
         '''
-        if isinstance(patterns, basestring):
+        if isinstance(patterns, str):
             # pattern is a single string. Make it into a list
             patterns = [patterns]
 
@@ -145,12 +145,12 @@ class DirFileLister(object):
             # create an copy of filepatterns with 'all upper case' and 'all
             # lowercase' pattern as well
             filepats = filepats + \
-                map(string.lower, filepats) + map(string.upper, filepats)
+                list(map(lambda s:s.lower(), filepats)) + list(map(lambda s:s.upper(), filepats))
             # remove the duplicates
             filepats = list(set(filepats))
-        except Exception, exp:
+        except Exception as exp:
             # lexer not found for the language. Return an 'empty' list
-            logging.warn(exp.message)
+            logging.warn(exp)
             filepats = []
 
         return filepats

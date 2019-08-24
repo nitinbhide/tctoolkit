@@ -8,8 +8,9 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
+from functools import reduce
 
-from itertools import imap
+
 
 _NODEID = 0
 
@@ -29,7 +30,7 @@ class TreemapNode(object):
         self.accumulateSizes = accumulateSizes
 
     def __iter__(self):
-        return(self.children.itervalues())
+        return(iter(self.children.values()))
 
     def __len__(self):
         return(len(self.children))
@@ -42,7 +43,7 @@ class TreemapNode(object):
         return a list of children with non zero size value and
         where getClr() return a valid floating point value.
         '''
-        for child in self.children.itervalues():
+        for child in self.children.values():
             if child.isValidNode(sizeprop, clrprop):
                 yield child
 
@@ -60,13 +61,13 @@ class TreemapNode(object):
             and (len(self.children) > 0 or self.getClr(clrprop) != None)
 
     def addChildNode(self, node):
-        assert(self.children.has_key(node.name) == False)
+        assert((node.name in self.children) == False)
         assert(isinstance(node, TreemapNode) == True)
         self.children[node.name] = node
         return(node)
 
     def addChildName(self, name):
-        if(self.children.has_key(name) == False):
+        if((name in self.children) == False):
             node = TreemapNode(name)
             self.children[name] = node
 
@@ -82,7 +83,7 @@ class TreemapNode(object):
         parent = self
         curchild = None
         for nodename in nodeNameList[0:-1]:
-            if(parent.children.has_key(nodename) == False):
+            if((nodename in parent.children) == False):
                 parent.addChildName(nodename)
             parent = parent.children[nodename]
         childnode = parent.addChildName(nodeNameList[-1])
@@ -91,7 +92,7 @@ class TreemapNode(object):
     def getNode(self, nodeNameList):
         node = self
         for nodename in nodeNameList:
-            if(node.children.has_key(nodename) == True):
+            if((nodename in node.children) == True):
                 node = node.children[nodename]
             else:
                 node = None
@@ -100,11 +101,11 @@ class TreemapNode(object):
         return(node)
 
     def MergeSingleChildNodes(self, seperator='/'):
-        for child in self.children.itervalues():
+        for child in self.children.values():
             child.MergeSingleChildNodes(seperator)
 
         if(len(self.children) == 1 and len(self.properties) == 0):
-            child = self.children.values()[0]
+            child = list(self.children.values())[0]
             self.name = self.name + seperator + child.name
             self.properties = child.properties
             self.children = child.children
@@ -130,7 +131,7 @@ class TreemapNode(object):
         # add it as sum of properties of its children
         if(self.accumulateSizes == True):
             cmbsize = reduce(lambda totalsize, node: totalsize +
-                             node.getSize(key), self.children.itervalues(), cmbsize)
+                             node.getSize(key), iter(self.children.values()), cmbsize)
 
         return(cmbsize)
 
@@ -138,7 +139,7 @@ class TreemapNode(object):
         minclr = self.getClr(clrprop)
         if(self.children != None and len(self.children) > 0):
             minclr = min(
-                imap(lambda child: child.minclr(clrprop), self.children.itervalues()))
+                map(lambda child: child.minclr(clrprop), iter(self.children.values())))
 
         assert(
             (self.children != None and len(self.children) > 0) or minclr != None)
@@ -148,7 +149,7 @@ class TreemapNode(object):
         maxclr = self.getClr(clrprop)
         if(self.children != None and len(self.children) > 0):
             maxclr = max(
-                imap(lambda child: child.maxclr(clrprop), self.children.itervalues()))
+                map(lambda child: child.maxclr(clrprop), iter(self.children.values())))
         assert(
             (self.children != None and len(self.children) > 0) or maxclr != None)
         return(maxclr)
@@ -161,7 +162,7 @@ class TreemapNode(object):
 
     def writejsonnodechildren(self, outfile, sizekey, clrkey=None):
         isfirst = True
-        for node in self.children.values():
+        for node in list(self.children.values()):
             if(isfirst == False):
                 outfile.write(',\n')
             node.writejsonnode(outfile, sizekey, clrkey)
