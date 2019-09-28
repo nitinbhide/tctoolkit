@@ -79,7 +79,7 @@ class TCApp(object):
 
         return success
 
-    def getFileList(self, dirname=None, exclude_dirs=None):
+    def getFileList(self, dirname=None, exclude_dirs=[]):
         '''
         iterator over the file list based on the options parameters
         '''

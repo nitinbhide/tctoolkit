@@ -11,6 +11,7 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
+import six
 import logging
 import string
 import sys
@@ -23,12 +24,12 @@ from optparse import OptionParser
 
 from pygments.token import Token
 
-from thirdparty.templet import unicodefunction
+from .thirdparty.templet import unicodefunction
 
-from tctoolkitutil import readJsText, getJsDirPath
-from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import FileOrStdout
-from tctoolkitutil import TCApp
+from .tctoolkitutil import readJsText, getJsDirPath
+from .tctoolkitutil import SourceCodeTokenizer
+from .tctoolkitutil import FileOrStdout
+from .tctoolkitutil import TCApp
 
 try:
     # check if the NetworkX is available
@@ -475,7 +476,7 @@ class ClassCoOccurMatrix(TCApp):
         graph = make_nx_graph(nodes, links)
         groups = nx.connected_components(graph)
 
-        print "number of groups detected %d" % len(groups)
+        print("number of groups detected %d" % len(groups))
         centrality = calc_betweenness(graph)
         average, censtddev = centrality_stddev(centrality)
         # remove all the edges with centrality > (average+stddev)
@@ -485,12 +486,12 @@ class ClassCoOccurMatrix(TCApp):
         # Store the information about suggested edges to remove
         self.edgesToRemove = edges
         graph.remove_edges_from(edges)
-        print "edges removed %d" % len(edges)
+        print("edges removed %d" % len(edges))
 
         # now extract the groups (or connected components) from the graph.
         groups = nx.connected_components(graph)
         groups = sorted(groups, key=lambda g: len(g), reverse=True)
-        print "number of groups detected %d" % len(groups)
+        print("number of groups detected %d" % len(groups))
         return groups
 
     def detectGroupsSimple(self, nodes, links):
@@ -555,7 +556,7 @@ class ClassCoOccurMatrix(TCApp):
         '''
         extracted all tokens from a source file and then add it to co-occurence matrix
         '''
-        print "Adding class names information of file: %s" % srcfile
+        print("Adding class names information of file: %s" % srcfile)
 
         # create a list of classnames and keep it in classnames set
         names = set()
@@ -599,7 +600,7 @@ class ClassCoOccurMatrix(TCApp):
             self.__addFile(fname)
 
         # now detect class names and create co occurance matrix
-        for srcfile, names in self.file_tokens.iteritems():
+        for srcfile, names in six.iteritems(self.file_tokens):
             names = names & self.class_tokens
 
             for cname1, cname2 in itertools.permutations(names, 2):
