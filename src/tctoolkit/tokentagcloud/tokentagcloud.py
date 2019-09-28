@@ -16,11 +16,11 @@ import string
 
 from pygments.token import Token
 
-from tctoolkitutil import DirFileLister
-from tctoolkitutil import TagCloud
-from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
-from tctoolkitutil import LiteralFilter
+from ..tctoolkitutil import DirFileLister
+from ..tctoolkitutil import TagCloud
+from ..tctoolkitutil import SourceCodeTokenizer
+from ..tctoolkitutil import KeywordFilter, NameFilter, ClassFuncNameFilter, FuncNameFilter, ClassNameFilter
+from ..tctoolkitutil import LiteralFilter
 
 
 class TagCloudTokenizer(SourceCodeTokenizer):
@@ -80,7 +80,7 @@ class SourceCodeTagCloud(object):
 
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
-        print "Adding tags information of file: %s" % srcfile
+        print("Adding tags information of file: %s" % srcfile)
         tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
         for srctoken in tokenizer:
