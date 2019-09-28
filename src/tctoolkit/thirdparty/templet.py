@@ -82,7 +82,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys
 import re
 import inspect
-
+import six
 
 class _TemplateBuilder(object):
     __pattern = re.compile(r"""\$         # Directives begin with a $
@@ -177,12 +177,13 @@ def _templatefunction(func, listname, stringtype):
 
 def stringfunction(func):
     """Function attribute for string template functions"""
+    
     return _templatefunction(func, listname='out', stringtype='str')
 
 
 def unicodefunction(func):
     """Function attribute for unicode template functions"""
-    return _templatefunction(func, listname='out', stringtype='unicode')
+    return _templatefunction(func, listname='out', stringtype=six.text_type.__name__)
 
 ##############################################################################
 # When executed as a script, run some testing code.
