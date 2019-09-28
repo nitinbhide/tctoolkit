@@ -64,8 +64,7 @@ class TagCloud(object):
             totalTagWords = len(tagWordList)
             # now extract top 'numWords' from the list and then sort it with alphabetical order.
             # comparison should be case-insensitive
-            tagWordList = sorted(tagWordList[0:numWords], key=operator.itemgetter(0),
-                                 cmp=lambda x, y: cmp(x.lower(), y.lower()))
+            tagWordList = sorted(tagWordList[0:numWords], key=lambda x: x[0].lower())
 
         return tagWordList
 
