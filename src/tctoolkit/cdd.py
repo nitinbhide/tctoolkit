@@ -74,7 +74,8 @@ class HtmlWriter(object):
             linklist.append(
                 {'source': nodes[source], 'target': nodes[target], 'value': value})
 
-        return json.dumps({'groups': grouplist, 'nodes': nodelist, 'links': linklist}, ensure_ascii=False, encoding='utf-8')
+        #return json.dumps({'groups': grouplist, 'nodes': nodelist, 'links': linklist}, ensure_ascii=False, encoding='utf-8')
+        return json.dumps({'groups': grouplist, 'nodes': nodelist, 'links': linklist}, ensure_ascii=False)
 
     @unicodefunction
     def outputCooccurenceMatrix(self):
