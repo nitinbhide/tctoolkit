@@ -21,9 +21,9 @@ from optparse import OptionParser
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 
-from tctoolkitutil import *
-from thirdparty.templet import *
-from codedupdetect import CodeDupDetect
+from .tctoolkitutil import *
+from .thirdparty.templet import *
+from .codedupdetect import CodeDupDetect
 #from exceptions import ImportError
 
 
