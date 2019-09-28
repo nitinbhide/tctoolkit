@@ -419,7 +419,7 @@ class ClassCoOccurMatrix(TCApp):
                 nodes[cname1]['count'] = nodes[cname1]['count'] + linkcount
                 nodes[cname2]['count'] = nodes[cname2]['count'] + linkcount
 
-        for co_pair, count in self.ccom.iteritems():
+        for co_pair, count in six.iteritems(self.ccom):
             addLink(co_pair[0], co_pair[1])
 
         groups = self.detectGroups(nodes, links)
@@ -429,7 +429,7 @@ class ClassCoOccurMatrix(TCApp):
         # key (classname1, classname2), value = number of ocurrances
         grouplinks = dict()
 
-        for node1, node2 in links.iterkeys():
+        for node1, node2 in six.iterkeys(links):
             if nodes[node1]['group'] == nodes[node2]['group']:
                 grouplinks[(node1, node2)] = links[(node1, node2)]
 
@@ -445,14 +445,14 @@ class ClassCoOccurMatrix(TCApp):
             G = nx.Graph()
             G.add_nodes_from(nodes)
             link_tupples = [(node_tupple[0], node_tupple[1], val['count'])
-                            for node_tupple, val in links.iteritems()]
+                            for node_tupple, val in six.iteritems(links)]
             G.add_weighted_edges_from(link_tupples)
             return G
 
         def calc_betweenness(graph):
             centrality = nx.edge_betweenness_centrality(graph, False)
             centrality = sorted(
-                centrality.iteritems(), key=operator.itemgetter(1), reverse=True)
+                six.iteritems(centrality), key=operator.itemgetter(1), reverse=True)
             return centrality
 
         def calc_average(iter):
@@ -466,15 +466,16 @@ class ClassCoOccurMatrix(TCApp):
             std_dev = 0.0
             if count > 0:
                 total = sum(
-                    itertools.imap(operator.itemgetter(1), centrality)) * 1.0
+                    six.moves.map(operator.itemgetter(1), centrality)) * 1.0
                 average = total / count
                 variance_sum = sum(map(
-                    lambda x: (x - average)**2, itertools.imap(operator.itemgetter(1), centrality)))
+                    lambda x: (x - average)**2, six.moves.map(operator.itemgetter(1), centrality)))
                 std_dev = math.sqrt(variance_sum / count)
             return average, std_dev
 
         graph = make_nx_graph(nodes, links)
         groups = nx.connected_components(graph)
+        groups = list(groups)
 
         print("number of groups detected %d" % len(groups))
         centrality = calc_betweenness(graph)
@@ -581,11 +582,11 @@ class ClassCoOccurMatrix(TCApp):
         # create a list of node dictionaries
         assert(len(nodelist) == len(nodes))
 
-        for node, nodedata in nodes.iteritems():
+        for node, nodedata in six.iteritems(nodes):
             nodelist[nodedata['index']] = {
                 'name': node, 'count': nodedata['count'], 'group': nodedata['group']}
         # create a list of link dictionaries
-        for link, value in links.iteritems():
+        for link, value in six.iteritems(links):
             source = link[0]
             target = link[1]
             linklist.append({'source': nodes[source]['index'], 'target': nodes[
