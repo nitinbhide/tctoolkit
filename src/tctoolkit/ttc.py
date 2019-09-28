@@ -17,10 +17,10 @@ import json
 
 from optparse import OptionParser
 
-from thirdparty.templet import unicodefunction
-from tokentagcloud.tokentagcloud import *
-from tctoolkitutil import readJsText, getJsDirPath, FileOrStdout
-from tctoolkitutil import TCApp
+from .thirdparty.templet import unicodefunction
+from .tokentagcloud.tokentagcloud import *
+from .tctoolkitutil import readJsText, getJsDirPath, FileOrStdout
+from .tctoolkitutil import TCApp
 
 
 @unicodefunction
