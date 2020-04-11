@@ -15,7 +15,7 @@ import sys
 import os
 import string
 import xml.etree.ElementTree as ET
-from tctoolkitutil.treemapdata import TreemapNode
+from ..tctoolkitutil.treemapdata import TreemapNode
 
 
 def tonum(str):

@@ -9,15 +9,16 @@ New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
 
+import six
 import sys
 import os
 import string
 import json
 from optparse import OptionParser
 
-from thirdparty.templet import *
-from sourcemon import *
-from tctoolkitutil.common import readJsText, getJsDirPath
+from .thirdparty.templet import *
+from .sourcemon import *
+from .tctoolkitutil.common import readJsText, getJsDirPath
 
 
 @unicodefunction
@@ -240,14 +241,14 @@ class D3JSTreemap(SMTree):
 
         nodedict = dict()
         nodedict['name'] = node.name
-        for prop, value in node.properties.iteritems():
+        for prop, value in six.iteritems(node.properties):
             nodedict[prop] = value
-            minmax = self.propnames.get(prop, (sys.maxint, 0))
+            minmax = self.propnames.get(prop, (sys.maxsize, 0))
             minmax = (min(minmax[0], value), max(minmax[1], value))
             self.propnames[prop] = minmax
 
         children = list()
-        for childname, childnode in node.children.iteritems():
+        for childname, childnode in six.iteritems(node.children):
             children.append(self.getNodeDict(childnode))
         nodedict['children'] = children
         return nodedict
@@ -260,7 +261,7 @@ class D3JSTreemap(SMTree):
 
     def getPropertyNames(self):
         proplist = list()
-        for prop, minmax in self.propnames.iteritems():
+        for prop, minmax in six.iteritems(self.propnames):
             propdict = {"name": prop, "min": minmax[0], "max": minmax[
                 1], "threshold": COLOR_PROP_CONFIG.get(prop, minmax[0])}
             proplist.append(propdict)
@@ -279,7 +280,7 @@ def RunMain():
     (options, args) = parser.parse_args()
 
     if(len(args) < 2):
-        print "Invalid number of arguments. Use smtreemapjs.py --help to see the details."
+        print("Invalid number of arguments. Use smtreemapjs.py --help to see the details.")
     else:
         smfile = args[0]
         htmlfilename = args[1]
