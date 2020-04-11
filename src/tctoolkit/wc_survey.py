@@ -8,14 +8,13 @@ This module is part of Thinking Craftsman Toolkit (TC Toolkit) and is released u
 New BSD License: http://www.opensource.org/licenses/bsd-license.php
 TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 '''
-
+import six
 import logging
 import itertools
 import operator
 import json
 import math
 import os.path
-from cStringIO import StringIO
 from itertools import groupby
 from contextlib import closing
 
@@ -23,11 +22,11 @@ from optparse import OptionParser
 
 from pygments.token import Token
 
-from thirdparty.templet import unicodefunction
+from .thirdparty.templet import unicodefunction
 
-from tctoolkitutil import SourceCodeTokenizer
-from tctoolkitutil import FileOrStdout
-from tctoolkitutil import TCApp
+from .tctoolkitutil import SourceCodeTokenizer
+from .tctoolkitutil import FileOrStdout
+from .tctoolkitutil import TCApp
 
 
 class SignatureTokenizer(SourceCodeTokenizer):
@@ -75,10 +74,10 @@ class WCSignatureSurvey(TCApp):
     def create_signatures(self):
         # first calculate all signatures
         for fname in self.getFileList(self.args[0]):
-            print "Analyzing file %s" % fname
+            print("Analyzing file %s" % fname)
 
             tokenizer = SignatureTokenizer(fname, self.lang)
-            with closing(StringIO()) as signature:
+            with closing(six.StringIO()) as signature:
 
                 for srctoken in tokenizer:
                     value = srctoken.value.strip()
@@ -100,21 +99,24 @@ class WCSignatureSurvey(TCApp):
 
     def _run(self):
         if not self.outfile:
-            print "Please specify output filename (use option -o)"
+            print("Please specify output filename (use option -o)")
             return
 
         self.create_signatures()
         # now group the filenames with directory names
         dirnames, filegroups = self.group_filenames()
 
-        with open(self.outfile, "wb") as outfile:
-            print "Writing the signature to %s" % self.outfile
+        with open(self.outfile, "w") as outfile:
+            print("Writing the signature to %s" % self.outfile)
             for dname in dirnames:
                 outfile.write("%s\n" % dname)
                 for fname in filegroups[dname]:
                     signature = self.signatures[fname]
                     fname = os.path.basename(fname)
-                    outfile.write("\t%s : %s\n" % (fname, signature))
+                    try:
+                        outfile.write("\t%s : %s\n" % (fname, signature))
+                    except Exception as e:
+                        pass
                 outfile.write("\n")
 
 

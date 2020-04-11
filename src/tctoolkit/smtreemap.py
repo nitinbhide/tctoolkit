@@ -19,8 +19,8 @@ import Tkinter
 import tkFileDialog
 from idlelib.TreeWidget import TreeItem, TreeNode
 
-from tctoolkitutil.tktreemap import TreemapSquarified, TMColorMap, createScrollableCanvas
-from tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
+from ..tctoolkitutil.tktreemap import TreemapSquarified, TMColorMap, createScrollableCanvas
+from ..tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
 from sourcemon import *
 
 SMFILEFORMATS = [
@@ -163,7 +163,7 @@ def RunMain():
     (options, args) = parser.parse_args()
 
     if(len(args) < 1):
-        print "Invalid number of arguments. Use smtreemap.py --help to see the details."
+        print("Invalid number of arguments. Use smtreemap.py --help to see the details.")
     else:
         app = App()
         smfile = args[0]
