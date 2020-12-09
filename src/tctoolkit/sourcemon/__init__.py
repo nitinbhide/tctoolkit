@@ -105,6 +105,7 @@ class SMTree(TreemapNode):
                 metricid = metricnode.attrib.get('id')
                 metricid2prop[metricid] = propname
 
+        assert len(metricid2prop) > 0
         return(metricid2prop)
 
     def createFromCSV(self, smfile):
