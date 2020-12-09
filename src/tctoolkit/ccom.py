@@ -504,7 +504,7 @@ class ClassCoOccurMatrix(TCApp):
         4. Repeat this process
         '''
         # first create a node set for search
-        nodeset = set(nodes.iterkeys())
+        nodeset = set(six.iterkeys(nodes))
 
         def findMaxCountNode(nodeset):
             maxnode = max(nodeset, key=lambda n: nodes[n]['count'])
@@ -512,7 +512,7 @@ class ClassCoOccurMatrix(TCApp):
 
         def findConnectedNode(nodeset, node):
             # find the node connected to 'node', return it.
-            for link in links.iterkeys():
+            for link in six.iterkeys(links):
                 if(link[0] == node and link[1] in nodeset):
                     return link[1]
                 if link[1] == node and link[0] in nodeset:
