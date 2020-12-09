@@ -14,6 +14,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import string
 import sys
 import json
+import html
 
 from optparse import OptionParser
 
@@ -226,7 +227,7 @@ class D3SourceTagCloud(SourceCodeTagCloud):
         if(len(tagWordList) > 0):
             # change the font size between "-2" to "+8" relative to current
             # font size
-            tagList = [{'text': w, 'count': freq, 'filecount': self.getFileCount(
+            tagList = [{'text': html.escape(w), 'count': freq, 'filecount': self.getFileCount(
                 w)} for w, freq in tagWordList]
         tagJsonStr = json.dumps(tagList)
 
