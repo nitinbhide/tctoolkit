@@ -15,12 +15,11 @@ import sys
 import os
 import string
 from optparse import OptionParser
-import Tkinter
-import tkFileDialog
-from idlelib.TreeWidget import TreeItem, TreeNode
+import tkinter
+from idlelib.tree import TreeItem, TreeNode
 
-from ..tctoolkitutil.tktreemap import TreemapSquarified, TMColorMap, createScrollableCanvas
-from ..tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
+from .tctoolkitutil.tktreemap import TreemapSquarified, TMColorMap, createScrollableCanvas
+from .tctoolkitutil.tkcanvastooltip import TkCanvasToolTip
 from sourcemon import *
 
 SMFILEFORMATS = [
@@ -54,12 +53,12 @@ class FileTreeItem(TreeItem):
 class App(object):
 
     def __init__(self):
-        self.root = Tkinter.Tk()
+        self.root = tkinter.Tk()
         self.root.title("Source Monitor Treemap")
         self.initMenu()
         self.initDropDown()
-        self.pane = Tkinter.PanedWindow(self.root, orient=Tkinter.HORIZONTAL)
-        self.pane.pack(fill=Tkinter.BOTH, expand=1)
+        self.pane = tkinter.PanedWindow(self.root, orient=tkinter.HORIZONTAL)
+        self.pane.pack(fill=tkinter.BOTH, expand=1)
         self.initTreeCanvas()
         self.initTreemapCanvas()
         self.filetree = None
@@ -70,39 +69,39 @@ class App(object):
         self.pane.config(bg='blue')
         self.pane.add(self.tmcanvas.frame)
         self.pane.paneconfigure(
-            self.tmcanvas.frame, sticky=Tkinter.N + Tkinter.S + Tkinter.E + Tkinter.W)
+            self.tmcanvas.frame, sticky=tkinter.N + tkinter.S + tkinter.E + tkinter.W)
         self.tooltip = TkCanvasToolTip(self.tmcanvas, follow=True)
 
     def initTreeCanvas(self):
-        frame = Tkinter.Frame(self.pane)
+        frame = tkinter.Frame(self.pane)
         self.treecanvas = createScrollableCanvas(frame, width='2i')
         self.pane.add(frame)
         self.pane.paneconfigure(
-            frame, sticky=Tkinter.N + Tkinter.S + Tkinter.E + Tkinter.W)
+            frame, sticky=tkinter.N + tkinter.S + tkinter.E + tkinter.W)
 
     def initMenu(self):
-        menubar = Tkinter.Menu(self.root)
-        filemenu = Tkinter.Menu(menubar, tearoff=0)
+        menubar = tkinter.Menu(self.root)
+        filemenu = tkinter.Menu(menubar, tearoff=0)
         filemenu.add_command(label="Open", command=self.openSMFile)
         filemenu.add_command(label="Exit", command=self.root.quit)
         menubar.add_cascade(label="File", menu=filemenu)
         self.root.config(menu=menubar)
 
     def initDropDown(self):
-        self.dropdownframe = Tkinter.Frame(self.root)
-        self.sizeOption = Tkinter.StringVar()
+        self.dropdownframe = tkinter.Frame(self.root)
+        self.sizeOption = tkinter.StringVar()
         self.sizeOption.set(SIZE_PROP)
-        self.colorOption = Tkinter.StringVar()
+        self.colorOption = tkinter.StringVar()
         self.colorOption.set(CLR_PROP)
         # get the list of options
         options = set(SMPROP_MAPPING.itervalues())
         # now convert the set to sorted list
         options = sorted(options)
 
-        self.optionsSize = Tkinter.OptionMenu(
+        self.optionsSize = tkinter.OptionMenu(
             self.dropdownframe, self.sizeOption, command=self.optionchange, *options)
         self.optionsSize.grid(row=0, column=0)
-        self.optionsClr = Tkinter.OptionMenu(
+        self.optionsClr = tkinter.OptionMenu(
             self.dropdownframe, self.colorOption, command=self.optionchange, *options)
         self.optionsClr.grid(row=0, column=1)
         self.dropdownframe.pack()
@@ -141,7 +140,7 @@ class App(object):
         return(clrmap)
 
     def openSMFile(self):
-        filename = tkFileDialog.askopenfilename(
+        filename = tkinter.filedialog.askopenfilename(
             title="Choose Source Monitor output file", filetypes=SMFILEFORMATS, defaultextension=".xml")
         smtree = SMTree(filename)
         self.createtreemap(smtree)

@@ -10,7 +10,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 
 '''
 
-import Tkinter
+import tkinter
 from itertools import imap
 from treemapdata import TreemapNode, DEFAULT_COLOR_PROP, DEFAULT_SIZE_PROP
 
@@ -40,24 +40,24 @@ def initScrollableCanvas(frame, canvas):
 
     canvas.config(bg='white')
     # Create a scrollable canvas
-    scrollX = Tkinter.Scrollbar(frame, orient=Tkinter.HORIZONTAL)
-    scrollY = Tkinter.Scrollbar(frame, orient=Tkinter.VERTICAL)
+    scrollX = tkinter.Scrollbar(frame, orient=tkinter.HORIZONTAL)
+    scrollY = tkinter.Scrollbar(frame, orient=tkinter.VERTICAL)
     # now tie the three together. This is standard boilerplate text
     canvas['xscrollcommand'] = scrollX.set
     canvas['yscrollcommand'] = scrollY.set
     scrollX['command'] = canvas.xview
     scrollY['command'] = canvas.yview
-    scrollX.grid(row=1, column=0, sticky=Tkinter.E + Tkinter.W)
-    scrollY.grid(row=0, column=1, sticky=Tkinter.N + Tkinter.S)
+    scrollX.grid(row=1, column=0, sticky=tkinter.E + tkinter.W)
+    scrollY.grid(row=0, column=1, sticky=tkinter.N + tkinter.S)
     canvas.grid(
-        row=0, column=0, sticky=Tkinter.N + Tkinter.S + Tkinter.E + Tkinter.W)
+        row=0, column=0, sticky=tkinter.N + tkinter.S + tkinter.E + tkinter.W)
     # fill and expand if required.
-    frame.pack(fill=Tkinter.BOTH, expand=True)
+    frame.pack(fill=tkinter.BOTH, expand=True)
 
 
 def createScrollableCanvas(parent, **kwargs):
-    frame = Tkinter.Frame(parent)
-    canvas = Tkinter.Canvas(frame, kwargs)
+    frame = tkinter.Frame(parent)
+    canvas = tkinter.Canvas(frame, kwargs)
     initScrollableCanvas(frame, canvas)
     return(canvas)
 
@@ -138,7 +138,7 @@ class TMColorMap:
         return(rgbstr)
 
 
-class TreemapCanvas(Tkinter.Canvas):
+class TreemapCanvas(tkinter.Canvas):
 
     def __init__(self, root, kwargs):
         # Set the default variable values for Treemaps
@@ -164,8 +164,8 @@ class TreemapCanvas(Tkinter.Canvas):
             del kwargs[var]
 
     def __createCanvas(self, root, kwargs):
-        self.frame = Tkinter.Frame(root)
-        Tkinter.Canvas.__init__(self, self.frame, kwargs)
+        self.frame = tkinter.Frame(root)
+        tkinter.Canvas.__init__(self, self.frame, kwargs)
         initScrollableCanvas(self.frame, self)
 
     def set(self, **kwargs):
@@ -174,7 +174,7 @@ class TreemapCanvas(Tkinter.Canvas):
             self.__dict__[key] = value
 
     def drawTreemap(self, tmroot):
-        self.delete(Tkinter.ALL)
+        self.delete(tkinter.ALL)
         self.tmroot = tmroot
         axis = 0
         self['scrollregion'] = (
@@ -392,7 +392,7 @@ Example Code on how ot use the TkTreemap
 class App:
 
     def __init__(self):
-        self.root = Tkinter.Tk()
+        self.root = tkinter.Tk()
         self.tmcanvas = TreemapSquarified(self.root, width='8i', height='6i')
         self.tmcanvas.config(bg='white')
         self.tmcanvas.pack()
