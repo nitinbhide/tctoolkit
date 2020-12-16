@@ -42,11 +42,11 @@ def TimeIt(fout, prefix=''):
     '''
     return a timer context manager. return the elapsed time.
     '''
-    start_time = time.clock()
+    start_time = time.perf_counter()
 
     yield
 
-    end_time = time.clock()
+    end_time = time.perf_counter() 
     timediff = end_time - start_time
     fout.write("%s : %.2f seconds" % (prefix, timediff))
 
