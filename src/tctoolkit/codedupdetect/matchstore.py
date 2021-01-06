@@ -108,7 +108,7 @@ class MatchSet(object):
 
         matchdata = MatchData(matchlen, matchstart, matchend, revisioninfo)
         self.matchset.add(matchdata)
-        if self.firstMatch is not None:
+        if self.firstMatch is None:
             self.firstMatch = matchdata
 
     @property
