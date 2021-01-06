@@ -200,7 +200,7 @@ class MatchStore(object):
 
         if not self.is_overlapping(matchstart1, matchend1, matchstart2, matchend2):
             matchset = self.matchlist.get(sha1_hash)
-            if matchset is not None:
+            if matchset is None:
                 matchset = MatchSet(self.blameflag)
             matchset.addMatch(matchlen, matchstart1, matchend1)
             matchset.addMatch(matchlen, matchstart2, matchend2)
