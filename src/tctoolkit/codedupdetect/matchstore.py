@@ -40,14 +40,23 @@ class MatchData(object):
         self.endtoken = endtoken
         self.revisioninfo = revisioninfo
 
-    def __cmp__(self, other):
-        val = 1
-        if other != None:
-            val = cmp(self.srcfile(), other.srcfile())
-            if val == 0:
-                # file name is same now. Compareline numbers
-                val = cmp(self.getStartLine(), other.getStartLine())
-        return val
+    def __eq__(self, other):
+        return (self.srcfile(), self.getStartLine()) == (other.srcfile(), other.getStartLine())
+
+    def __ne__(self, other):
+        return (self.srcfile(), self.getStartLine()) != (other.srcfile(), other.getStartLine())
+
+    def __lt__(self, other):
+        return (self.srcfile(), self.getStartLine()) < (other.srcfile(), other.getStartLine())
+
+    def __le__(self, other):
+        return (self.srcfile(), self.getStartLine()) <= (other.srcfile(), other.getStartLine())
+
+    def __gt__(self, other):
+        return (self.srcfile(), self.getStartLine()) > (other.srcfile(), other.getStartLine())
+
+    def __ge__(self, other):
+        return (self.srcfile(), self.getStartLine()) >= (other.srcfile(), other.getStartLine())
 
     def __hash__(self):
         tpl = (self.srcfile(), self.getStartLine())
@@ -99,7 +108,7 @@ class MatchSet(object):
 
         matchdata = MatchData(matchlen, matchstart, matchend, revisioninfo)
         self.matchset.add(matchdata)
-        if self.firstMatch == None:
+        if self.firstMatch is not None:
             self.firstMatch = matchdata
 
     @property
@@ -191,7 +200,7 @@ class MatchStore(object):
 
         if not self.is_overlapping(matchstart1, matchend1, matchstart2, matchend2):
             matchset = self.matchlist.get(sha1_hash)
-            if matchset == None:
+            if matchset is not None:
                 matchset = MatchSet(self.blameflag)
             matchset.addMatch(matchlen, matchstart1, matchend1)
             matchset.addMatch(matchlen, matchstart2, matchend2)
