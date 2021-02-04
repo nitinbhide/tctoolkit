@@ -32,16 +32,19 @@ class Countlines():
         # database
         conn = sqlite3.connect("analysis.db")
         c = conn.cursor()
-        c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text,DATE text,LOC integer)""")
+        c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer)""")
+        c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text PRIMARY KEY,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
+       REFERENCES Files (FILENAME))''')
         c.execute("DELETE FROM Files")
         conn.commit()
-        os.chdir('../metrics/test/')
         for srcfile in filelist:
-            # self.Blockdept(srcfile)
-            # break
-            c.execute('''INSERT INTO Files VALUES(?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),(datetime.now()),self.Readfile(srcfile)))
+            a=self.Readfile(srcfile)
+            c.execute('''INSERT INTO Files VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),datetime.now(),a[0],a[1]))
             conn.commit()
-        print (pd.read_sql_query("SELECT * FROM Files", conn))
+            # for i, j in (self.Blockdept(srcfile).items()):
+            #     c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),i,j[0],j[1]))
+            #     conn.commit()
+        print (pd.read_sql_query("SELECT * FROM Blockdepth", conn))
         
     def Blockdept(self, srcfile):
         d = dict()
@@ -49,50 +52,44 @@ class Countlines():
         a = []
         open = ['{',':']
         close = ['}']
-        ans=0
+        ans = 0
+        count = 0
+        startcal = False
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
-            
             for ttype, value in self.lexer.get_tokens(code.read()):
-                # print(ttype, value)
                 if ttype == Token.Name.Function:
+                    startcal=True
                     function.append(value)
-                    
                 if value in open:
-                    a.append('{')
+                    a.append(1)
                     ans = max(ans, len(a))
                 elif value in close:
                     a.pop()
-                if not a and ans>0:
-                    d[function.pop()] = ans
-                    ans=0
-        print(d)
+                if startcal and '\n' in value:count+=1
+                if not a and ans > 0:
+                    count+=1
+                    d[function.pop()] = [ans,count]
+                    ans = 0
+                    startcal = False
+                    count=0
+        return d
 
     def Readfile(self, srcfile):
         commentlist = [Comment.Single, Comment.Multiline, Token.Literal.String.Doc, Token.Text,Token.Comment.Preproc]
         inquotes = [Token.Literal.String.Double, Token.Literal.String.Single]
-        count = 0
-        test=os.listdir("./")
-        for item in test:
-            if item.startswith("sample"):
-                os.remove(item)
-        extension=self.StripAtStart(srcfile,self.srcdir).split('.')[1]
+        totalcount=0
+        srccount = 0
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
-            # ioread = io.StringIO(code.read())
-            # print(ioread.read())
-            with codecs.open("sample."+extension, "w+", encoding='utf-8', errors='ignore') as f:
-                for r in code.readlines():
-                    r = r.strip()
-                    f.write(r+'\n')
-            with codecs.open("sample."+extension, "rb", encoding='utf-8', errors='ignore') as f:
-                countchars = 0
-                for ttype, value in self.lexer.get_tokens(f.read()):
-                    if ttype in inquotes:continue
-                    if ( value == '\n' or ttype==Token.Comment.Single) and countchars>0:
-                        count += 1
-                        countchars=0
-                    if (ttype not in commentlist):
-                        countchars+=1
-        return count
+            countchars = 0
+            for ttype, value in self.lexer.get_tokens(code.read()):
+                if ttype in inquotes:continue
+                if ( '\n' in value or ttype==Token.Comment.Single) and countchars>0:
+                    srccount += 1
+                    countchars = 0
+                if ('\n' in value):totalcount+=1
+                if (ttype not in commentlist):
+                    countchars += 1
+        return [srccount,totalcount]
                 
 
 def RunMain():
