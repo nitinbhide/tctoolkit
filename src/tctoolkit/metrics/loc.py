@@ -5,20 +5,24 @@ from optparse import OptionParser
 from datetime import datetime
 from pygments.token import Comment,Token
 from pygments.lexers import get_lexer_by_name
-import codecs
+import codecs,traceback
 sys.path.append("..")
 from tctoolkitutil import DirFileLister
 class Countlines():
-    def StripAtStart(self,src, strtostrip):
-        if(src.startswith(strtostrip)):
-            src = src[len(strtostrip):]
-        return(src)
+    
     def __init__(self, language, dependspath=[]):
-        self.dependencypath = dependspath
+        dependencypath = dependspath
         self.language = language
         self.srcdir = None
         self.lexer = get_lexer_by_name(language)
+        self.openlist = ["for","while","if","else","loop","until"]
+        self.closelist = ['}', "end"]
 
+    def StripAtStart(self,src, strtostrip):
+        if(src.startswith(strtostrip)):
+            src = src[len(strtostrip):]
+        return (src)
+        
     def getFiles(self, srcdir):
         self.srcdir = srcdir
         if(self.srcdir.endswith(os.sep) == False):
@@ -33,45 +37,111 @@ class Countlines():
         conn = sqlite3.connect("analysis.db")
         c = conn.cursor()
         c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer)""")
-        c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text PRIMARY KEY,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
-       REFERENCES Files (FILENAME))''')
-        c.execute("DELETE FROM Files")
+        c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text ,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
+         REFERENCES Files (FILENAME),UNIQUE(Filename,Function))''' )
         conn.commit()
+        c.execute('DELETE FROM Blockdepth')
         for srcfile in filelist:
-            a=self.Readfile(srcfile)
-            c.execute('''INSERT INTO Files VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),datetime.now(),a[0],a[1]))
-            conn.commit()
-            # for i, j in (self.Blockdept(srcfile).items()):
-            #     c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),i,j[0],j[1]))
-            #     conn.commit()
+            a = self.Readfile(srcfile)
+            try:
+                c.execute('''INSERT INTO Files VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),datetime.now(),a[0],a[1]))
+                conn.commit()
+            except:
+                pass
+            for i, j in (self.Blockdept(srcfile).items()):
+                try:
+                    c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),i,j[0],j[1]))
+                    conn.commit()
+                except:
+                    pass
+            # break
         print (pd.read_sql_query("SELECT * FROM Blockdepth", conn))
         
     def Blockdept(self, srcfile):
-        d = dict()
+        type1 = ['c', 'cpp', 'java', 'js','css']
+        type2 = ['rb', 'py']
+        if self.StripAtStart(srcfile,self.srcdir).split('.')[1] in type1:
+            return self.Type1(srcfile)
+        else:
+            return self.Type2(srcfile)
+    def Type1(self, srcfile):
         function = []
         a = []
-        open = ['{',':']
-        close = ['}']
         ans = 0
         count = 0
+        d=dict()
         startcal = False
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
             for ttype, value in self.lexer.get_tokens(code.read()):
-                if ttype == Token.Name.Function:
-                    startcal=True
+                if ttype == Token.Name.Function :
+                    startcal = True
+                    print(ttype,value)
                     function.append(value)
-                if value in open:
+                    count += 1
+                if '{' == value :
                     a.append(1)
-                    ans = max(ans, len(a))
-                elif value in close:
+                    ans = max(ans,len(a))
+                if '}'==value:
                     a.pop()
-                if startcal and '\n' in value:count+=1
-                if not a and ans > 0:
-                    count+=1
-                    d[function.pop()] = [ans,count]
+                
+                if startcal and '\n' in value: count += 1
+                if len(a) == 0 and ans > 0:
+                    if count>0:
+                        d[function.pop()] = [ans, count]
+                    else:function.pop()
                     ans = 0
                     startcal = False
-                    count=0
+                    count = 0
+        print(d)
+        return d
+    def Type2(self, srcfile):
+        function = []
+        a = []
+        d=dict()
+        ans,count = 0,0
+        countl,counts = 0,0
+        countspace = False
+        startcal = False
+        with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
+            for line in code.readlines():
+                if len(line.strip()) == 0: continue
+                # print(line)
+                # print(len(line) - len(line.lstrip()))
+                
+                # for ttype, value in self.lexer.get_tokens(line):
+                #     print(ttype,value)
+                #     if countspace or ( len(line)-len(line.lstrip()) > counts):
+                #         a.append(counts)
+                #         counts = len(line)-len(line.lstrip())
+                #         count += 1
+                #         print(len(line)-len(line.lstrip()))
+                #         ans = max(ans, count)
+                    # if ttype == Token.Name.Function :
+                    #     startcal = True
+                    #     countspace=True
+                    #     function.append(value)
+                    #     count+=1
+                    #     a.append(count)
+                    #     countl+=1
+                        
+                    # if value in self.openlist:
+                    #     countspace=True
+                    # if (ttype == Token.Text):
+                    #      print(len(value))
+                    # elif value in self.closelist or (len(line)-len(line.lstrip())<counts):
+                    #     countspace=False
+                    #     counts = a.pop()
+                    #     count-=1
+                    
+                    # if startcal and '\n' in value:countl+=1
+                    # if not a and ans > 0:
+                    #     countl+=1
+                    #     d[function.pop()] = [ans,countl]
+                    #     ans = 0
+                    #     startcal = False
+                    #     counts = 0
+                    # if ans > 0 and not d:
+                    #     d['-'] = [ans, countl]
         return d
 
     def Readfile(self, srcfile):
