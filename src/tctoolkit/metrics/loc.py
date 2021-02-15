@@ -8,6 +8,15 @@ from pygments.lexers import get_lexer_by_name
 import codecs,traceback
 sys.path.append("..")
 from tctoolkitutil import DirFileLister
+class Hierarchy():
+    def __init__(self,parent=None):
+        self.parent = parent
+        self.cchild = 0
+        self.stack = []
+        self.depth = 0
+        self.count = 0
+        self.ccount=0
+        
 class Countlines():
     
     def __init__(self, language, dependspath=[]):
@@ -17,6 +26,8 @@ class Countlines():
         self.lexer = get_lexer_by_name(language)
         self.openlist = ["for","while","if","else","loop","until"]
         self.closelist = ['}', "end"]
+        self.conn = sqlite3.connect("analysis.db")
+        self.c = self.conn.cursor()
 
     def StripAtStart(self,src, strtostrip):
         if(src.startswith(strtostrip)):
@@ -34,13 +45,12 @@ class Countlines():
     def run(self,srcdir):
         filelist = self.getFiles(srcdir)
         # database
-        conn = sqlite3.connect("analysis.db")
-        c = conn.cursor()
-        c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer)""")
-        c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text ,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
+        
+        self.c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer)""")
+        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text ,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
          REFERENCES Files (FILENAME),UNIQUE(Filename,Function))''' )
-        conn.commit()
-        c.execute('DELETE FROM Blockdepth')
+        self.conn.commit()
+        self.c.execute('DELETE FROM Blockdepth')
         for srcfile in filelist:
             a = self.Readfile(srcfile)
             try:
@@ -48,52 +58,63 @@ class Countlines():
                 conn.commit()
             except:
                 pass
-            for i, j in (self.Blockdept(srcfile).items()):
-                try:
-                    c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),i,j[0],j[1]))
-                    conn.commit()
-                except:
-                    pass
+            self.Blockdept(srcfile)
             # break
-        print (pd.read_sql_query("SELECT * FROM Blockdepth", conn))
+        print (pd.read_sql_query("SELECT * FROM Blockdepth", self.conn))
         
     def Blockdept(self, srcfile):
-        type1 = ['c', 'cpp', 'java', 'js','css']
+        type1 = ['c', 'cpp', 'java', 'js','cs']
         type2 = ['rb', 'py']
         if self.StripAtStart(srcfile,self.srcdir).split('.')[1] in type1:
             return self.Type1(srcfile)
         else:
             return self.Type2(srcfile)
+
     def Type1(self, srcfile):
         function = []
         a = []
-        ans = 0
-        count = 0
-        d=dict()
-        startcal = False
+        startcal = 0
+        gotfunc = False
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
             for ttype, value in self.lexer.get_tokens(code.read()):
+                if gotfunc:
+                    if value == '{':
+                        startcal += 1
+                        gotfunc = False
+                    elif value == ';':
+                        gotfunc = False
+                        function.pop()
+                        a[-1].count = 0
+                        a.pop()
+                    else:continue
                 if ttype == Token.Name.Function :
-                    startcal = True
-                    print(ttype,value)
+                    gotfunc = True
+                    if startcal:    
+                        obj = Hierarchy(function[-1])
+                    else:
+                        obj = Hierarchy()
+                    a.append(obj)
                     function.append(value)
-                    count += 1
-                if '{' == value :
-                    a.append(1)
-                    ans = max(ans,len(a))
-                if '}'==value:
+                    a[-1].count += 1
+                    continue
+                if '{' == value and startcal:
+                    a[-1].stack.append(1)
+                    a[-1].depth = max(a[-1].depth, len(a[-1].stack))
+                if '}'==value and startcal:
+                    a[-1].stack.pop()
+                if startcal and '\n' in value:
+                    a[-1].count += 1
+
+                if a and len(a[-1].stack) == 0 and a[-1].depth > 0:
+                    if a[-1].parent:
+                        a[-2].cchild = a[-1].depth
+                        a[-2].ccount = a[-1].count
+                    self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?)''',
+                    (self.StripAtStart(srcfile,self.srcdir),function.pop(),a[-1].cchild+a[-1].depth,a[-1].count+a[-1].ccount))
+                    self.conn.commit()
+                    startcal -= 1
                     a.pop()
-                
-                if startcal and '\n' in value: count += 1
-                if len(a) == 0 and ans > 0:
-                    if count>0:
-                        d[function.pop()] = [ans, count]
-                    else:function.pop()
-                    ans = 0
-                    startcal = False
-                    count = 0
-        print(d)
-        return d
+
     def Type2(self, srcfile):
         function = []
         a = []
@@ -187,3 +208,34 @@ def RunMain():
 
 if __name__ == "__main__":
     RunMain()
+
+
+# if value == 'GetName': print(ttype, value)
+#                 if gotfunc:
+#                     if value == '{':
+#                         startcal = True
+#                         gotfunc = False
+#                     elif value == ';':
+#                         gotfunc = False
+#                         function.pop()
+#                         count = 0
+#                     else:continue
+#                 if ttype == Token.Name.Function :
+#                     gotfunc = True
+#                     function.append(value)
+#                     count += 1
+#                     continue
+#                 if '{' == value and startcal:
+#                     a.append(1)
+#                     ans = max(ans,len(a))
+#                 if '}'==value and startcal:
+#                     a.pop()
+                
+#                 if startcal and '\n' in value: count += 1
+#                 if len(a) == 0 and ans > 0:
+#                     if count>0:
+#                         d[function.pop()] = [ans, count]
+#                     else:function.pop()
+#                     ans = 0
+#                     startcal = False
+#                     count = 0
