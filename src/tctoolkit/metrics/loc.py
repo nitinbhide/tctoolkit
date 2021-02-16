@@ -15,7 +15,7 @@ class Hierarchy():
         self.stack = []
         self.depth = 0
         self.count = 0
-        self.ccount=0
+        self.ccount = 0
         
 class Countlines():
     
@@ -28,6 +28,7 @@ class Countlines():
         self.closelist = ['}', "end"]
         self.conn = sqlite3.connect("analysis.db")
         self.c = self.conn.cursor()
+        self.check=0
 
     def StripAtStart(self,src, strtostrip):
         if(src.startswith(strtostrip)):
@@ -45,10 +46,9 @@ class Countlines():
     def run(self,srcdir):
         filelist = self.getFiles(srcdir)
         # database
-        
         self.c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer)""")
-        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text ,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
-         REFERENCES Files (FILENAME),UNIQUE(Filename,Function))''' )
+        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text,Parent text,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
+         REFERENCES Files (FILENAME),UNIQUE(Filename,Parent,Function))''' )
         self.conn.commit()
         self.c.execute('DELETE FROM Blockdepth')
         for srcfile in filelist:
@@ -59,7 +59,6 @@ class Countlines():
             except:
                 pass
             self.Blockdept(srcfile)
-            # break
         print (pd.read_sql_query("SELECT * FROM Blockdepth", self.conn))
         
     def Blockdept(self, srcfile):
@@ -86,34 +85,42 @@ class Countlines():
                         function.pop()
                         a[-1].count = 0
                         a.pop()
-                    else:continue
-                if ttype == Token.Name.Function :
-                    gotfunc = True
-                    if startcal:    
-                        obj = Hierarchy(function[-1])
-                    else:
-                        obj = Hierarchy()
-                    a.append(obj)
-                    function.append(value)
-                    a[-1].count += 1
-                    continue
-                if '{' == value and startcal:
-                    a[-1].stack.append(1)
-                    a[-1].depth = max(a[-1].depth, len(a[-1].stack))
-                if '}'==value and startcal:
-                    a[-1].stack.pop()
-                if startcal and '\n' in value:
-                    a[-1].count += 1
+                    else: continue
+                dummy,a,function,gotfunc=self.Checkfunc(ttype,value,gotfunc,startcal,a,function)
 
-                if a and len(a[-1].stack) == 0 and a[-1].depth > 0:
-                    if a[-1].parent:
-                        a[-2].cchild = a[-1].depth
-                        a[-2].ccount = a[-1].count
-                    self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?)''',
-                    (self.StripAtStart(srcfile,self.srcdir),function.pop(),a[-1].cchild+a[-1].depth,a[-1].count+a[-1].ccount))
-                    self.conn.commit()
+                if not dummy and a and len(a[-1].stack) == 0 and a[-1].depth > 0:
+                    self.insertval(srcfile,a,function)
                     startcal -= 1
+                    function.pop()
                     a.pop()
+
+    def Checkfunc(self,ttype,value,gotfunc,startcal,a,function):
+        if ttype == Token.Name.Function :
+            gotfunc = True
+            if startcal:    
+                obj = Hierarchy(function[-1])
+            else:
+                obj = Hierarchy()
+            a.append(obj)
+            function.append(value)
+            a[-1].count += 1
+            return 1,a,function,gotfunc
+        if '{' == value and startcal:
+            a[-1].stack.append(1)
+            a[-1].depth = max(a[-1].depth, len(a[-1].stack))
+        if '}'==value and startcal:
+            a[-1].stack.pop()
+        if startcal and '\n' in value:
+            a[-1].count += 1
+        return 0,a,function,gotfunc
+
+    def insertval(self,srcfile,a,function):
+        if a[-1].parent:
+            a[-2].cchild = a[-1].depth
+            a[-2].ccount = a[-1].count
+        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?)''',
+        (self.StripAtStart(srcfile,self.srcdir),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].count+a[-1].ccount))
+        self.conn.commit()
 
     def Type2(self, srcfile):
         function = []
@@ -203,39 +210,14 @@ def RunMain():
         print ("Dependency search path : %s" %options.includespath)
         print ("Counting loc ...")
         app = Countlines(options.lang, dirname)
-        return app.run(dirname)
+        app.c.execute(""" CREATE TABLE IF NOT EXISTS Checkpoint(Checkpointname text PRIMARY KEY,DATE text)""")
+        app.check=app.c.execute('SELECT COUNT(*) FROM Checkpoint').fetchone()[0]+1
+        app.c.execute('''INSERT INTO Checkpoint VALUES(?,?)''',
+        ("Checkpoint "+str(app.check),datetime.now()))
+        app.conn.commit()
+        print (pd.read_sql_query("SELECT * FROM Checkpoint", app.conn))
+        app.run(dirname)
 
 
 if __name__ == "__main__":
     RunMain()
-
-
-# if value == 'GetName': print(ttype, value)
-#                 if gotfunc:
-#                     if value == '{':
-#                         startcal = True
-#                         gotfunc = False
-#                     elif value == ';':
-#                         gotfunc = False
-#                         function.pop()
-#                         count = 0
-#                     else:continue
-#                 if ttype == Token.Name.Function :
-#                     gotfunc = True
-#                     function.append(value)
-#                     count += 1
-#                     continue
-#                 if '{' == value and startcal:
-#                     a.append(1)
-#                     ans = max(ans,len(a))
-#                 if '}'==value and startcal:
-#                     a.pop()
-                
-#                 if startcal and '\n' in value: count += 1
-#                 if len(a) == 0 and ans > 0:
-#                     if count>0:
-#                         d[function.pop()] = [ans, count]
-#                     else:function.pop()
-#                     ans = 0
-#                     startcal = False
-#                     count = 0
