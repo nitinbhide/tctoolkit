@@ -5,7 +5,8 @@ from optparse import OptionParser
 from datetime import datetime
 from pygments.token import Comment,Token
 from pygments.lexers import get_lexer_by_name
-import codecs,traceback
+import codecs, traceback
+from pathlib import Path
 sys.path.append("..")
 from tctoolkitutil import DirFileLister
 class Hierarchy():
@@ -46,20 +47,27 @@ class Countlines():
     def run(self,srcdir):
         filelist = self.getFiles(srcdir)
         # database
-        self.c.execute(""" CREATE TABLE IF NOT EXISTS Files (FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer)""")
-        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth (FILENAME text,Parent text,Function text,Max_depth integer,loc integer, FOREIGN KEY (FILENAME)
-         REFERENCES Files (FILENAME),UNIQUE(Filename,Parent,Function))''' )
+        self.c.execute(""" CREATE TABLE IF NOT EXISTS Files
+        (Checkpoint_name text,FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer,comment integer,
+        FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name))""")
+        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth
+        (Checkpoint_name text,FILENAME text,Parent text,Function text,Max_depth integer,loc integer, 
+        FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME),
+        FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name),
+        UNIQUE(Filename,Parent,Function))''' )
         self.conn.commit()
         self.c.execute('DELETE FROM Blockdepth')
         for srcfile in filelist:
             a = self.Readfile(srcfile)
             try:
-                c.execute('''INSERT INTO Files VALUES(?,?,?,?)''',(self.StripAtStart(srcfile,self.srcdir),datetime.now(),a[0],a[1]))
-                conn.commit()
-            except:
-                pass
+                self.c.execute('''INSERT INTO Files VALUES(?,?,?,?,?,?)''',
+                (self.check,str(Path(srcfile).absolute()),datetime.now(),a[0],a[1],a[2]))
+                self.conn.commit()
+            except:pass
             self.Blockdept(srcfile)
+        print(pd.read_sql_query("SELECT * FROM Files", self.conn))
         print (pd.read_sql_query("SELECT * FROM Blockdepth", self.conn))
+
         
     def Blockdept(self, srcfile):
         type1 = ['c', 'cpp', 'java', 'js','cs']
@@ -118,8 +126,8 @@ class Countlines():
         if a[-1].parent:
             a[-2].cchild = a[-1].depth
             a[-2].ccount = a[-1].count
-        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?)''',
-        (self.StripAtStart(srcfile,self.srcdir),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].count+a[-1].ccount))
+        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?,?)''',
+        (self.check,str(Path(srcfile).absolute()),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].count+a[-1].ccount))
         self.conn.commit()
 
     def Type2(self, srcfile):
@@ -177,6 +185,7 @@ class Countlines():
         inquotes = [Token.Literal.String.Double, Token.Literal.String.Single]
         totalcount=0
         srccount = 0
+        comment=0
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
             countchars = 0
             for ttype, value in self.lexer.get_tokens(code.read()):
@@ -187,7 +196,8 @@ class Countlines():
                 if ('\n' in value):totalcount+=1
                 if (ttype not in commentlist):
                     countchars += 1
-        return [srccount,totalcount]
+                if ttype in [Comment.Single, Comment.Multiline, Token.Literal.String.Doc]:comment+=1
+        return [srccount,totalcount,comment]
                 
 
 def RunMain():
@@ -210,10 +220,10 @@ def RunMain():
         print ("Dependency search path : %s" %options.includespath)
         print ("Counting loc ...")
         app = Countlines(options.lang, dirname)
-        app.c.execute(""" CREATE TABLE IF NOT EXISTS Checkpoint(Checkpointname text PRIMARY KEY,DATE text)""")
-        app.check=app.c.execute('SELECT COUNT(*) FROM Checkpoint').fetchone()[0]+1
+        app.c.execute(""" CREATE TABLE IF NOT EXISTS Checkpoint(Checkpoint_name text PRIMARY KEY,DATE text)""")
+        app.check="Checkpoint "+str(app.c.execute('SELECT COUNT(*) FROM Checkpoint').fetchone()[0]+1)
         app.c.execute('''INSERT INTO Checkpoint VALUES(?,?)''',
-        ("Checkpoint "+str(app.check),datetime.now()))
+        (app.check,datetime.now()))
         app.conn.commit()
         print (pd.read_sql_query("SELECT * FROM Checkpoint", app.conn))
         app.run(dirname)
