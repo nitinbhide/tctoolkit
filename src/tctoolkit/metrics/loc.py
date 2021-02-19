@@ -17,6 +17,7 @@ class Hierarchy():
         self.depth = 0
         self.count = 0
         self.ccount = 0
+        self.depth_line=0
         
 class Countlines():
     
@@ -51,7 +52,7 @@ class Countlines():
         (Checkpoint_name text,FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer,comment integer,
         FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name))""")
         self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth
-        (Checkpoint_name text,FILENAME text,Parent text,Function text,Max_depth integer,loc integer, 
+        (Checkpoint_name text,FILENAME text,Parent text,Function text,Max_depth integer,dept_line integer,loc integer, 
         FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME),
         FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name),
         UNIQUE(Filename,Parent,Function))''' )
@@ -80,10 +81,11 @@ class Countlines():
     def Type1(self, srcfile):
         function = []
         a = []
-        startcal = 0
+        startcal, count = 0, 0
         gotfunc = False
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
             for ttype, value in self.lexer.get_tokens(code.read()):
+                if '\n' in value:count+=1
                 if gotfunc:
                     if value == '{':
                         startcal += 1
@@ -94,15 +96,14 @@ class Countlines():
                         a[-1].count = 0
                         a.pop()
                     else: continue
-                dummy,a,function,gotfunc=self.Checkfunc(ttype,value,gotfunc,startcal,a,function)
-
+                dummy,a,function,gotfunc=self.Checkfunc(ttype,value,gotfunc,startcal,a,function,count+1)
                 if not dummy and a and len(a[-1].stack) == 0 and a[-1].depth > 0:
                     self.insertval(srcfile,a,function)
                     startcal -= 1
                     function.pop()
                     a.pop()
 
-    def Checkfunc(self,ttype,value,gotfunc,startcal,a,function):
+    def Checkfunc(self,ttype,value,gotfunc,startcal,a,function,count):
         if ttype == Token.Name.Function :
             gotfunc = True
             if startcal:    
@@ -115,6 +116,7 @@ class Countlines():
             return 1,a,function,gotfunc
         if '{' == value and startcal:
             a[-1].stack.append(1)
+            a[-1].depth_line=count
             a[-1].depth = max(a[-1].depth, len(a[-1].stack))
         if '}'==value and startcal:
             a[-1].stack.pop()
@@ -126,8 +128,8 @@ class Countlines():
         if a[-1].parent:
             a[-2].cchild = a[-1].depth
             a[-2].ccount = a[-1].count
-        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?,?)''',
-        (self.check,str(Path(srcfile).absolute()),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].count+a[-1].ccount))
+        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?,?,?)''',
+        (self.check,str(Path(srcfile).absolute()),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].depth_line,a[-1].count+a[-1].ccount))
         self.conn.commit()
 
     def Type2(self, srcfile):
@@ -139,46 +141,7 @@ class Countlines():
         countspace = False
         startcal = False
         with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
-            for line in code.readlines():
-                if len(line.strip()) == 0: continue
-                # print(line)
-                # print(len(line) - len(line.lstrip()))
-                
-                # for ttype, value in self.lexer.get_tokens(line):
-                #     print(ttype,value)
-                #     if countspace or ( len(line)-len(line.lstrip()) > counts):
-                #         a.append(counts)
-                #         counts = len(line)-len(line.lstrip())
-                #         count += 1
-                #         print(len(line)-len(line.lstrip()))
-                #         ans = max(ans, count)
-                    # if ttype == Token.Name.Function :
-                    #     startcal = True
-                    #     countspace=True
-                    #     function.append(value)
-                    #     count+=1
-                    #     a.append(count)
-                    #     countl+=1
-                        
-                    # if value in self.openlist:
-                    #     countspace=True
-                    # if (ttype == Token.Text):
-                    #      print(len(value))
-                    # elif value in self.closelist or (len(line)-len(line.lstrip())<counts):
-                    #     countspace=False
-                    #     counts = a.pop()
-                    #     count-=1
-                    
-                    # if startcal and '\n' in value:countl+=1
-                    # if not a and ans > 0:
-                    #     countl+=1
-                    #     d[function.pop()] = [ans,countl]
-                    #     ans = 0
-                    #     startcal = False
-                    #     counts = 0
-                    # if ans > 0 and not d:
-                    #     d['-'] = [ans, countl]
-        return d
+            pass
 
     def Readfile(self, srcfile):
         commentlist = [Comment.Single, Comment.Multiline, Token.Literal.String.Doc, Token.Text,Token.Comment.Preproc]
