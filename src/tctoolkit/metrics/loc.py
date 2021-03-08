@@ -57,7 +57,6 @@ class Countlines():
         FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name),
         UNIQUE(Filename,Parent,Function))''' )
         self.conn.commit()
-        self.c.execute('DELETE FROM Blockdepth')
         for srcfile in filelist:
             a = self.Readfile(srcfile)
             try:

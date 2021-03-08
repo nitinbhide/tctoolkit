@@ -17,7 +17,6 @@ from pygments.lexers import get_lexer_for_filename, get_lexer_by_name, get_all_l
 from pygments.filter import simplefilter
 from pygments.token import Token
 from .filelist import make_uncpath
-
 class SourceToken(object):
 
     '''
@@ -182,27 +181,27 @@ Filter Functions to get tokens of specific type only
 '''
 
 
-def TagTypeFilter(word, ttype, freq, tagType):
+def TagTypeFilter(word, ttype, freq, tagType,checbit):
     validtag = None
-    if(freq > 1 and ttype in tagType):
+    if(freq > 1 and ttype in tagType) or (checbit!=None and freq>1):
         validtag = (word, freq)
     return(validtag)
 
 
-def KeywordFilter(word, ttype, freq):
-    return(TagTypeFilter(word, ttype, freq, Token.Keyword))
+def KeywordFilter(word, ttype, freq,checbit):
+    return(TagTypeFilter(word, ttype, freq, Token.Keyword,checbit))
 
 
-def NameFilter(word, ttype, freq):
-    return(TagTypeFilter(word, ttype, freq, Token.Name))
+def NameFilter(word, ttype, freq,checbit):
+    return(TagTypeFilter(word, ttype, freq, Token.Name,checbit))
 
 
-def ClassNameFilter(word, ttype, freq):
-    return(TagTypeFilter(word, ttype, freq, Token.Name.Class))
+def ClassNameFilter(word, ttype, freq, checbit):
+    return(TagTypeFilter(word, ttype, freq, Token.Name.Class,checbit))
 
 
-def FuncNameFilter(word, ttype, freq):
-    return(TagTypeFilter(word, ttype, freq, Token.Name.Function))
+def FuncNameFilter(word, ttype, freq,checbit):
+    return(TagTypeFilter(word, ttype, freq, Token.Name.Function,checbit))
 
 
 def ClassFuncNameFilter(word, ttype, freq):
@@ -212,5 +211,5 @@ def ClassFuncNameFilter(word, ttype, freq):
     return(validtag)
 
 
-def LiteralFilter(word, ttype, freq):
-    return TagTypeFilter(word, ttype, freq, Token.Literal)
+def LiteralFilter(word, ttype, freq,checbit):
+    return TagTypeFilter(word, ttype, freq, Token.Literal,checbit)

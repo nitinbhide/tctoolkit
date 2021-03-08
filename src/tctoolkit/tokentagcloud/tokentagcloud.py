@@ -13,9 +13,7 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import operator
 import math
 import string
-
 from pygments.token import Token
-
 from ..tctoolkitutil import DirFileLister
 from ..tctoolkitutil import TagCloud
 from ..tctoolkitutil import SourceCodeTokenizer
@@ -90,8 +88,8 @@ class SourceCodeTagCloud(object):
                 self.fileTagCount[value] = self.fileTagCount.get(value, 0) + 1
                 fileTokenset.add(value)
 
-    def getTags(self, numWords=100, filterFunc=None):
-        return self.tagcloud.getSortedTagWordList(numWords, filterFunc)
+    def getTags(self, numWords=100, filterFunc=None,classset=set(),funcset=set()):
+        return self.tagcloud.getSortedTagWordList(numWords, filterFunc,classset,funcset)
 
     def getFileCount(self, tagWord):
         return self.fileTagCount.get(tagWord, 0)
