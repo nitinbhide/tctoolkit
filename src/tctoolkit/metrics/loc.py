@@ -47,26 +47,32 @@ class Countlines():
 
     def run(self,srcdir):
         filelist = self.getFiles(srcdir)
+        check=True
+        print('Choose from this:\n\t1.loc\n\t2.Blockdepth')
+        if int(input())==2:check=False
         # database
-        self.c.execute(""" CREATE TABLE IF NOT EXISTS Files
-        (Checkpoint_name text,FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer,comment integer,
-        FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name))""")
-        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth
-        (Checkpoint_name text,FILENAME text,Parent text,Function text,Max_depth integer,dept_line integer,loc integer, 
-        FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME),
-        FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name),
-        UNIQUE(Filename,Parent,Function))''' )
+        if check:
+            self.c.execute(""" CREATE TABLE IF NOT EXISTS Files
+            (Checkpoint_name text,FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer,comment integer,
+            FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name))""")
+        else:
+            self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth
+            (Checkpoint_name text,FILENAME text,Parent text,Function text,Max_depth integer,dept_line integer,loc integer, 
+            FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME),FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name),
+            UNIQUE(Filename,Parent,Function))''' )
         self.conn.commit()
         for srcfile in filelist:
-            a = self.Readfile(srcfile)
-            try:
-                self.c.execute('''INSERT INTO Files VALUES(?,?,?,?,?,?)''',
-                (self.check,str(Path(srcfile).absolute()),datetime.now(),a[0],a[1],a[2]))
-                self.conn.commit()
-            except:pass
-            self.Blockdept(srcfile)
-        print(pd.read_sql_query("SELECT * FROM Files", self.conn))
-        print (pd.read_sql_query("SELECT * FROM Blockdepth", self.conn))
+            if check:
+                a = self.Readfile(srcfile)
+                try:
+                    self.c.execute('''INSERT INTO Files VALUES(?,?,?,?,?,?)''',
+                    (self.check,str(Path(srcfile).absolute()),datetime.now(),a[0],a[1],a[2]))
+                    self.conn.commit()
+                except:pass
+            else:
+                self.Blockdept(srcfile)
+        # print(pd.read_sql_query("SELECT * FROM Files", self.conn))
+        # print (pd.read_sql_query("SELECT * FROM Blockdepth", self.conn))
 
         
     def Blockdept(self, srcfile):
@@ -184,10 +190,9 @@ def RunMain():
         app = Countlines(options.lang, dirname)
         app.c.execute(""" CREATE TABLE IF NOT EXISTS Checkpoint(Checkpoint_name text PRIMARY KEY,DATE text)""")
         app.check="Checkpoint "+str(app.c.execute('SELECT COUNT(*) FROM Checkpoint').fetchone()[0]+1)
-        app.c.execute('''INSERT INTO Checkpoint VALUES(?,?)''',
-        (app.check,datetime.now()))
+        app.c.execute('''INSERT INTO Checkpoint VALUES(?,?)''',(app.check,datetime.now()))
         app.conn.commit()
-        print (pd.read_sql_query("SELECT * FROM Checkpoint", app.conn))
+        # print (pd.read_sql_query("SELECT * FROM Checkpoint", app.conn))
         app.run(dirname)
 
 

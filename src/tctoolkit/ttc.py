@@ -219,6 +219,7 @@ class D3SourceTagCloud(SourceCodeTagCloud):
         self.conn = sqlite3.connect("ttc.db")
         self.c = self.conn.cursor()
         super(D3SourceTagCloud, self).__init__(dirname, pattern, lang)
+
     def javascript(self,name):
         if(self.dirname.endswith(os.sep) == False):
             self.dirname += os.sep
@@ -237,6 +238,7 @@ class D3SourceTagCloud(SourceCodeTagCloud):
                             if value not in nameset: nameset.add(value)
                     if ttype not in Token.Text: prev = value
         return nameset
+        
     def inserttotable(self,taglist):
         self.c.execute(""" CREATE TABLE IF NOT EXISTS TagCloud(Text text,Count integer ,
         Filecount integer,UNIQUE(Text,Count,Filecount))""")
@@ -248,6 +250,7 @@ class D3SourceTagCloud(SourceCodeTagCloud):
             except:pass
         self.conn.commit()
         print(pd.read_sql_query("SELECT * FROM TagCloud", self.conn))
+        self.c.execute('Delete from TagCloud')
 
     def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
