@@ -10,6 +10,10 @@ from pathlib import Path
 sys.path.append("..")
 from tctoolkitutil import DirFileLister
 class Hierarchy():
+
+    ''' 
+    this class is used to easily get all attributes of functions to dump in blockdept
+    '''
     def __init__(self,parent=None):
         self.parent = parent
         self.cchild = 0
@@ -20,8 +24,12 @@ class Hierarchy():
         self.depth_line=0
         
 class Countlines():
-    
+
+    '''
+     calculating lines of code
+    '''
     def __init__(self, language, dependspath=[]):
+
         dependencypath = dependspath
         self.language = language
         self.srcdir = None
@@ -32,12 +40,14 @@ class Countlines():
         self.c = self.conn.cursor()
         self.check=0
 
-    def StripAtStart(self,src, strtostrip):
+    def StripAtStart(self, src, strtostrip):
+        
         if(src.startswith(strtostrip)):
             src = src[len(strtostrip):]
         return (src)
         
     def getFiles(self, srcdir):
+
         self.srcdir = srcdir
         if(self.srcdir.endswith(os.sep) == False):
             self.srcdir += os.sep
@@ -45,45 +55,64 @@ class Countlines():
         filelist = filelister.getFilesForLang(self.language)
         return filelist
 
-    def run(self,srcdir):
+    def run(self, srcdir):
+        '''
+          parse through each file and insert into db
+        '''
         filelist = self.getFiles(srcdir)
-        check=True
-        print('Choose from this:\n\t1.loc\n\t2.Blockdepth')
-        if int(input())==2:check=False
+        dirname = os.path.dirname('code.js')
+        print("er",dirname)
+        filename = os.path.join(dirname, 'relative/path/to/file/you/want')
         # database
-        if check:
-            self.c.execute(""" CREATE TABLE IF NOT EXISTS Files
-            (Checkpoint_name text,FILENAME text PRIMARY KEY,DATE text,src_loc integer,total_loc integer,comment integer,
-            FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name))""")
-        else:
-            self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth
-            (Checkpoint_name text,FILENAME text,Parent text,Function text,Max_depth integer,dept_line integer,loc integer, 
-            FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME),FOREIGN KEY (Checkpoint_name) REFERENCES Checkpoint (Checkpoint_name),
-            UNIQUE(Filename,Parent,Function))''' )
+        self.c.execute(''' CREATE TABLE IF NOT EXISTS Files
+        (Checkpoint_name text,FILENAME text,PRIMARY KEY(Checkpoint_name,FILENAME)) ''' )
         self.conn.commit()
         for srcfile in filelist:
-            if check:
-                a = self.Readfile(srcfile)
-                try:
-                    self.c.execute('''INSERT INTO Files VALUES(?,?,?,?,?,?)''',
-                    (self.check,str(Path(srcfile).absolute()),datetime.now(),a[0],a[1],a[2]))
-                    self.conn.commit()
-                except:pass
-            else:
-                self.Blockdept(srcfile)
-        # print(pd.read_sql_query("SELECT * FROM Files", self.conn))
-        # print (pd.read_sql_query("SELECT * FROM Blockdepth", self.conn))
+            self.findloc(srcfile)
+            
+            self.blockdepth(srcfile)
+    def findloc(self, srcfile):
 
+        '''
+        parsing file and calculating loc
+        '''
+        commentlist = [Comment.Single, Comment.Multiline, Token.Literal.String.Doc, Token.Text,Token.Comment.Preproc]
+        inquotes = [Token.Literal.String.Double, Token.Literal.String.Single]
+        totalcount=0
+        srccount = 0
+        comment=0
+        with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
+            countchars = 0
+            for ttype, value in self.lexer.get_tokens(code.read()):
+                if ttype in inquotes:continue
+                if ( '\n' in value or ttype==Token.Comment.Single) and countchars>0:
+                    srccount += 1
+                    countchars = 0
+                if ('\n' in value):totalcount+=1
+                if (ttype not in commentlist):
+                    countchars += 1
+                if ttype in [Comment.Single, Comment.Multiline, Token.Literal.String.Doc]:comment+=1
+        self.inserttoloc(srcfile,srccount, totalcount, comment)
         
-    def Blockdept(self, srcfile):
-        type1 = ['c', 'cpp', 'java', 'js','cs']
-        type2 = ['rb', 'py']
-        if self.StripAtStart(srcfile,self.srcdir).split('.')[1] in type1:
-            return self.Type1(srcfile)
-        else:
-            return self.Type2(srcfile)
+    def inserttoloc(self, srcfile, srccount, totalcount, comment):
+        
+        '''
+        inserting into loc
+        '''
+        self.c.execute(''' CREATE TABLE IF NOT EXISTS Loc
+        (FILENAME text,DATE text,src_loc integer,total_loc integer,comment integer,
+        FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME))''')
+        try:
+            self.c.execute('''INSERT INTO Loc VALUES(?,?,?,?,?)''',
+            (str(os.path.relpath(srcfile)),datetime.now(),srccount,totalcount,comment))
+            self.conn.commit()
+        except:pass
 
-    def Type1(self, srcfile):
+    def blockdepth(self, srcfile):
+
+        '''
+        calculates the depth of each function
+        '''
         function = []
         a = []
         startcal, count = 0, 0
@@ -101,14 +130,18 @@ class Countlines():
                         a[-1].count = 0
                         a.pop()
                     else: continue
-                dummy,a,function,gotfunc=self.Checkfunc(ttype,value,gotfunc,startcal,a,function,count+1)
+                dummy,a,function,gotfunc=self.checkfunc(ttype,value,gotfunc,startcal,a,function,count+1)
                 if not dummy and a and len(a[-1].stack) == 0 and a[-1].depth > 0:
-                    self.insertval(srcfile,a,function)
+                    self.inserttoblockdepth(srcfile,a,function)
                     startcal -= 1
                     function.pop()
                     a.pop()
 
-    def Checkfunc(self,ttype,value,gotfunc,startcal,a,function,count):
+    def checkfunc(self, ttype, value, gotfunc, startcal, a, function, count):
+
+        '''
+        validating if function has definition and return its attributes
+        '''
         if ttype == Token.Name.Function :
             gotfunc = True
             if startcal:    
@@ -129,44 +162,31 @@ class Countlines():
             a[-1].count += 1
         return 0,a,function,gotfunc
 
-    def insertval(self,srcfile,a,function):
+    def inserttoblockdepth(self, srcfile, a, function):
+        '''
+        inserting into blockdepth
+        '''
+        self.c.execute('''CREATE TABLE IF NOT EXISTS Blockdepth
+        (FILENAME text,Parent text,Function text,Max_depth integer,dept_line integer,loc integer, 
+        FOREIGN KEY (FILENAME) REFERENCES Files (FILENAME),
+        PRIMARY KEY(Filename,Parent,Function))''' )
         if a[-1].parent:
             a[-2].cchild = a[-1].depth
             a[-2].ccount = a[-1].count
-        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?,?,?)''',
-        (self.check,str(Path(srcfile).absolute()),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].depth_line,a[-1].count+a[-1].ccount))
+        self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?,?)''',
+        (str(Path(srcfile).absolute()),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].depth_line,a[-1].count+a[-1].ccount))
         self.conn.commit()
-
-    def Type2(self, srcfile):
-        function = []
-        a = []
-        d=dict()
-        ans,count = 0,0
-        countl,counts = 0,0
-        countspace = False
-        startcal = False
-        with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
-            pass
-
-    def Readfile(self, srcfile):
-        commentlist = [Comment.Single, Comment.Multiline, Token.Literal.String.Doc, Token.Text,Token.Comment.Preproc]
-        inquotes = [Token.Literal.String.Double, Token.Literal.String.Single]
-        totalcount=0
-        srccount = 0
-        comment=0
-        with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
-            countchars = 0
-            for ttype, value in self.lexer.get_tokens(code.read()):
-                if ttype in inquotes:continue
-                if ( '\n' in value or ttype==Token.Comment.Single) and countchars>0:
-                    srccount += 1
-                    countchars = 0
-                if ('\n' in value):totalcount+=1
-                if (ttype not in commentlist):
-                    countchars += 1
-                if ttype in [Comment.Single, Comment.Multiline, Token.Literal.String.Doc]:comment+=1
-        return [srccount,totalcount,comment]
                 
+def checkpoint(options, dirname):
+    '''
+    creates checkpoint for each run
+    '''
+    app = Countlines(options.lang, dirname)
+    app.c.execute(""" CREATE TABLE IF NOT EXISTS Checkpoint(Checkpoint_name text PRIMARY KEY,DATE text)""")
+    app.check="Checkpoint "+str(app.c.execute('SELECT COUNT(*) FROM Checkpoint').fetchone()[0]+1)
+    app.c.execute('''INSERT INTO Checkpoint VALUES(?,?)''',(app.check,datetime.now()))
+    app.conn.commit()
+    app.run(dirname)
 
 def RunMain():
     usage = "usage: %prog [options] <directory name>"
@@ -186,14 +206,9 @@ def RunMain():
         pathlist.append('.')  # append current directory to search path
         print ("Language : %s" %(options.lang))
         print ("Dependency search path : %s" %options.includespath)
-        print ("Counting loc ...")
-        app = Countlines(options.lang, dirname)
-        app.c.execute(""" CREATE TABLE IF NOT EXISTS Checkpoint(Checkpoint_name text PRIMARY KEY,DATE text)""")
-        app.check="Checkpoint "+str(app.c.execute('SELECT COUNT(*) FROM Checkpoint').fetchone()[0]+1)
-        app.c.execute('''INSERT INTO Checkpoint VALUES(?,?)''',(app.check,datetime.now()))
-        app.conn.commit()
-        # print (pd.read_sql_query("SELECT * FROM Checkpoint", app.conn))
-        app.run(dirname)
+        print("Counting loc ...")
+        checkpoint(options,dirname)
+        
 
 
 if __name__ == "__main__":

@@ -16,13 +16,12 @@ import sys
 import json
 import html
 import pandas as pd
-from pygments.lexers import get_lexer_by_name
 from optparse import OptionParser
 from .thirdparty.templet import unicodefunction
 from .tokentagcloud.tokentagcloud import *
 from .tctoolkitutil import readJsText, getJsDirPath, FileOrStdout
 from .tctoolkitutil import TCApp
-import sqlite3,os,codecs
+import sqlite3,os
 from pathlib import Path
 
 @unicodefunction
@@ -220,26 +219,10 @@ class D3SourceTagCloud(SourceCodeTagCloud):
         self.c = self.conn.cursor()
         super(D3SourceTagCloud, self).__init__(dirname, pattern, lang)
 
-    def javascript(self,name):
-        if(self.dirname.endswith(os.sep) == False):
-            self.dirname += os.sep
-        filelister = DirFileLister(self.dirname)
-        filelist = filelister.getFilesForLang(self.lang)
-        nameset=set()
-        for srcfile in filelist:
-            prev=''
-            with codecs.open(srcfile, "rb", encoding='utf-8', errors='ignore') as code:
-                for ttype, value in get_lexer_by_name(self.lang).get_tokens(code.read()):
-                    if name == 'class':
-                        if ttype in Token.Name and prev.lower() in ['class', 'new']:
-                            if value not in nameset: nameset.add(value)
-                    elif name == 'func':
-                        if ttype in Token.Name and prev.lower() == 'function':
-                            if value not in nameset: nameset.add(value)
-                    if ttype not in Token.Text: prev = value
-        return nameset
-        
-    def inserttotable(self,taglist):
+    def inserttotable(self, taglist):
+        '''
+        inserts into table
+        '''
         self.c.execute(""" CREATE TABLE IF NOT EXISTS TagCloud(Text text,Count integer ,
         Filecount integer,UNIQUE(Text,Count,Filecount))""")
         self.conn.commit()
@@ -254,14 +237,8 @@ class D3SourceTagCloud(SourceCodeTagCloud):
 
     def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
-        classset = set()
-        funcset=set()
-        if self.lang in ['js', 'ts', 'typescript', 'javascript']:
-            if filterFunc==ClassNameFilter:
-                classset = self.javascript('class')
-            elif filterFunc == FuncNameFilter:
-                funcset = self.javascript('func')
-        tagWordList = self.getTags(numWords, filterFunc,classset,funcset)
+
+        tagWordList = self.getTags(numWords, filterFunc)
         # create list of dictionaries them dump list using json.dumps
         tagList = []
 
@@ -273,7 +250,6 @@ class D3SourceTagCloud(SourceCodeTagCloud):
         tagJsonStr = json.dumps(tagList)
         if tagList:
             self.inserttotable(tagList)
-        # print(tagJsonStr)
         return(tagJsonStr)
 
 

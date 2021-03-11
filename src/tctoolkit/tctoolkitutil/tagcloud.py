@@ -13,8 +13,6 @@ TC Toolkit is hosted at https://bitbucket.org/nitinbhide/tctoolkit
 import math
 import operator
 import locale
-from pygments.token import Token
-from .sourcetokenizer import ClassNameFilter,FuncNameFilter
 
 class TagCloud(object):
 
@@ -35,31 +33,28 @@ class TagCloud(object):
         self.tagDict[word] = freq
         # now update the word
         cur_ttype = self.tagTypeDict.get(word, None)
-        if cur_ttype == None or (ttype != cur_ttype and ttype in cur_ttype):
+        if cur_ttype == None or (ttype != cur_ttype and ttype in cur_ttype.split()[1]):
             self.tagTypeDict[word] = ttype
     
-    def filterWords(self, filterFunc,classset,funcset):
+    def filterWords(self, filterFunc):
         '''
         filter the words using the filter function
         '''
         tagDict = dict()
         for word, freq in self.tagDict.items():
-            checbit=None
-            if word in classset:checbit = 1
-            elif word in funcset:checbit=1
-            taginfo = filterFunc(word, self.tagTypeDict[word], freq,checbit)
+            taginfo = filterFunc(word, self.tagTypeDict[word], freq)
             if(taginfo != None):
                 tagDict[taginfo[0]] = taginfo[1]
         return(tagDict)
 
-    def getSortedTagWordList(self, numWords, filterFunc,classset,funcset):
+    def getSortedTagWordList(self, numWords, filterFunc):
         '''
         return list of tag words sorted alphabetically
         '''
         tagWordList = []
         tagDict = self.tagDict
         if(filterFunc != None):
-            tagDict = self.filterWords(filterFunc,classset,funcset)
+            tagDict = self.filterWords(filterFunc)
 
         if(len(tagDict) > 0):
             # first get sorted wordlist (reverse sorted by frequency)

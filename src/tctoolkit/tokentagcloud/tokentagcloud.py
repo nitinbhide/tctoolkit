@@ -50,8 +50,15 @@ class TagCloudTokenizer(SourceCodeTokenizer):
         Useful for detecting class names in languages like c++ or java, c#. Typically for strings
         like 'new A()' , A is detected as 'function' as determined by pygments.
         '''
+        '''
+        also useful for detecting function names where pygments fail to detect in languages 
+        such as typescript javascript
+        '''
         if prevtoken != None and prevtoken.ttype in Token.Keyword and prevtoken.value == 'new' and srctoken.is_type(Token.Name):
             srctoken.ttype = Token.Name.Class
+        elif prevtoken != None and prevtoken.ttype in Token.Keyword and prevtoken.value == 'function'and srctoken.is_type(Token.Name):
+            srctoken.ttype = Token.Name.Function
+            
 
 
 class SourceCodeTagCloud(object):
@@ -79,6 +86,7 @@ class SourceCodeTagCloud(object):
     def __addFile(self, srcfile):
         assert(self.tagcloud != None)
         print("Adding tags information of file: %s" % srcfile)
+        
         tokenizer = TagCloudTokenizer(srcfile)
         fileTokenset = set()
         for srctoken in tokenizer:
@@ -88,8 +96,8 @@ class SourceCodeTagCloud(object):
                 self.fileTagCount[value] = self.fileTagCount.get(value, 0) + 1
                 fileTokenset.add(value)
 
-    def getTags(self, numWords=100, filterFunc=None,classset=set(),funcset=set()):
-        return self.tagcloud.getSortedTagWordList(numWords, filterFunc,classset,funcset)
+    def getTags(self, numWords=100, filterFunc=None):
+        return self.tagcloud.getSortedTagWordList(numWords, filterFunc)
 
     def getFileCount(self, tagWord):
         return self.fileTagCount.get(tagWord, 0)
