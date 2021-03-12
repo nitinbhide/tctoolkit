@@ -34,8 +34,6 @@ class Countlines():
         self.language = language
         self.srcdir = None
         self.lexer = get_lexer_by_name(language)
-        self.openlist = ["for","while","if","else","loop","until"]
-        self.closelist = ['}', "end"]
         self.conn = sqlite3.connect("analysis.db")
         self.c = self.conn.cursor()
         self.check=0
@@ -60,14 +58,14 @@ class Countlines():
           parse through each file and insert into db
         '''
         filelist = self.getFiles(srcdir)
-        dirname = os.path.dirname('code.js')
-        print("er",dirname)
-        filename = os.path.join(dirname, 'relative/path/to/file/you/want')
         # database
         self.c.execute(''' CREATE TABLE IF NOT EXISTS Files
         (Checkpoint_name text,FILENAME text,PRIMARY KEY(Checkpoint_name,FILENAME)) ''' )
         self.conn.commit()
         for srcfile in filelist:
+            try:
+                self.c.execute('''INSERT INTO Files VALUES(?,?)''',(self.check,os.path.relpath(srcfile)))
+            except:pass
             self.findloc(srcfile)
             
             self.blockdepth(srcfile)
@@ -174,7 +172,7 @@ class Countlines():
             a[-2].cchild = a[-1].depth
             a[-2].ccount = a[-1].count
         self.c.execute('''INSERT INTO Blockdepth VALUES(?,?,?,?,?,?)''',
-        (str(Path(srcfile).absolute()),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].depth_line,a[-1].count+a[-1].ccount))
+        (str(os.path.relpath(srcfile)),a[-1].parent,function[-1],a[-1].cchild+a[-1].depth,a[-1].depth_line,a[-1].count+a[-1].ccount))
         self.conn.commit()
                 
 def checkpoint(options, dirname):

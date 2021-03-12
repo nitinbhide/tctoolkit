@@ -232,8 +232,7 @@ class D3SourceTagCloud(SourceCodeTagCloud):
                         (taglist[i]['text'], taglist[i]['count'], taglist[i]['filecount']))
             except:pass
         self.conn.commit()
-        print(pd.read_sql_query("SELECT * FROM TagCloud", self.conn))
-        self.c.execute('Delete from TagCloud')
+
 
     def getJSON(self, numWords=100, filterFunc=None):
         tagJsonStr = ''
