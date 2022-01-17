@@ -96,7 +96,7 @@ class SMTree(TreemapNode):
 
     def getMetricId2PropMap(self, xmtree):
         assert(xmtree != None)
-        metricnodes = xmtree.findall('project/metric_names/metric_name')
+        metricnodes = xmtree.findall('project//metric_names/metric_name')
         metricid2prop = dict()
 
         for metricnode in metricnodes:
