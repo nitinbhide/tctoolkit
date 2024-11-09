@@ -161,9 +161,11 @@ def _templatefunction(func, listname, stringtype):
                 break
     except:
         docline = 2
-    args = inspect.getargspec(func)
+    #args = inspect.getfullargspec(func)
+    sig = inspect.signature(func)
+    
     builder = _TemplateBuilder(
-        'def %s%s:' % (func.__name__, inspect.formatargspec(*args)),
+        'def %s%s:' % (func.__name__, str(sig)),
         '%s = []' % listname,
         '%s.append(%%s)' % listname,
         '%s.append(%s(%%s))' % (listname, stringtype),
