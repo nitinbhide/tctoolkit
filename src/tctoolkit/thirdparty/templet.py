@@ -85,15 +85,26 @@ import inspect
 import six
 
 class _TemplateBuilder(object):
-    __pattern = re.compile(r"""\$         # Directives begin with a $
-        (?![.(/'"])(                    # $. $( $/ $' $" do not require escape
-        \$                            | # $$ is an escape for $
-        [^\S\n]*\n                    | # $\n is a line continuation
-        [_a-z][_a-z0-9]*              | # $simple Python identifier
-        \{(?![[{])[^\}]*\}            | # ${...} expression to eval
-        \{\[.*?\]\}                   | # ${[...]} list comprehension to eval
-        \{\{.*?\}\}                   | # ${{...}} multiline code to exec
-      )((?<=\}\})[^\S\n]*\n|)           # eat trailing newline after }}
+    # details of __pattern regex
+    # __pattern = re.compile(r"""\$         # Directives begin with a $
+    #     (?![.(/'"])(                    # $. $( $/ $' $" do not require escape
+    #     \$                            | # $$ is an escape for $
+    #     [^\S\n]*\n                    | # $\n is a line continuation
+    #     [_a-z][_a-z0-9]*              | # $simple Python identifier
+    #     \{(?![[{])[^\}]*\}            | # ${...} expression to eval
+    #     \{\[.*?\]\}                   | # ${[...]} list comprehension to eval
+    #     \{\{.*?\}\}                   | # ${{...}} multiline code to exec
+    #   )((?<=\}\})[^\S\n]*\n|)           # eat trailing newline after }}
+    
+    __pattern = re.compile(r"""\$         
+        (?![.(/'"])(                    
+        \$                            | 
+        [^\S\n]*\n                    | 
+        [_a-z][_a-z0-9]*              | 
+        \{(?![[{])[^\}]*\}            | 
+        \{\[.*?\]\}                   | 
+        \{\{.*?\}\}                   | 
+      )((?<=\}\})[^\S\n]*\n|)           
     """, re.IGNORECASE | re.VERBOSE | re.DOTALL)
 
     def __init__(s, *args):
